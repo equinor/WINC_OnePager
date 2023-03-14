@@ -230,7 +230,26 @@ We are trying to find out how many grids do we want. From the previous part we h
     ```
 All of the well elements are located in the 0.05 m area, all the rest of grids is to fill-up the rest of the area gradually. 
 
-
+![LGR result](https://github.com/equinor/GaP/blob/main/LGR_GaP.png)
+   
 </details>
+
+<details><summary><h2>Number of fine grids in the whole LGR in Z direction</h2></summary>
+
+After setting up the up the number of grids in X-Y direction, we should set up number of grids in Z direction.
+
+The idea is not to refine too much in the Z direction, mainly because of the computational time. 
+
+However, it we don’t refine at all, the resolution in the Z direction in overburden might be too low. Then, the it would limit our access to a specific depth, when we want to set start and end depth of each casing. 
+First we define how many grids do we want? 
+- We hard-coded the number of grids in overburden to 10 per layer. i.e. each layer is divided into the 10 layers. For example, if we have 10 grids in the overburden, in the LGR we will have 100 layers. 
+- Then we convert the list to numpy array to be able to do calculation on that.
+- Later we will see the LGR_num_z can directly be used in the NZFIN keyword under CARFIN 
+   
+   ```python
+   LGR_numb_z = (no_of_layers_in_OB-main_grd_min_k + 1) * [10] + (main_grd_max_k -no_of_layers_in_OB) *[1] 
+   LGR_numb_z = np.array (LGR_numb_z)
+   ```
+
 
 
