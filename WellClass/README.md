@@ -86,7 +86,12 @@ good,0.01
 mid,10
 poor,1.00E+03
 ```
-Once the file is ready, it can be processed:
+
+
+
+## Data Visualization and Proxy-based Leakage Estimation
+
+Once all the information is tabulated, it can be processed through the well class. 
 
 ```python
 #Import CSV tables
@@ -107,12 +112,23 @@ my_well = Well( header       = well_csv['well_header'],
            )
 ```
 
-## Data Visualization and Proxy-based Leakage Estimation
+The processing will store the data in memory and use it to produce a hybrid geological well-sketch and a pressure-depth plot displaying the fluid pressures of each phase and the minimum horizontal stress.
 
-Once all the information is tabulated, it can be processed with a python script. The processing will store the data in memory and use it to produce a hybrid geological well-sketch and a pressure-depth plot displaying the fluid pressures of each phase and the minimum horizontal stress.
+```python
+#Plot sketch, pressures
+fig, (ax1, ax2) = plt.subplots(1,2, sharey=True)
+my_well.plot_sketch(ax=ax1)
+my_well.plot_pressure(ax=ax2)
+
+fig.tight_layout()
+
+```
 
 The well sketch combines both subsurface data and well engineering information. It serves as a starting point to identify the main leakage pathways and illustrate the main risks associated with the well.
 
 The pressure plot, besides visualizing the provided pressure scenarios, has the necessary input to run a preliminary leakage estimation based on a Darcy-based proxy. This proxy gives an estimate of leakage rates through the main barrier (deepest cement plug). The magnitude will be a function of both the transport properties assigned to the barrier and the resulting phase pressures of each scenario.
+
+![well_sketch](https://github.com/equinor/SCREEN/assets/49291809/01544f8f-fcae-4602-b188-bf032a64d20b)
+
 
 
