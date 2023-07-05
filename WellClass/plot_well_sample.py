@@ -2,8 +2,7 @@ from well_class_v2 import *
 
 
 #Import CSV tables
-filename = r'GaP_input_Cosmo_v3.csv'
-# filename = r'GaP_input_Smeaheia_v3.csv'
+filename = r'Simple_well.csv'
 
 well_csv = csv_parser(filename)
 
