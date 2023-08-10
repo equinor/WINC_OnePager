@@ -257,7 +257,8 @@ class Well:
                 diam = min_q.iloc[0]['diameter_m']
 
         borehole = np.array(borehole)
-        borehole[:-1, 1] = borehole[1:, 0]
+        # borehole[:-1, 1] = borehole[1:, 0]
+        borehole[1:, 0] = borehole[:-1, 1]
 
         borehole_df = pd.DataFrame(data=borehole, columns=['top_msl', 'bottom_msl', 'id_m'])
         self.borehole = borehole_df.to_dict()
@@ -547,6 +548,8 @@ class Well:
         geology_df =      pd.DataFrame(self.geology)
         well_header =     self.header
 
+
+
         #define plot spatial references
         ax_width = 2 * drilling_df['diameter_m'].max()/2 #plot width
         xcoord_left = -drilling_df['diameter_m'].max()/2 #well construction text
@@ -556,8 +559,9 @@ class Well:
         steelcolor = '#702F00'
         base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
         ymax = max([base_deepest_rsrv,self.co2_datum])+100
+        
 
-        # Draw borehole
+        # Draw drilling (Bit size)
         for idx, row in drilling_df.iterrows():
              xy = (-row['diameter_m']/2, row['top_msl'])
              width = row['diameter_m']
@@ -621,6 +625,14 @@ class Well:
                 ycoord = (row['top_msl'] + row['bottom_msl'])/2
                 ax.annotate(text = row['barrier_name'], xy = (xcoord_left, ycoord), fontsize = txt_fs_left, va = 'center', ha='right')
 
+        # Draw open hole (borehole/pipe) for testing only
+        # for idx, row in borehole_df.iterrows():
+        #      xy = (-row['id_m']/2, row['top_msl'])
+        #      width = row['id_m']
+        #      height = row['bottom_msl'] - row['top_msl']
+        #      ax.add_patch(Rectangle(xy, width, height, zorder=9, fill=False, edgecolor='k', lw=2, ))
+
+
         #Draw geological information
         ax.hlines(y=geology_df['top_msl'], xmin=-ax_width, xmax=ax_width, zorder=-4, lw=.25, color='k')
         ax.axhspan(0, well_header['sf_depth_msl'], color='lightblue', alpha=0.5, zorder=-20)
@@ -643,7 +655,10 @@ class Well:
         ax.set_ylabel('depth [mMSL]')
         ax.set_xlabel('radius [m]')
         
-        return ax
+        if 'fig' in locals():
+             return fig, ax
+        else:
+             return ax
     
     def plot_pressure(self, ax = None):
         if ax is None:
@@ -696,9 +711,11 @@ class Well:
         ax.set_xlabel('presure [bar]')
         ax.set_ylim(0, ymax)
         ax.invert_yaxis()
-
-        return fig, ax
-
+        if 'fig' in locals():
+             return fig, ax
+        else:
+             return ax
+        
     def plot_pt(self, fig=None, ax=None):
 
         if fig == None:
