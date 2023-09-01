@@ -6,12 +6,12 @@ import numpy as np
 import pandas as pd
 
 from ..pvt.pvt import get_hydrostatic_P
-
 from ..well_class.well_class import Well
-from ..well_pressure.barrier_pressure import (
+
+from .barrier_pressure import (
     compute_barrier_leakage
 )
-from ..well_pressure.co2_pressure import (
+from .co2_pressure import (
     compute_CO2_pressures,
 )
 
