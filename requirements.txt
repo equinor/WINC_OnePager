@@ -1,0 +1,15 @@
+numpy
+pandas
+scipy
+jsonpickle
+pyyaml
+pydantic
+jupyter
+jupyterlab
+ipympl
+ecl
+mkdocs
+mkdocstrings[python]
+mkdocs-material
+mkdocs-autorefs
+markdown-callouts

@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# ignore ecl grid
+*.grdecl
+
+# venv
+venv_screen/
+
 # C extensions
 *.so
 
