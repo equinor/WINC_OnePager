@@ -1,0 +1,73 @@
+site_name: SCREEN
+theme:
+  name: material
+  palette:
+  - media: '(prefers-color-scheme: light)'
+    scheme: default
+    primary: teal
+    accent: amber
+    toggle:
+      icon: material/lightbulb
+      name: Switch to dark mode
+  - media: '(prefers-color-scheme: dark)'
+    scheme: slate
+    primary: teal
+    accent: amber
+    toggle:
+      icon: material/lightbulb-outline
+      name: Switch to light mode
+  features:
+  - search.suggest
+  - search.highlight
+  - content.tabs.link
+  - navigation.indexes
+  - content.tooltips
+  - navigation.path
+  - content.code.annotate
+  - content.code.copy
+  - content.code.select
+
+markdown_extensions:
+  - toc:
+      permalink: 
+  - attr_list
+  - def_list
+  - tables
+  - pymdownx.highlight:
+      use_pygments: false
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - callouts
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_section_style: list
+            members_order: source
+            show_root_heading: true
+            show_source: true
+            show_signature_annotations: true
+  - search
+  - autorefs
+
+nav:
+  - Home: index.md
+  - 'User Guides':
+    - GaP: gap.md
+    - WellClass: well_class.md
+    - PressCalc: press_calc.md
+    - WellViz: well_viz.md
+  - Developer Guides:
+    - MkDocs: mkdocs.md
+    - Installation: INSTALLATION.md
+    - Code References:
+      - GaP:
+        - carfin: code_references/gap_carfin.md
+        - geometry: code_references/gap_geometry.md
+      - WellClass:
+        - 'well class': code_references/well_class.md
+        - 'well_pressure': code_references/well_pressure.md
+        - 'models': code_references/models.md
+

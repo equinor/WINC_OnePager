@@ -1,0 +1,160 @@
+
+apiVersion: well/v0.1
+kind: Well
+metadata:
+  namespace: screen
+  name: smeaheia
+  author: equinor
+
+spec:
+
+  well_header:
+
+    well_name: 'NO 32/4-1'
+    well_rkb: 23.5
+    sf_depth_msl: 312
+    well_td_rkb: 3186
+    sf_temp: 4
+    geo_tgrad: 40
+
+  drilling:
+
+    - top_rkb: 335.5
+      bottom_rkb: 395
+      diameter_in: 36
+
+    - top_rkb: 395
+      bottom_rkb: 720
+      diameter_in: '17 1/2'
+
+    - top_rkb: 720
+      bottom_rkb: 1185
+      diameter_in: '12 1/4'
+
+    - top_rkb: 1185
+      bottom_rkb: 3186
+      diameter_in: '8 1/2'
+
+  casing_cement:
+
+    - top_rkb: 335.5
+      bottom_rkb: 394
+      diameter_in: 30
+      toc_rkb: 335.5
+      boc_rkb: 394
+      shoe: true
+
+    - top_rkb: 335.5
+      bottom_rkb: 709
+      diameter_in: '13 3/8'
+      toc_rkb: 335.5
+      boc_rkb: 709
+      shoe: true
+
+    - top_rkb: 622
+      bottom_rkb: 1137.5
+      diameter_in: '9 5/8'
+      toc_rkb: 706
+      boc_rkb: 1137.5
+      shoe: true
+
+  barriers:
+
+    - barrier_name: cplug9
+      barrier_type: cplug
+      top_rkb: 375
+      bottom_rkb: 583
+
+    - barrier_name: mplug2
+      barrier_type: mech_plug
+      top_rkb: 1049
+      bottom_rkb: 1069
+
+  geology:
+
+    - top_rkb: 336
+      geol_unit: 'NORDLAND GP'
+      reservoir_flag: false
+
+    - top_rkb: 535
+      geol_unit: 'ROGALAND GP'
+      reservoir_flag: false
+
+    - top_rkb: 846
+      geol_unit: 'SHETLAND GP'
+      reservoir_flag: false
+
+    - top_rkb: 1081
+      geol_unit: 'CROMER KNOLL GP'
+      reservoir_flag: false
+
+    - top_rkb: 1109
+      geol_unit: 'DRAUPNE FM'
+      reservoir_flag: false
+
+    - top_rkb: 1216
+      geol_unit: 'HEATHER FM'
+      reservoir_flag: false
+
+    - top_rkb: 1238
+      geol_unit: 'SOGNEFJORD FM'
+      reservoir_flag: true
+
+    - top_rkb: 1306
+      geol_unit: 'HEATHER FM'
+      reservoir_flag: false
+
+    - top_rkb: 1366
+      geol_unit: 'FENSFJORD FM'
+      reservoir_flag: true
+
+    - top_rkb: 1595
+      geol_unit: 'HEATHER FM'
+      reservoir_flag: false
+
+    - top_rkb: 1598
+      geol_unit: 'KROSSFJORD FM'
+      reservoir_flag: true
+
+    - top_rkb: 1645
+      geol_unit: 'HEATHER FM'
+      reservoir_flag: false
+
+    - top_rkb: 1650
+      geol_unit: 'BRENT GP'
+      reservoir_flag: false
+
+    - top_rkb: 1783
+      geol_unit: 'DUNLIN GP'
+      reservoir_flag: false
+
+    - top_rkb: 1816
+      geol_unit: 'STATFJORD GP'
+      reservoir_flag: false
+
+    - top_rkb: 1832
+      geol_unit: 'HEGRE GP'
+      reservoir_flag: false
+
+    - top_rkb: 3132
+      geol_unit: 'BASEMENT'
+      reservoir_flag: false
+
+  reservoir_pressure:
+
+    depth_msl: 1217
+    RP2: '91'
+    RP3: '20'
+
+  co2_datum: 1282.5
+
+  main_barrier:
+    barrier_name: cplug9
+
+  barrier_permeability:
+    - quality: good
+      kv: 0.01
+    - quality: mid
+      kv: 10
+    - quality: poor
+      kv: 1.00E+03

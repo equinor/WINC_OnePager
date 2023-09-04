@@ -1,0 +1,74 @@
+# yaml configuration for GaP 
+spec:
+
+  sim_case:
+    folder: "../data/smeaheia"
+    filename: "GEN_NOLGR_PH2"
+
+  lgr_out:
+    folder: "../data/smeaheia"
+    filename: "LEG_HIRES"
+
+  defaults:
+    mindz_ob: 10.0
+
+  casings:
+
+    - type: "conductor"
+      ID: 0.762
+      pipe:
+        strt_depth: 312
+        end_depth: 371
+        perm: 10000      # permeability of tube
+      oph:
+        strt_depth: 4
+        end_depth: 376
+      cement:
+        strt_depth: 312
+        end_depth: 371
+        perm: 5          # permeability of cement bond
+
+    - type: "production"
+      ID: 0.244
+      pipe:
+        strt_depth: 599
+        end_depth: 1114
+        perm: 10000      # permeability of tube
+      oph:
+        strt_depth: 599
+        end_depth: 1622
+      cement:
+        strt_depth: 683
+        end_depth: 1114
+        perm: 5          # permeability of cement bond
+
+    - type: "surface"
+      ID: 0.3397
+      pipe:
+        strt_depth: 312
+        end_depth: 686
+        perm: 10000      # permeability of tube
+      oph:
+        strt_depth: 312
+        end_depth: 697
+      cement:
+        strt_depth: 312
+        end_depth: 686
+        perm: 5          # permeability of cement bond
+
+  barriers:
+
+    - type: "barrier"
+      ID: 0.3397
+      pipe:
+        strt_depth: 352
+        end_depth: 560
+        perm: 0.5
+
+    - type: "barrier"
+      ID: 0.244
+      pipe:
+        strt_depth: 1020
+        end_depth: 1046
+        perm: 100
+      
