@@ -9,10 +9,11 @@ $ git clone https://github.com/equinor/SCREEN
 ```
 Note here `$` is a linux command prompt. There is no need to type it. Now you should have a folder named `SCREEN` at your local machine. then `cd` to it.
 
-Until it is merged with `main` branch, the refactored codes is currently located at branch `hzh/refactoring` and can be checkout with the following command:
+It's normal for us to make a new branch if we indend to make some changes of the codes. This can be done with the `-b` option, for example:
 ```
-$ git checkout hzh/refactoring
+$ git checkout -b hzh/cleanup
 ```
+This would generate a new branch, named `hzh/cleanup`.
 
 ## Virtual environment
 
