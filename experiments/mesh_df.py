@@ -1,0 +1,241 @@
+
+import numpy as np
+import pandas as pd
+
+class Mesh:
+
+    def __init__(self, LGR_sizes_x, LGR_sizes_y, LGR_sizes_z):
+        """ dataframe for LGR grids
+        """
+
+        # LGR dimensions
+        nx = len(LGR_sizes_x)
+        ny = len(LGR_sizes_y)
+        nz = len(LGR_sizes_z)
+
+        print(f'nx={nx}, ny={ny}, nz={nz}')
+
+        #Create i, j, k indices
+        cell_ijk = np.indices((nx, ny, nz))
+        cell_ijk = cell_ijk.reshape((3, nx * ny * nz)).T
+
+        #Create LGR Dataframe with indices
+        mesh_df = pd.DataFrame(data = cell_ijk, columns = ['i', 'j', 'k'])
+
+        self.mesh_df = mesh_df
+
+        mesh_df.sort_values(by=['k', 'i'], inplace = True)
+        mesh_df.reset_index(inplace=True, drop=True)
+
+        #Creat DX, DY, DZ for LGR mesh
+        DX_grid, DZ_grid, DY_grid = np.meshgrid(LGR_sizes_x, LGR_sizes_z, LGR_sizes_y)
+
+        mesh_df['DX'] = DX_grid.flatten()
+        mesh_df['DY'] = DY_grid.flatten()
+        mesh_df['DZ'] = DZ_grid.flatten()
+
+    def set_cell_coords(self):
+        """ Create cell coordinate X, Y, Z for LGR mesh
+        """
+
+        # for convenience only
+        mesh_df = self.mesh_df
+
+        # cell coordinates
+        xcoord = (mesh_df.query("j==0&k==0").DX.cumsum() - mesh_df.query("j==0&k==0").DX/2).values
+        ycoord = (mesh_df.query("i==0&k==0").DY.cumsum() - mesh_df.query("i==0&k==0").DY/2).values
+        zcoord = (mesh_df.query("i==0&j==0").DZ.cumsum() - mesh_df.query("i==0&j==0").DZ/2).values
+
+        # TODO(hzh): a bug?
+        # map_X = dict(zip(mesh_df.query("j==0&j==0")['i'], xcoord))
+        map_X = dict(zip(mesh_df.query("j==0&k==0")['i'], xcoord))
+        map_Y = dict(zip(mesh_df.query("i==0&k==0")['j'], ycoord))
+        map_Z = dict(zip(mesh_df.query("i==0&j==0")['k'], zcoord))
+
+        # save cell coordinates X, Y, Z to dataframe
+        mesh_df['X'] = mesh_df['i'].map(map_X)
+        mesh_df['Y'] = mesh_df['j'].map(map_Y)
+        mesh_df['Z'] = mesh_df['k'].map(map_Z)
+
+        # save Corner Z points to dataframe
+        mesh_df['Zcorn_top'] = mesh_df['Z'] - mesh_df['DZ']/2
+        mesh_df['Zcorn_bottom'] = mesh_df['Z'] + mesh_df['DZ']/2
+
+    def upscale_properties(self):
+        """ Upscale coarse properties to LGR mesh
+        """
+
+        # for convenience only
+        mesh_df = self.mesh_df
+
+        # TODO(hzh): do we suppose to use mid index in grid_init?
+
+        # indices for center finer grid
+        mid_i = mesh_df.i.max()//2
+        mid_j = mesh_df.j.max()//2
+
+        # properties
+        fields = ['PORV', 
+                  'PERMX', 'PERMY', 'PERMZ', 
+                  'MULTX', 'MULTY', 'MULTZ', 
+                  'MULTX-', 'MULTY-', 'MULTZ-', 
+                  'PORO']
+
+        # Upscale coarse properties to LGR grids
+
+        for field in fields:
+            # mesh_df[field] = np.nan
+            mesh_df[field] = 0.0                    # TODO(hzh): what should I put here?
+            
+        for idx, row in grid_init.query('i==@mid_i & j==@mid_j').iterrows():
+
+            # switch to corner coords, coarse grid
+            top  = row.Z - row.DZ/2
+            base = row.Z + row.DZ/2
+
+            for field in fields:
+
+                mesh_df.loc[(mesh_df['Z']>=top) & (mesh_df['Z']<base), field] = row[field]
+
+
+    def set_material_type(self, 
+                          drilling_df, 
+                          casings_df, 
+                          barriers_df):
+        """ Assign material types, such as openholes, overburden, cement bond, etc.
+        """
+
+        # for convenience only
+        mesh_df = self.mesh_df
+
+        # set default material to 'overburden'
+        mesh_df['material'] = 'overburden'
+
+        # ### 1. Drilling
+        for idx, row in drilling_df.iterrows():
+            
+            top, bottom = row['top_msl'], row['bottom_msl']
+
+            if top < mesh_df['Zcorn_bottom'].max():
+
+                # extract bounding box
+                k_min, k_max = row['k_min'], row['k_max']
+                ij_min, ij_max = row['ij_min'], row['ij_max']
+                
+                # 1.1 set material type to openhole
+                criteria =  '(k >= @k_min) & (k <= @k_max) & (i >= @ij_min) & (i <= @ij_max) & (j >= @ij_min) & (j <= @ij_max)'
+                mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'openhole'
+
+        # ### 2. Casings
+        for idx, row in casings_df.iterrows():
+
+            # extract bounding box
+            k_min, k_max = row['k_min'], row['k_max']
+            ij_min, ij_max = row['ij_min'], row['ij_max']
+            toc_k_min, toc_k_max = row['toc_k_min'], row['toc_k_max']
+            
+            # 2.1 set material type to annulus
+            # x
+            criteria_i =  '(material == "openhole") & (k >= @k_min) & (k <= @k_max) & ((i < @ij_min) | (i > @ij_max))'
+            mesh_df.loc[mesh_df.eval(criteria_i), 'material'] = 'annulus'
+            # y
+            criteria_j =  '(material == "openhole") & (k >= @k_min) & (k <= @k_max) & ((j < @ij_min) | (j > @ij_max))'
+            mesh_df.loc[mesh_df.eval(criteria_j), 'material'] = 'annulus'
+            
+            # 2.2 set material type to cement_bond
+            criteria = '(material == "annulus") & (k >= @toc_k_min) & (k <= @toc_k_max)' 
+            mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'cement_bond'
+
+            # 2.3 set material type to openhole
+            criteria = '(material == "annulus")'  
+            mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'openhole'
+            # mesh_df.loc[mesh_df.eval(criteria_j), 'material'] = 'cementbond'   
+
+        # ### 3. Barriers
+        for idx, row in barriers_df.iterrows():
+            
+            b_k_min, b_k_max = row['k_min'], row['k_max']
+            
+            criteria = '(material == "openhole") & (k >= @b_k_min) & (k <= @b_k_max)' 
+            mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'barrier'
+
+    def set_permeability(self, barriers_mod_df):
+        """ Assign permeability according to material type
+        """
+
+        # for convenience only
+        mesh_df = self.mesh_df
+
+        # open hole
+        oh_perm = 1e5
+
+        # cemont bond
+        cb_perm = 0.5
+
+        # barrier
+        barrier_perm = 0.5
+
+        # TODO(hzh): test with original permeabilities
+
+        # open hole
+        oh_perm = 10000
+        # cemont bond
+        cb_perm = 5
+
+        # barrier
+        barrier_perm = 0.5
+
+        # TODO(hzh): need to figure out a better to load barrier perms.
+        # here manually set them
+        barriers_defaults = [0.5, 100, 5, 5, 10]
+
+        # barriers
+        barrier_perms = []
+        for i in range(len(barriers_mod_df)):
+            barrier_perms.append(barriers_defaults[i])
+
+        # set permeability according to material type
+
+        # 1. openhole
+        criteria = 'material == "openhole"'
+        mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = oh_perm
+
+        # 2. cement bond
+        criteria = 'material == "cement_bond"'
+        mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = cb_perm
+
+        # 3. barrier
+        criteria = 'material == "barrier"'
+        mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = barrier_perm
+
+    def plot(self, my_well, mid_i: int):
+        """ Visualization of well sketch and LGR grids
+        """
+
+        # for convenience only
+        mesh_df = self.mesh_df
+
+        # grid coordinates at LGR grids for plotting
+        xcorn  = (mesh_df.query("j==0&k==0").DX.cumsum()).values
+        ycorn  = (mesh_df.query("i==0&k==0").DY.cumsum()).values
+        zcorn  = (mesh_df.query("i==0&j==0").DZ.cumsum()).values
+
+        # add origin
+        xcorn = np.append(0, xcorn)
+        ycorn = np.append(0, ycorn)
+        zcorn = np.append(0, zcorn)
+
+        # shift it
+        xcorn -= main_grd_dx/2
+        ycorn -= main_grd_dy/2
+
+
+        # LGR
+        # TODO(hzh): mid_j, a typo?
+        XZ_slice = mesh_df.query('j==@mid_i')
+
+        # extract permeability value
+        Z = XZ_slice.PERMX.values.reshape(nz, nx)
+
+        # plot it
+        plot_well_perm(my_well, x=xcorn, y=zcorn, Z=Z, on_coarse=False)        

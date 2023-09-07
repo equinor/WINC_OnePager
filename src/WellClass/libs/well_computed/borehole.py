@@ -6,6 +6,13 @@ def compute_borehole(casings: dict, drilling: dict) -> dict:
     '''
     Routine to compute the effective open borehole. 
     It takes the original hole and substracts the diameter taken by cement bond.
+
+        Args:
+            casings (dict): contains casing information
+            drilling (dict): contains drilling information
+
+        Returns:
+            borehold (dict): contains borehole information
     '''
     
     casings_df  = pd.DataFrame(casings)
