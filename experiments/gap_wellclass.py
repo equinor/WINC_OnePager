@@ -30,15 +30,10 @@ from src.WellClass.libs.utils import (
     csv_parser,
     yaml_parser,
 )
-from src.WellClass.libs.utils.LGR_grid import (
-    compute_ngrd,
-    generate_LGR_xy,
-    generate_LGR_z,
-)
 
 from src.WellClass.libs.utils.df2gap import (
-    gap_casing_list,
-    gap_barrier_list
+    to_gap_casing_list,
+    to_gap_barrier_list
 )
 
 
@@ -153,47 +148,6 @@ simcase = os.path.join(sim_path, case['simcase'])
 # 
 # We are going to compute the grid sizes in lateral (x and y) and vertical directions
 
-# ### 1. Compute minimum grid size
-
-# 0. minimum grid size
-
-# minimum grid size depends on minimum annulus thickness
-min_grd_size = casings_df['thick_m'].min()
-
-if min_grd_size < 0.05:
-    min_grd_size = 0.05
-
-print(f'Minimimum grid size is {min_grd_size*100:.2f} cm')
-
-# TODO(hzh): manually set it
-if Ali_way:
-    min_grd_size = 0.05
-
-# 1. compute number of LGR grids for drilling, casing and borehole, respectively
-
-# for drilling
-drilling_df['n_grd_id']  = drilling_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
-
-# the following two are not used
-casings_df[ 'n_grd_id']  = casings_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
-borehole_df['n_grd_id'] = borehole_df['id_m'].map(lambda x: compute_ngrd(x, min_grd_size))
-
-# ### 2. Compute LGR grid sizes in x-y directions
-
-# 2.1 Number of cells representing horizontal LGR
-no_latral_fine_grd = drilling_df['n_grd_id'].max()
-
-# 2.2 generate the LGR grid sizes in x-y
-LGR_sizes_x, LGR_sizes_y, _ = generate_LGR_xy(no_latral_fine_grd, 
-                                              min_grd_size, 
-                                              main_grd_dx, main_grd_dy,
-                                              Ali_way=Ali_way)
-
-# ### 3. Compute LGR grid sizes in z direction
-
-# LGR_sizes_z, LGR_numb_z, LGR_depths, _ = generate_LGR_z(DZ_rsrv, DZ_ovb_coarse)
-# TODO(hzh): to make LGR starts at ref_depth
-LGR_sizes_z, LGR_numb_z, LGR_depths, _ = generate_LGR_z(DZ_rsrv, DZ_ovb_coarse, ref_depth)
 
 
 #####################################
@@ -210,12 +164,12 @@ output_dir = '.'
 LGR_NAME = 'LEG_HIRES'
 
 # prepare info about Casing, Cement Bond and Open hole  for GaP
-casing_list = gap_casing_list(drilling_df, 
+casing_list = to_gap_casing_list(drilling_df, 
                               casings_df, 
                               oh_perm, cb_perm)
 
 # prepare info about Barrier for GaP 
-barrier_list = gap_barrier_list(barriers_mod_df, 
+barrier_list = to_gap_barrier_list(barriers_mod_df, 
                                 barrier_perms)
 
 # generate .grdecl file

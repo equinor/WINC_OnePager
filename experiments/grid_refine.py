@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-class Mesh:
+class GridRefine:
 
     def __init__(self, LGR_sizes_x, LGR_sizes_y, LGR_sizes_z):
         """ dataframe for LGR grids
@@ -68,8 +68,7 @@ class Mesh:
         # for convenience only
         mesh_df = self.mesh_df
 
-        # TODO(hzh): do we suppose to use mid index in grid_init?
-
+        # TODO(hzh): do we suppose to use mid index of coarse grid?
         # indices for center finer grid
         mid_i = mesh_df.i.max()//2
         mid_j = mesh_df.j.max()//2
@@ -123,7 +122,9 @@ class Mesh:
                 ij_min, ij_max = row['ij_min'], row['ij_max']
                 
                 # 1.1 set material type to openhole
-                criteria =  '(k >= @k_min) & (k <= @k_max) & (i >= @ij_min) & (i <= @ij_max) & (j >= @ij_min) & (j <= @ij_max)'
+                criteria =  '(k >= @k_min)  & (k <= @k_max) & \
+                             (i >= @ij_min) & (i <= @ij_max) & \
+                             (j >= @ij_min) & (j <= @ij_max)'
                 mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'openhole'
 
         # ### 2. Casings
@@ -136,14 +137,19 @@ class Mesh:
             
             # 2.1 set material type to annulus
             # x
-            criteria_i =  '(material == "openhole") & (k >= @k_min) & (k <= @k_max) & ((i < @ij_min) | (i > @ij_max))'
+            criteria_i =  '(material == "openhole") & \
+                           (k >= @k_min) & (k <= @k_max) & \
+                            ((i < @ij_min) | (i > @ij_max))'
             mesh_df.loc[mesh_df.eval(criteria_i), 'material'] = 'annulus'
             # y
-            criteria_j =  '(material == "openhole") & (k >= @k_min) & (k <= @k_max) & ((j < @ij_min) | (j > @ij_max))'
+            criteria_j =  '(material == "openhole") & \
+                           (k >= @k_min) & (k <= @k_max) & \
+                           ((j < @ij_min) | (j > @ij_max))'
             mesh_df.loc[mesh_df.eval(criteria_j), 'material'] = 'annulus'
             
             # 2.2 set material type to cement_bond
-            criteria = '(material == "annulus") & (k >= @toc_k_min) & (k <= @toc_k_max)' 
+            criteria = '(material == "annulus") & \
+                        (k >= @toc_k_min) & (k <= @toc_k_max)' 
             mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'cement_bond'
 
             # 2.3 set material type to openhole
@@ -156,7 +162,8 @@ class Mesh:
             
             b_k_min, b_k_max = row['k_min'], row['k_max']
             
-            criteria = '(material == "openhole") & (k >= @b_k_min) & (k <= @b_k_max)' 
+            criteria = '(material == "openhole") & \
+                        (k >= @b_k_min) & (k <= @b_k_max)' 
             mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'barrier'
 
     def set_permeability(self, barriers_mod_df):

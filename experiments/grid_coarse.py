@@ -8,7 +8,7 @@ from ecl.eclfile import EclInitFile, EclRestartFile
 from ecl.grid import EclGrid
 #import rips 
 
-class GridInit:
+class GridCoarse:
 
     def __init__(self, simcase):
         """ initialize the grid
@@ -64,6 +64,7 @@ class GridInit:
         grid_init = self.grid_init
         
         # Retrieve coarse x-y grid indexes where LGR will be placed
+        # i.e., center grid
         self.main_grd_i = grid_init.i.max()//2
         self.main_grd_j = grid_init.j.max()//2
 
@@ -99,6 +100,10 @@ class GridInit:
 
         # the dz value to distinguish zones between reservoir and ovb
         dz0 = 10
+
+        # center grid
+        main_grd_i = self.main_grd_i
+        main_grd_j = self.main_grd_j
 
         # 3.1 DZs for reservoir
         DZ_rsrv = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ <= @dz0')['DZ'].values

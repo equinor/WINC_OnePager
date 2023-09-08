@@ -7,10 +7,10 @@ from src.GaP.libs.models import (
     ElemModel,
 )
 
-def gap_casing_list(drilling_df: pd.DataFrame, 
-                   casings_df: pd.DataFrame, 
-                   oh_perm: float|int, 
-                   cb_perm: float|int) -> list[PipeCementModel]:
+def to_gap_casing_list(drilling_df: pd.DataFrame, 
+                        casings_df: pd.DataFrame, 
+                        oh_perm: float|int, 
+                        cb_perm: float|int) -> list[PipeCementModel]:
     """ convert casing dataframe to gap format
 
         Args:
@@ -44,8 +44,8 @@ def gap_casing_list(drilling_df: pd.DataFrame,
 
     return casings_list
 
-def gap_barrier_list(barriers_mod_df: pd.DataFrame, 
-                     barrier_perms: list[float]) -> list[ElemModel]:
+def to_gap_barrier_list(barriers_mod_df: pd.DataFrame, 
+                        barrier_perms: list[float]) -> list[ElemModel]:
     """ convert barrier dataframe to gap format
     """
 
