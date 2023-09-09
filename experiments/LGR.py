@@ -16,6 +16,9 @@ class LGR:
                  Ali_way):
         """ LGR grid information in x, y, z directions 
         """
+
+        self.Ali_way = Ali_way
+
         # initialize grid parameters
         self.main_grd_dx, self.main_grd_dy = grid_init.main_grd_dx, grid_init.main_grd_dy
 
@@ -63,10 +66,15 @@ class LGR:
 
         return min_grd_size
     
-    def _compute_LGR_sizes_xy(self, 
-                              Ali_way):
+    def compute_LGR_sizes_xy(self):
         """ Compute LGR grid sizes in x-y directions
         """
+        Ali_way = self.Ali_way
+
+        no_latral_fine_grd = self.no_latral_fine_grd
+        min_grd_size = self.min_grd_size
+        main_grd_dx = self.main_grd_dx
+        main_grd_dy = self.main_grd_dy
 
         # 2.2 generate the LGR grid sizes in x-y
         LGR_sizes_x, LGR_sizes_y, _ = generate_LGR_xy(no_latral_fine_grd, 
@@ -76,14 +84,15 @@ class LGR:
 
         return LGR_sizes_x, LGR_sizes_y
     
-    def _compute_LGR_sizes_z(self, 
-                             DZ_rsrv, DZ_ovb_coarse, 
-                             ref_depth):
+    def compute_LGR_sizes_z(self):
         """ Compute LGR grid sizes in z direction
         """
+        DZ_rsrv = self.DZ_rsrv
+        DZ_ovb_coarse = self.DZ_ovb_coarse 
+        ref_depth = self.ref_depth
+
         # LGR_sizes_z, LGR_numb_z, LGR_depths, _ = generate_LGR_z(DZ_rsrv, DZ_ovb_coarse)
         # TODO(hzh): to make LGR starts at ref_depth
         LGR_sizes_z, LGR_numb_z, LGR_depths, _ = generate_LGR_z(DZ_rsrv, DZ_ovb_coarse, ref_depth)
 
         return LGR_sizes_z, LGR_numb_z, LGR_depths
-

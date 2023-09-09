@@ -128,7 +128,7 @@ def main():
     drilling_df = well_df.drilling_df
     casings_df = well_df.casings_df
     barriers_df = well_df.barriers_df
-    barrier_mod_df = well_df.barriers_mod_df
+    barriers_mod_df = well_df.barriers_mod_df
 
     # # Loading the model
     # 
@@ -155,8 +155,9 @@ def main():
 
     lgr = LGR(grid_init, drilling_df, casings_df, Ali_way)
 
-    LGR_sizes_x, LGR_sizes_y, 
-    LGR_sizes_z
+    LGR_sizes_x, LGR_sizes_y = lgr.compute_LGR_sizes_xy() 
+    LGR_sizes_z, LGR_numb_z, LGR_depths = lgr.compute_LGR_sizes_z()
+
     #####################################
     # # Set up dataframe for LGR mesh
 
@@ -169,6 +170,7 @@ def main():
     
     ########################################33333
     # # Bounding box for well elements
+    well_df.compute_bbox(mesh.mesh_df, mesh.nx)
 
     # # Write LGR file
 
