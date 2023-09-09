@@ -3,9 +3,10 @@ import functools
 
 import numpy as np
 
-from ecl.eclfile import EclFile
-from ecl.eclfile import EclInitFile, EclRestartFile
 from ecl.grid import EclGrid
+from ecl.eclfile import EclInitFile
+
+# from ecl.eclfile import EclFile, EclRestartFile
 #import rips 
 
 class GridCoarse:
@@ -35,7 +36,12 @@ class GridCoarse:
                 except:
                         continue
 
-    def set_cell_coords(self):
+        # set up fields
+        self._set_cell_coords()
+        self._set_grid_info()
+        self._set_DZ_rsrv_ovb()
+
+    def _set_cell_coords(self):
         """ Create cell coordinate X, Y, Z
         """
 
@@ -57,7 +63,7 @@ class GridCoarse:
         grid_init['Y'] = grid_init['j'].map(map_Y)
         grid_init['Z'] = grid_init['k'].map(map_Z)
 
-    def set_grid_info(self, Ali_way):
+    def _set_grid_info(self):
         """ Grid information for coarse grid
         """
 
@@ -83,17 +89,15 @@ class GridCoarse:
         main_DEPTH = grid_init.query('i == @main_grd_i & j == @main_grd_j')['DEPTH'].values
 
         # depth where LGR starts
-        self.ref_depth = 0
-        if Ali_way:
-            self.ref_depth = main_DEPTH[0] - 0.5*main_DZ[0]
+        self.ref_depth = main_DEPTH[0] - 0.5*main_DZ[0]
 
         #Retrieve number of cells representing water column and overburden
         self.no_of_layers_in_OB    = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ >  10')['DZ'].shape[0]
         self.no_of_layers_below_OB = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ <= 10')['DZ'].shape[0]
 
-        print('====>', no_of_layers_in_OB, no_of_layers_below_OB)        
+        # print('====>', no_of_layers_in_OB, no_of_layers_below_OB)        
 
-    def set_DZ_rsrv_ovb(self):
+    def _set_DZ_rsrv_ovb(self):
         """ DZs for rsrv and ovb
         """
         grid_init = self.grid_init
@@ -106,12 +110,10 @@ class GridCoarse:
         main_grd_j = self.main_grd_j
 
         # 3.1 DZs for reservoir
-        DZ_rsrv = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ <= @dz0')['DZ'].values
+        self.DZ_rsrv = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ <= @dz0')['DZ'].values
 
         # 3.2 DZs for coarse grid
-        DZ_ovb_coarse = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ > @dz0')['DZ'].values
-
-        return DZ_rsrv, DZ_ovb_coarse
+        self.DZ_ovb_coarse = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ > @dz0')['DZ'].values
     
     @functools.cached_property
     def main_grd_i(self):

@@ -22,40 +22,6 @@ class WellDataFrame:
         self.barriers_df = pd.DataFrame(my_well.barriers)
         self.barriers_mod_df = pd.DataFrame(my_well.barriers_mod)
 
-    # def compute_annulus_thickness(self):
-    #     """ Compute annulus thickness. For simplicty it assumes 
-    #         annulus between casing and openhole as entire annulus
-    #     """
-    #     # for convenience
-    #     casings_df = self.casings_df
-    #     drilling_df = self.drilling_df
-
-    #     #
-    #     casings_df['ann_od_m'] = np.nan
-    #     casings_df['ann_bottom_msl'] = np.nan
-
-    #     # casing
-    #     for idx, row in casings_df[::-1].iterrows():
-
-    #         # get id from casing
-    #         d, top, bottom = row[['diameter_m', 'top_msl', 'bottom_msl']]
-
-    #         # get od from drilling
-    #         hole = drilling_df[drilling_df['diameter_m'] > d].iloc[-1]
-        
-    #         hole_top, hole_bottom, hole_d = hole[['top_msl', 'bottom_msl', 'diameter_m']]
-
-    #         casings_df.loc[idx, 'ann_od_m'] = hole_d       # outer diameter in meters
-    #         casings_df.loc[idx, 'ann_bottom_msl'] = hole_bottom
-
-    #     #Compute inner area
-    #     casings_df['A_i'] = np.pi * (casings_df['diameter_m']/2)**2
-
-    #     #Compute outer area
-    #     casings_df['A_o'] = np.pi * (casings_df['ann_od_m']/2)**2
-
-    #     # annulus thickness: (od-id)/2
-    #     casings_df['thick_m'] = (casings_df['ann_od_m'] - casings_df['diameter_m'])/2
 
     def compute_bbox(self, mesh_df: pd.DataFrame, nxy: int):
         """ Compute bounding boxes for drillings, casings and barriers.
@@ -141,4 +107,39 @@ class WellDataFrame:
             k_min, k_max = get_k_indices(mesh_df, top, bottom)
             
             barriers_df.loc[idx, 'k_min'] = k_min
-            barriers_df.loc[idx, 'k_max'] = k_max        
+            barriers_df.loc[idx, 'k_max'] = k_max
+
+    # def compute_annulus_thickness(self):
+    #     """ Compute annulus thickness. For simplicty it assumes 
+    #         annulus between casing and openhole as entire annulus
+    #     """
+    #     # for convenience
+    #     casings_df = self.casings_df
+    #     drilling_df = self.drilling_df
+
+    #     #
+    #     casings_df['ann_od_m'] = np.nan
+    #     casings_df['ann_bottom_msl'] = np.nan
+
+    #     # casing
+    #     for idx, row in casings_df[::-1].iterrows():
+
+    #         # get id from casing
+    #         d, top, bottom = row[['diameter_m', 'top_msl', 'bottom_msl']]
+
+    #         # get od from drilling
+    #         hole = drilling_df[drilling_df['diameter_m'] > d].iloc[-1]
+        
+    #         hole_top, hole_bottom, hole_d = hole[['top_msl', 'bottom_msl', 'diameter_m']]
+
+    #         casings_df.loc[idx, 'ann_od_m'] = hole_d       # outer diameter in meters
+    #         casings_df.loc[idx, 'ann_bottom_msl'] = hole_bottom
+
+    #     #Compute inner area
+    #     casings_df['A_i'] = np.pi * (casings_df['diameter_m']/2)**2
+
+    #     #Compute outer area
+    #     casings_df['A_o'] = np.pi * (casings_df['ann_od_m']/2)**2
+
+    #     # annulus thickness: (od-id)/2
+    #     casings_df['thick_m'] = (casings_df['ann_od_m'] - casings_df['diameter_m'])/2

@@ -35,9 +35,9 @@ def to_gap_casing_list(drilling_df: pd.DataFrame,
         # print(idx, ID, strt_depth, end_depth, strt_depth_cement, end_depth_cement, strt_depth_oph, end_depth_oph)
         
         casing_geom = PipeCementModel(ID=ID, 
-                                        pipe=DepthModel(strt_depth=strt_depth, end_depth=end_depth, perm=oh_perm),
-                                        oph=DepthModel(strt_depth=strt_depth_oph, end_depth=end_depth_oph), 
-                                        cement=DepthModel(strt_depth=strt_depth_cement, end_depth=end_depth_cement, perm=cb_perm)
+                                      pipe=DepthModel(strt_depth=strt_depth, end_depth=end_depth, perm=oh_perm),
+                                      oph=DepthModel(strt_depth=strt_depth_oph, end_depth=end_depth_oph), 
+                                      cement=DepthModel(strt_depth=strt_depth_cement, end_depth=end_depth_cement, perm=cb_perm)
                                     )
 
         casings_list.append(casing_geom)
