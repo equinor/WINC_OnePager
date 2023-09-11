@@ -1,6 +1,6 @@
 
 
-from src.WellClass.libs.utils.LGR_grid_utils import (
+from .LGR_grid_utils import (
     compute_ngrd,
     generate_LGR_xy,
     generate_LGR_z,

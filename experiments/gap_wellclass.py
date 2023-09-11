@@ -1,18 +1,13 @@
 
 """ To run it, type the following:
 
-$ python -m experiments.gap_wellclass
+$ python -m experiments.gap_wellclass --plot --ali-way --use-yaml
 
 """
 import os
-import sys
 import json
 
-import matplotlib.pyplot as plt
-
-# where WellClass and Ga[ codes are located
-# sys.path.append('../')
-
+import argparse
 
 from src.GaP.libs.carfin import build_grdecl
 
@@ -24,70 +19,70 @@ from src.WellClass.libs.utils import (
     yaml_parser,
 )
 
-from src.WellClass.libs.utils.df2gap import (
+from src.WellClass.libs.grid_utils.df2gap import (
     to_gap_casing_list,
     to_gap_barrier_list
 )
 
+# 
+from src.WellClass.libs.grid_utils import (
+    WellDataFrame,
+    GridCoarse,
+    GridRefine,
+    LGR,
+)
 
 # plots
-from .plot_utils import (
+from src.WellClass.libs.plotting.plot_grids import (
     plot_coarse,
     plot_refine,
 )
 
-# 
-from .well_df import WellDataFrame
+# # Examples
+# The following are the test examples.
 
-from .grid_coarse import GridCoarse
-from .grid_refine import GridRefine
-from .LGR    import LGR
+# examples
+smeaheia_v1 = {'well_input': r'GaP_input_Smeaheia_v3.csv', 
+            'well_input_yaml': r'smeaheia.yaml', 
+            #    'sim_path': r'/scratch/SCS/eim/SMEAHEIA', 
+            'sim_path': r'./test_data/examples/smeaheia_v1',
+            'simcase': r'GEN_NOLGR_PH2'}
+smeaheia_v2 = {'well_input': r'GaP_input_Smeaheia_v3.csv', 
+            'well_input_yaml': r'smeaheia.yaml', 
+            #    'sim_path': r'/scratch/SCS/bkh/wbook/realization-0/iter-0/pflotran/model', 
+            'sim_path': r'./test_data/examples/smeaheia_v2', 
+            'simcase': r'TEMP-0'}
+cosmo = {
+        'well_input': r'GaP_input_Cosmo_v3.csv', 
+        'well_input_yaml': r'cosmo.yaml', 
+        #  'sim_path': r'/scratch/SCS/bkh/well_class_test1/realization-0/iter-0/pflotran/model', 
+        'sim_path': r'./test_data/examples/cosmo', 
+        'simcase': r'TEMP-0'}
 
-def main():
+examples = {
+    'smeaheia_v1': smeaheia_v1,
+    'smeaheia_v2': smeaheia_v2,
+    'cosmo': cosmo
+}
+
+def main(args):
 
     # ## Some user options
 
     # TODO(hzh): use Ali's algorithm
-    Ali_way = True
+    Ali_way = args.ali_way
 
     # use yaml or csv input file
-    use_yaml = True
+    use_yaml = args.use_yaml
 
     # pick an example from given three options
+    case_type = args.case_type
 
-    case_type = 'cosmo'
+    # output
+    output_dir = args.output_dir
+    # LRG name 
+    LGR_NAME = args.output_name
 
-    case_type = 'smeaheia_v1'
-
-    # case_type = 'smeaheia_v2'
-
-    # # Examples
-    # 
-    # The following are the test examples.
-
-    # examples
-    smeaheia_v1 = {'well_input': r'GaP_input_Smeaheia_v3.csv', 
-                'well_input_yaml': r'smeaheia.yaml', 
-                #    'sim_path': r'/scratch/SCS/eim/SMEAHEIA', 
-                'sim_path': r'./test_data/examples/smeaheia_v1',
-                'simcase': r'GEN_NOLGR_PH2'}
-    smeaheia_v2 = {'well_input': r'GaP_input_Smeaheia_v3.csv', 
-                'well_input_yaml': r'smeaheia.yaml', 
-                #    'sim_path': r'/scratch/SCS/bkh/wbook/realization-0/iter-0/pflotran/model', 
-                'sim_path': r'./test_data/examples/smeaheia_v2', 
-                'simcase': r'TEMP-0'}
-    cosmo = {
-            'well_input': r'GaP_input_Cosmo_v3.csv', 
-            'well_input_yaml': r'cosmo.yaml', 
-            #  'sim_path': r'/scratch/SCS/bkh/well_class_test1/realization-0/iter-0/pflotran/model', 
-            'sim_path': r'./test_data/examples/cosmo', 
-            'simcase': r'TEMP-0'}
-
-    examples = {
-        'smeaheia_v1': smeaheia_v1,
-        'smeaheia_v2': smeaheia_v2,
-        'cosmo': cosmo
-    }
 
     # # Load well CSV or yaml configuration file
     # 
@@ -225,10 +220,7 @@ def main():
 
     # # Write LGR file
 
-    output_dir = '.'
 
-    # LRG name 
-    LGR_NAME = 'LEG_HIRES'
 
     # prepare info about Casing, Cement Bond and Open hole  for GaP
     casing_list = to_gap_casing_list(drilling_df, 
@@ -253,10 +245,34 @@ def main():
                  lgr.main_grd_min_k + 1, lgr.main_grd_max_k + 1,
                  lgr.no_of_layers_in_OB)
 
-    plot_coarse(my_well, grid_coarse)
-    plot_refine(my_well, grid_refine)
+    if args.plot:
+        plot_coarse(my_well, grid_coarse)
+        plot_refine(my_well, grid_refine)
 
 if __name__ == '__main__':
 
-    main()
+    # Create the parser
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--ali-way", action="store_true",
+                        help="Use Ali's logic to generate LGR grids")
+
+    parser.add_argument("--use-yaml", action="store_true",
+                        help="Use yaml format as input configuration file")
+
+    parser.add_argument("--case-type", type=str, default='smeaheia_v1',
+                        choices=['smeaheia_v1', 'smeaheia_v2', 'cosmo'],
+                        help="name of test example")
+            
+    parser.add_argument('--output-dir', type=str, default='./experiments',
+                        help="output directory")
+    parser.add_argument('--output-name', type=str, default='LEG_HIRES', 
+                        help='output file name')
+    
+    parser.add_argument('--plot', action='store_true', help='plot well sketch and well grids')
+
+    # Parse the argument
+    args = parser.parse_args()
+
+    main(args)
 

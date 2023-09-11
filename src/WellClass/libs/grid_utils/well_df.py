@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from src.WellClass.libs.utils.LGR_bbox import (
+from .LGR_bbox import (
     get_ij_indices,
     get_k_indices,
 )

@@ -2,10 +2,10 @@
 import numpy as np
 import pandas as pd
 
-from src.WellClass.libs.plotting.plot_utils import plot_well_perm
+from ..grid_utils.grid_coarse import GridCoarse
+from ..grid_utils.grid_refine import GridRefine
 
-from .grid_coarse import GridCoarse
-from .grid_refine import GridRefine
+from .plot_utils import plot_well_perm
 
 def plot_coarse(my_well, grid_coarse: GridCoarse):
     """ Plot well sketch and 2D slice of the permeability, at coarse grid
