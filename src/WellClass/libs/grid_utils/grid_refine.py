@@ -132,7 +132,7 @@ class GridRefine:
     def set_material_type(self,
                            drilling_df, 
                            casings_df, 
-                           barriers_df):
+                           barriers_mod_df):
         """ Assign material types, such as openholes, overburden, cement bond, etc.
         """
 
@@ -160,7 +160,7 @@ class GridRefine:
                 mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'openhole'
 
         # ### 2. Casings
-        for idx, row in casings_df.iterrows():
+        for ic, (idx, row) in enumerate(casings_df.iterrows()):
 
             # extract bounding box
             k_min, k_max = row['k_min'], row['k_max']
@@ -182,7 +182,7 @@ class GridRefine:
             # 2.2 set material type to cement_bond
             criteria = '(material == "annulus") & \
                         (k >= @toc_k_min) & (k <= @toc_k_max)' 
-            mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'cement_bond'
+            mesh_df.loc[mesh_df.eval(criteria), 'material'] = f'cement_bond_{ic}'
 
             # 2.3 set material type to openhole
             criteria = '(material == "annulus")'  
@@ -190,15 +190,15 @@ class GridRefine:
             # mesh_df.loc[mesh_df.eval(criteria_j), 'material'] = 'cementbond'   
 
         # ### 3. Barriers
-        for idx, row in barriers_df.iterrows():
+        for ib, (idx, row) in enumerate(barriers_mod_df.iterrows()):
             
             b_k_min, b_k_max = row['k_min'], row['k_max']
             
             criteria = '(material == "openhole") & \
                         (k >= @b_k_min) & (k <= @b_k_max)' 
-            mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'barrier'
+            mesh_df.loc[mesh_df.eval(criteria), 'material'] = f'barrier_{ib}'
 
-    def set_permeability(self, oh_perm, cb_perm, barrier_perm):
+    def set_permeability(self, drilling_df, casings_df, barriers_mod_df):
         """ Assign permeability according to material type
         """
 
@@ -208,16 +208,21 @@ class GridRefine:
         # set permeability according to material type
 
         # 1. openhole
+        oh_perm = drilling_df['oh_perm'].iloc[0]
         criteria = 'material == "openhole"'
         mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = oh_perm
 
         # 2. cement bond
-        criteria = 'material == "cement_bond"'
-        mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = cb_perm
+        for ic, (_, row) in enumerate(casings_df.iterrows()):
+            cb_perm = row['cb_perm']
+            criteria = f'material == "cement_bond_{ic}"'
+            mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = cb_perm
 
         # 3. barrier
-        criteria = 'material == "barrier"'
-        mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = barrier_perm
+        for ib, (_, row) in enumerate(barriers_mod_df.iterrows()):
+            barrier_perm = row['barrier_perm']
+            criteria = f'material == "barrier_{ib}"'
+            mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = barrier_perm
 
     def extract_xz_corn_coords(self):
         """ generate xcorn and zcorn coordinates

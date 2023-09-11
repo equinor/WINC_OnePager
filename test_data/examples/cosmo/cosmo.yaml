@@ -47,6 +47,7 @@ spec:
       toc_rkb: 132
       boc_rkb: 158
       shoe: true
+      cb_perm: 300
 
     - top_rkb: 132
       bottom_rkb: 439
@@ -61,6 +62,7 @@ spec:
       toc_rkb: 450
       boc_rkb: 1803
       shoe: true
+      cb_perm: 500
 
   barriers:
 
@@ -68,16 +70,19 @@ spec:
       barrier_type: cplug
       top_rkb: 132
       bottom_rkb: 150
+      barrier_perm: 0.5
 
     - barrier_name: cplug2
       barrier_type: cplug
       top_rkb: 1690
       bottom_rkb: 1850
+      barrier_perm: 100
 
     - barrier_name: cplug1
       barrier_type: cplug
       top_rkb: 2050
       bottom_rkb: 2300
+      barrier_perm: 5
 
   geology:
 

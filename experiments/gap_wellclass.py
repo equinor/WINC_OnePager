@@ -1,7 +1,7 @@
 
 """ To run it, type the following:
 
-$ python -m experiments.gap_wellclass --plot --ali-way --use-yaml
+$ python -m experiments.gap_wellclass --plot --ali-way --use-yaml --case-type cosmo
 
 """
 import os
@@ -179,30 +179,17 @@ def main(args):
 
     grid_refine.set_material_type(drilling_df,
                                   casings_df, 
-                                  barriers_df)
+                                  barriers_mod_df)
     
     ##############################
     # set up permeability
-    
-
-    # TODO(hzh): test with original permeabilities
-
-    # open hole
-    oh_perm = 10000
-    # cemont bond
-    cb_perm = 5
-
-    # barrier
-    barrier_perm = 0.5
 
     # set up permeability
-    grid_refine.set_permeability(oh_perm, cb_perm, barrier_perm)
+    grid_refine.set_permeability(drilling_df, casings_df, barriers_mod_df)
 
     #############################################
 
     # # Write LGR file
-
-
 
     # prepare info about Casing, Cement Bond and Open hole  for GaP
     casing_list = to_gap_casing_list(drilling_df, 
