@@ -1,15 +1,17 @@
 
+""" To run it, type the following:
+
+$ python -m experiments.gap_wellclass
+
+"""
 import os
 import sys
 import json
 
-import numpy as np
-import pandas as pd
-
 import matplotlib.pyplot as plt
 
 # where WellClass and Ga[ codes are located
-sys.path.append('../')
+# sys.path.append('../')
 
 
 from src.GaP.libs.carfin import build_grdecl
@@ -29,7 +31,10 @@ from src.WellClass.libs.utils.df2gap import (
 
 
 # plots
-from src.WellClass.libs.plotting import plot_well_perm
+from .plot_utils import (
+    plot_coarse,
+    plot_refine,
+)
 
 # 
 from .well_df import WellDataFrame
@@ -64,18 +69,18 @@ def main():
     smeaheia_v1 = {'well_input': r'GaP_input_Smeaheia_v3.csv', 
                 'well_input_yaml': r'smeaheia.yaml', 
                 #    'sim_path': r'/scratch/SCS/eim/SMEAHEIA', 
-                'sim_path': r'../test_data/examples/smeaheia_v1',
+                'sim_path': r'./test_data/examples/smeaheia_v1',
                 'simcase': r'GEN_NOLGR_PH2'}
     smeaheia_v2 = {'well_input': r'GaP_input_Smeaheia_v3.csv', 
                 'well_input_yaml': r'smeaheia.yaml', 
                 #    'sim_path': r'/scratch/SCS/bkh/wbook/realization-0/iter-0/pflotran/model', 
-                'sim_path': r'../test_data/examples/smeaheia_v2', 
+                'sim_path': r'./test_data/examples/smeaheia_v2', 
                 'simcase': r'TEMP-0'}
     cosmo = {
             'well_input': r'GaP_input_Cosmo_v3.csv', 
             'well_input_yaml': r'cosmo.yaml', 
             #  'sim_path': r'/scratch/SCS/bkh/well_class_test1/realization-0/iter-0/pflotran/model', 
-            'sim_path': r'../test_data/examples/cosmo', 
+            'sim_path': r'./test_data/examples/cosmo', 
             'simcase': r'TEMP-0'}
 
     examples = {
@@ -125,6 +130,7 @@ def main():
     well_df = WellDataFrame(my_well)
 
     # dataframes
+    annulus_df = well_df.annulus_df
     drilling_df = well_df.drilling_df
     casings_df = well_df.casings_df
     barriers_df = well_df.barriers_df
@@ -145,32 +151,71 @@ def main():
     # location of .egrid
     simcase = os.path.join(sim_path, case['simcase'])
 
-    ############################# grid_init ################
-    grid_init = GridCoarse(simcase)
+    ############################# grid_coarse ################
+    grid_coarse = GridCoarse(simcase)
 
     ##############
     # # LGR grid information in x, y, z directions
     # 
     # We are going to compute the grid sizes in lateral (x and y) and vertical directions
 
-    lgr = LGR(grid_init, drilling_df, casings_df, Ali_way)
-
-    LGR_sizes_x, LGR_sizes_y = lgr.compute_LGR_sizes_xy() 
-    LGR_sizes_z, LGR_numb_z, LGR_depths = lgr.compute_LGR_sizes_z()
+    lgr = LGR(grid_coarse, 
+              annulus_df, 
+              drilling_df, casings_df, 
+              Ali_way)
 
     #####################################
     # # Set up dataframe for LGR mesh
 
-    mesh = GridRefine(LGR_sizes_x, LGR_sizes_y, 
-                      LGR_sizes_z, 
-                      drilling_df,
-                      casings_df, 
-                      barriers_df,
-                      barriers_mod_df)
-    
-    ########################################33333
+    grid_refine = GridRefine(grid_coarse,
+                            lgr.LGR_sizes_x, lgr.LGR_sizes_y, 
+                            lgr.LGR_sizes_z, 
+                            drilling_df,
+                            casings_df, 
+                            barriers_df,
+                            barriers_mod_df)
+
+    ##############################
+    # set up permeability
+    ##############################
+
+    # open hole
+    oh_perm = 1e5
+
+    # cemont bond
+    cb_perm = 0.5
+
+    # barrier
+    barrier_perm = 0.5
+
+    # TODO(hzh): test with original permeabilities
+
+    # open hole
+    oh_perm = 10000
+    # cemont bond
+    cb_perm = 5
+
+    # barrier
+    barrier_perm = 0.5
+
+    # TODO(hzh): need to figure out a better to load barrier perms.
+    # here manually set them
+    barriers_defaults = [0.5, 100, 5, 5, 10]
+
+    # barriers
+    barrier_perms = []
+    for i in range(len(barriers_mod_df)):
+        barrier_perms.append(barriers_defaults[i])
+
+    # set up permeability
+    grid_refine.set_permeability(oh_perm, cb_perm, barrier_perm)
+
+    #############################################
+
     # # Bounding box for well elements
-    well_df.compute_bbox(mesh.mesh_df, mesh.nx)
+    well_df.compute_bbox(grid_refine.mesh_df, grid_refine.nx)
+
+    #############################################
 
     # # Write LGR file
 
@@ -193,14 +238,17 @@ def main():
     build_grdecl(output_dir, LGR_NAME,
                  casing_list,
                  barrier_list,
-                 LGR_sizes_x, 
-                 LGR_depths, 
-                 LGR_numb_z, 
-                 min_grd_size,
-                 grid.getNX(), grid.getNY(),
-                 main_grd_i + 1, main_grd_j + 1,
-                 main_grd_min_k + 1, main_grd_max_k + 1,
-                 no_of_layers_in_OB)
+                 lgr.LGR_sizes_x, 
+                 lgr.LGR_depths, 
+                 lgr.LGR_numb_z, 
+                 lgr.min_grd_size,
+                 lgr.NX, lgr.NY,
+                 lgr.main_grd_i + 1, lgr.main_grd_j + 1,
+                 lgr.main_grd_min_k + 1, lgr.main_grd_max_k + 1,
+                 lgr.no_of_layers_in_OB)
+
+    plot_coarse(my_well, grid_coarse)
+    plot_refine(my_well, grid_refine)
 
 if __name__ == '__main__':
 

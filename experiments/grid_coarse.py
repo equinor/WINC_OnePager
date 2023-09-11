@@ -1,7 +1,6 @@
 
-import functools
-
 import numpy as np
+import pandas as pd
 
 from ecl.grid import EclGrid
 from ecl.eclfile import EclInitFile
@@ -11,8 +10,11 @@ from ecl.eclfile import EclInitFile
 
 class GridCoarse:
 
-    def __init__(self, simcase):
+    def __init__(self, simcase: str):
         """ initialize the grid
+
+            Args:
+                simcase (str): name prefix for ECL grid
         """
 
         #Get grid dimensions and coordinates
@@ -36,16 +38,18 @@ class GridCoarse:
                 except:
                         continue
 
-        # set up fields
-        self._set_cell_coords()
-        self._set_grid_info()
-        self._set_DZ_rsrv_ovb()
+        # set up other grid-related information
+        self._set_grid_info(self.grid_init)
+        
+        # set up cell coordinates
+        self._set_cell_coords(self.grid_init)
 
-    def _set_cell_coords(self):
+    def _set_cell_coords(self, grid_init: pd.DataFrame):
         """ Create cell coordinate X, Y, Z
-        """
 
-        grid_init = self.grid_init
+            Args:
+                grid_init (pd.DataFrame): dataframe containing coarse grid information
+        """
 
         # generate cell coordinates by shifting half cell size
         xcoord = (grid_init.query("j==0&k==0").DX.cumsum() - grid_init.query("j==0&k==0").DX/2).values
@@ -63,11 +67,19 @@ class GridCoarse:
         grid_init['Y'] = grid_init['j'].map(map_Y)
         grid_init['Z'] = grid_init['k'].map(map_Z)
 
-    def _set_grid_info(self):
-        """ Grid information for coarse grid
-        """
+        # mid values
+        mid_i = self.main_grd_i
+        mid_j = self.main_grd_j
 
-        grid_init = self.grid_init
+        self.xcoord0 = xcoord[mid_i]
+        self.ycoord0 = ycoord[mid_j]
+
+    def _set_grid_info(self, grid_init: pd.DataFrame):
+        """ Grid information for coarse grid
+
+            Args:
+                grid_init (pd.DataFrame): dataframe containing coarse grid information
+        """
         
         # Retrieve coarse x-y grid indexes where LGR will be placed
         # i.e., center grid
@@ -79,35 +91,79 @@ class GridCoarse:
         self.main_grd_max_k = grid_init.k.max()
 
         # Retrieve coarse cell sizes
+        self._set_main_grd_dx_dy(grid_init, self.main_grd_i, self.main_grd_j)
+
+        # Retrieve refdepth where LGR starts
+        self._set_ref_depth(grid_init, self.main_grd_i, self.main_grd_j)
+
+        # Retrieve number of cells representing water column and overburden
+        self._set_no_layers(grid_init, self.main_grd_i, self.main_grd_j)
+
+        self._set_DZ_rsrv_ovb(grid_init, self.main_grd_i, self.main_grd_j)
+
+    def _set_main_grd_dx_dy(self, 
+                            grid_init: pd.DataFrame, 
+                            main_grd_i: int, 
+                            main_grd_j: int):
+        """ coarse cell size at the center grid
+
+            Args:
+                grid_init (pd.DataFrame): dataframe containing coarse grid information
+                main_grd_i (int): index of center x grid
+                main_grd_j (int): index of center y grid
+        """
+
         self.main_grd_dx = grid_init.query('i == @main_grd_i & j == @main_grd_j & k == k.min()')['DX'].iloc[0]
         self.main_grd_dy = grid_init.query('i == @main_grd_i & j == @main_grd_j & k == k.min()')['DY'].iloc[0]
+    
+    def _set_ref_depth(self, 
+                        grid_init: pd.DataFrame, 
+                        main_grd_i: int, 
+                        main_grd_j: int):
+        """ set reference depth for LGR grid
 
-
+            Args:
+                grid_init (pd.DataFrame): dataframe containing coarse grid information
+                main_grd_i (int): index of center x grid
+                main_grd_j (int): index of center y grid
+        """
+    
         # Retrieve all DZ in coarse grid, not used
-        main_DZ = grid_init.query('i == @main_grd_i & j == @main_grd_j')['DZ'].values
+        main_DZ    = grid_init.query('i == @main_grd_i & j == @main_grd_j')['DZ'].values
 
         main_DEPTH = grid_init.query('i == @main_grd_i & j == @main_grd_j')['DEPTH'].values
 
         # depth where LGR starts
         self.ref_depth = main_DEPTH[0] - 0.5*main_DZ[0]
 
-        #Retrieve number of cells representing water column and overburden
+    def _set_no_layers(self, 
+                        grid_init: pd.DataFrame, 
+                        main_grd_i: int, 
+                        main_grd_j: int):
+        """ Retrieve number of cells representing water column and overburden
+
+            Args:
+                grid_init (pd.DataFrame): dataframe containing coarse grid information
+                main_grd_i (int): index of center x grid
+                main_grd_j (int): index of center y grid
+        """
+
         self.no_of_layers_in_OB    = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ >  10')['DZ'].shape[0]
         self.no_of_layers_below_OB = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ <= 10')['DZ'].shape[0]
-
-        # print('====>', no_of_layers_in_OB, no_of_layers_below_OB)        
-
-    def _set_DZ_rsrv_ovb(self):
+    
+    def _set_DZ_rsrv_ovb(self, 
+                         grid_init: pd.DataFrame, 
+                         main_grd_i: int, 
+                         main_grd_j: int, 
+                         dz0: float|int =10):
         """ DZs for rsrv and ovb
+
+            Args:
+                grid_init (pd.DataFrame): dataframe containing coarse grid information
+                main_grd_i (int): index of center x grid
+                main_grd_j (int): index of center y grid
+                dz0 (float): the dz value to distinguish zones between reservoir and ovb
         """
-        grid_init = self.grid_init
-
-        # the dz value to distinguish zones between reservoir and ovb
-        dz0 = 10
-
-        # center grid
-        main_grd_i = self.main_grd_i
-        main_grd_j = self.main_grd_j
 
         # 3.1 DZs for reservoir
         self.DZ_rsrv = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ <= @dz0')['DZ'].values
@@ -115,24 +171,13 @@ class GridCoarse:
         # 3.2 DZs for coarse grid
         self.DZ_ovb_coarse = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ > @dz0')['DZ'].values
     
-    @functools.cached_property
-    def main_grd_i(self):
-        return self.grid_init.i.max()//2
-
-    @functools.cached_property   
-    def main_grd_j(self):
-        return self.grid_init.j.max()//2
     
-    def plot_raw(self, ):
-        """ Plot well sketch and 2D slice of the permeability, at coarse grid
+    def extract_xy_corn_coords(self):
+        """ generate xcorn and ycorn coordinates
         """
-        
+
         # for convenience
         grid_init = self.grid_init
-
-        # middle indices of x and y
-        mid_i = grid_init.i.max()//2
-        mid_j = grid_init.j.max()//2
 
         # generate grid coordinates for plotting
 
@@ -148,15 +193,22 @@ class GridCoarse:
 
         # shift grid coordinates half-length in x-y directions, i.e., [0, 3900] => [-1900, 2100]
         # but not in z direction
-        xcorn -= xcoord[mid_i]
-        ycorn -= ycoord[mid_j]
+        xcorn -= self.xcoord0
+        ycorn -= self.ycoord0    
+
+        return xcorn, ycorn
+    
+    def extract_xz_slice(self):
+        """ generate x-z PERM slice
+        """
+
+        # center y grid index
+        mid_j = self.main_grd_j
 
         # extract 2D xz slice at middle of y
-        XZ_slice = grid_init.query('j==@mid_j')
+        XZ_slice = self.grid_init.query('j==@mid_j')
 
         # extract permeability
-        Z = XZ_slice.PERMX.values.reshape(NZ, NX)
+        Z = XZ_slice.PERMX.values.reshape(self.NZ, self.NX)
 
-        # plot x-z slice
-        plot_well_perm(my_well, x=xcorn, y=zcorn, Z=Z, on_coarse=True)
-
+        return Z

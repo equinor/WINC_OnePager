@@ -2,17 +2,24 @@
 import numpy as np
 import pandas as pd
 
+from .grid_coarse import GridCoarse
+
 class GridRefine:
 
     def __init__(self, 
+                 grid_coarse: GridCoarse,
                  LGR_sizes_x, LGR_sizes_y, LGR_sizes_z,
                  drilling_df,
                  casings_df, 
                  barriers_df,
                  barriers_mod_df
                  ):
-        """ dataframe for LGR grids
+        """ dataframe for LGR mesh for the center coarse grid
         """
+
+        # dx/dy of coarse grid
+        self.main_grd_dx = grid_coarse.main_grd_dx
+        self.main_grd_dy = grid_coarse.main_grd_dy
 
         # LGR dimensions
         nx = len(LGR_sizes_x)
@@ -30,40 +37,52 @@ class GridRefine:
 
         #Create LGR Dataframe with indices
         mesh_df = pd.DataFrame(data = cell_ijk, columns = ['i', 'j', 'k'])
-
-        self.mesh_df = mesh_df
-
+        #
         mesh_df.sort_values(by=['k', 'i'], inplace = True)
         mesh_df.reset_index(inplace=True, drop=True)
 
+        #
+        self.mesh_df = mesh_df
+
+
         # set up fields
-        self._set_cell_intervals(LGR_sizes_x, LGR_sizes_z, LGR_sizes_y)
-        self._set_cell_coords()
-        self._set_z_corners()       
-        self._set_material_type(drilling_df,
+        self._set_cell_intervals(self.mesh_df, 
+                                 LGR_sizes_x, 
+                                 LGR_sizes_z, 
+                                 LGR_sizes_y)
+        self._set_cell_coords(self.mesh_df)
+        self._set_z_corners(self.mesh_df)       
+        self._set_material_type(self.mesh_df,
+                                drilling_df,
                                 casings_df, 
                                 barriers_df)
-        self._set_permeability(barriers_mod_df)
 
-    def _set_cell_intervals(self, LGR_sizes_x, LGR_sizes_z, LGR_sizes_y):
+        # TODO(hzh): do we suppose to use mid index of coarse grid?
+
+        # indices for center finer grid
+        mid_i = grid_coarse.main_grd_i       # mesh_df.i.max()//2
+        mid_j = grid_coarse.main_grd_j       # mesh_df.j.max()//2
+
+        self._upscale_properties(grid_coarse.grid_init, mid_i, mid_j)
+
+    def _set_cell_intervals(self, mesh_df, 
+                            LGR_sizes_x, 
+                            LGR_sizes_z, 
+                            LGR_sizes_y):
         """ Creat DX, DY, DZ for LGR mesh
         """
-        # for convenience only
-        mesh_df = self.mesh_df
-
+ 
         # mesh
         DX_grid, DZ_grid, DY_grid = np.meshgrid(LGR_sizes_x, LGR_sizes_z, LGR_sizes_y)
 
+        # internals
         mesh_df['DX'] = DX_grid.flatten()
         mesh_df['DY'] = DY_grid.flatten()
         mesh_df['DZ'] = DZ_grid.flatten()
 
-    def _set_cell_coords(self):
+    def _set_cell_coords(self, mesh_df):
         """ Create cell coordinate X, Y, Z for LGR mesh
         """
-
-        # for convenience only
-        mesh_df = self.mesh_df
 
         # cell coordinates
         xcoord = (mesh_df.query("j==0&k==0").DX.cumsum() - mesh_df.query("j==0&k==0").DX/2).values
@@ -81,25 +100,19 @@ class GridRefine:
         mesh_df['Y'] = mesh_df['j'].map(map_Y)
         mesh_df['Z'] = mesh_df['k'].map(map_Z)
 
-    def _set_z_corners(self):
+    def _set_z_corners(self, mesh_df):
         """ save Corner Z points to dataframe 
         """
-
-        # for convenience only
-        mesh_df = self.mesh_df
 
         mesh_df['Zcorn_top'] = mesh_df['Z'] - mesh_df['DZ']/2
         mesh_df['Zcorn_bottom'] = mesh_df['Z'] + mesh_df['DZ']/2
 
-    def _set_material_type(self, 
-                          drilling_df, 
-                          casings_df, 
-                          barriers_df):
+    def _set_material_type(self, mesh_df,
+                           drilling_df, 
+                           casings_df, 
+                           barriers_df):
         """ Assign material types, such as openholes, overburden, cement bond, etc.
         """
-
-        # for convenience only
-        mesh_df = self.mesh_df
 
         # set default material to 'overburden'
         mesh_df['material'] = 'overburden'
@@ -160,40 +173,12 @@ class GridRefine:
                         (k >= @b_k_min) & (k <= @b_k_max)' 
             mesh_df.loc[mesh_df.eval(criteria), 'material'] = 'barrier'
 
-    def _set_permeability(self, barriers_mod_df):
+    def set_permeability(self, oh_perm, cb_perm, barrier_perm):
         """ Assign permeability according to material type
         """
 
         # for convenience only
         mesh_df = self.mesh_df
-
-        # open hole
-        oh_perm = 1e5
-
-        # cemont bond
-        cb_perm = 0.5
-
-        # barrier
-        barrier_perm = 0.5
-
-        # TODO(hzh): test with original permeabilities
-
-        # open hole
-        oh_perm = 10000
-        # cemont bond
-        cb_perm = 5
-
-        # barrier
-        barrier_perm = 0.5
-
-        # TODO(hzh): need to figure out a better to load barrier perms.
-        # here manually set them
-        barriers_defaults = [0.5, 100, 5, 5, 10]
-
-        # barriers
-        barrier_perms = []
-        for i in range(len(barriers_mod_df)):
-            barrier_perms.append(barriers_defaults[i])
 
         # set permeability according to material type
 
@@ -209,11 +194,40 @@ class GridRefine:
         criteria = 'material == "barrier"'
         mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = barrier_perm
 
-    def plot(self, my_well, mid_i: int):
-        """ Visualization of well sketch and LGR grids
+    def _upscale_properties(self, grid_init, mid_i, mid_j):
+        """ Upscale coarse properties to LGR mesh
         """
 
         # for convenience only
+        mesh_df = self.mesh_df
+
+        # properties
+        fields = ['PORV', 
+                  'PERMX', 'PERMY', 'PERMZ', 
+                  'MULTX', 'MULTY', 'MULTZ', 
+                  'MULTX-', 'MULTY-', 'MULTZ-', 
+                  'PORO']
+
+        # Upscale coarse properties to LGR grids
+
+        for field in fields:
+            # mesh_df[field] = np.nan
+            mesh_df[field] = 0.0                    # TODO(hzh): what should I put here?
+            
+        for idx, row in grid_init.query('i==@mid_i & j==@mid_j').iterrows():
+
+            # switch to corner coords, coarse grid
+            top  = row.Z - row.DZ/2
+            base = row.Z + row.DZ/2
+
+            for field in fields:
+
+                mesh_df.loc[(mesh_df['Z']>=top) & (mesh_df['Z']<base), field] = row[field]
+
+    def extract_xy_corn_coords(self):
+        """ generate xcorn and ycorn coordinates
+        """
+
         mesh_df = self.mesh_df
 
         # grid coordinates at LGR grids for plotting
@@ -227,51 +241,22 @@ class GridRefine:
         zcorn = np.append(0, zcorn)
 
         # shift it
-        xcorn -= main_grd_dx/2
-        ycorn -= main_grd_dy/2
+        xcorn -= self.main_grd_dx/2
+        ycorn -= self.main_grd_dy/2
 
+        return xcorn, ycorn
+    
+    def extract_xz_slice(self):
+        """ generate x-z PERM slice
+        """
 
-        # LGR
-        # TODO(hzh): mid_j, a typo?
-        XZ_slice = mesh_df.query('j==@mid_i')
+        # center y grid index
+        mid_j = self.mesh_df.j.max()//2
 
-        # extract permeability value
-        Z = XZ_slice.PERMX.values.reshape(nz, nx)
+        # extract 2D xz slice at middle of y
+        XZ_slice = self.mesh_df.query('j==@mid_j')
 
-        # plot it
-        plot_well_perm(my_well, x=xcorn, y=zcorn, Z=Z, on_coarse=False)        
+        # extract permeability
+        Z = XZ_slice.PERMX.values.reshape(self.nz, self.nx)
 
-    # def upscale_properties(self):
-    #     """ Upscale coarse properties to LGR mesh
-    #     """
-
-    #     # for convenience only
-    #     mesh_df = self.mesh_df
-
-    #     # TODO(hzh): do we suppose to use mid index of coarse grid?
-    #     # indices for center finer grid
-    #     mid_i = mesh_df.i.max()//2
-    #     mid_j = mesh_df.j.max()//2
-
-    #     # properties
-    #     fields = ['PORV', 
-    #               'PERMX', 'PERMY', 'PERMZ', 
-    #               'MULTX', 'MULTY', 'MULTZ', 
-    #               'MULTX-', 'MULTY-', 'MULTZ-', 
-    #               'PORO']
-
-    #     # Upscale coarse properties to LGR grids
-
-    #     for field in fields:
-    #         # mesh_df[field] = np.nan
-    #         mesh_df[field] = 0.0                    # TODO(hzh): what should I put here?
-            
-    #     for idx, row in grid_init.query('i==@mid_i & j==@mid_j').iterrows():
-
-    #         # switch to corner coords, coarse grid
-    #         top  = row.Z - row.DZ/2
-    #         base = row.Z + row.DZ/2
-
-    #         for field in fields:
-
-    #             mesh_df.loc[(mesh_df['Z']>=top) & (mesh_df['Z']<base), field] = row[field]
+        return Z

@@ -39,18 +39,18 @@ def get_k_indices(df: pd.DataFrame, top: float|int, bottom: float|int) -> tuple[
 
         return k_min, k_max
 
-def get_ij_indices(nx: int, n_grd: int) -> tuple[int, int]:
+def get_ij_indices(nxy: int, n_grd: int) -> tuple[int, int]:
     """ compute x-y min/max indices
 
         Args:
-            nx (int): x grid size of finer grid
+            nxy (int): total grid size of x-y finer grid, i.e., refined x-y size of the center coarse grid
             n_grd (int): number of x grid of that well element, i.e., row['n_grd_id']
 
         Returns:
             tuple: min/max indices of given well element
     """
     # x-y ranges
-    ij_min = (nx - n_grd)//2
+    ij_min = (nxy - n_grd)//2
     ij_max = ij_min + n_grd - 1
     
     return ij_min, ij_max

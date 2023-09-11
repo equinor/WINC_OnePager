@@ -20,6 +20,8 @@ def plot_well_perm(my_well, *, x, y, Z, on_coarse=True):
 
     fig.tight_layout(h_pad = 0)
 
+    plt.show()
+
 def plot_perm(x, y, Z, *, ax, on_coarse=True):
     """ plot permeability, x-z slice
     """
