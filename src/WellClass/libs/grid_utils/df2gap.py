@@ -8,16 +8,12 @@ from src.GaP.libs.models import (
 )
 
 def to_gap_casing_list(drilling_df: pd.DataFrame, 
-                        casings_df: pd.DataFrame, 
-                        oh_perm: float|int, 
-                        cb_perm: float|int) -> list[PipeCementModel]:
+                        casings_df: pd.DataFrame) -> list[PipeCementModel]:
     """ convert casing dataframe to gap format
 
         Args:
             drilling_df (pd.DataFrame): dataframe for drilling
             casings_df (pd.DataFrame): dataframe for casings
-            oh_perm (float): permeability for open hole
-            cb_perm (float): permeability for cement bond
 
         Returns:
             list[PipeCementModel]: list of PipeCementModels
@@ -28,8 +24,8 @@ def to_gap_casing_list(drilling_df: pd.DataFrame,
 
         ID = row['diameter_m'] 
         strt_depth, end_depth = row['top_msl'], row['bottom_msl']
-        strt_depth_cement, end_depth_cement = row['toc_msl'], row['boc_msl']
-        strt_depth_oph, end_depth_oph = drilling_df.loc[idx, ['top_msl', 'bottom_msl']]
+        strt_depth_cement, end_depth_cement, cb_perm = row['toc_msl'], row['boc_msl'], row['cb_perm']
+        strt_depth_oph, end_depth_oph, oh_perm = drilling_df.loc[idx, ['top_msl', 'bottom_msl', 'oh_perm']]
 
         # qc it
         # print(idx, ID, strt_depth, end_depth, strt_depth_cement, end_depth_cement, strt_depth_oph, end_depth_oph)
@@ -44,8 +40,7 @@ def to_gap_casing_list(drilling_df: pd.DataFrame,
 
     return casings_list
 
-def to_gap_barrier_list(barriers_mod_df: pd.DataFrame, 
-                        barrier_perms: list[float]) -> list[ElemModel]:
+def to_gap_barrier_list(barriers_mod_df: pd.DataFrame) -> list[ElemModel]:
     """ convert barrier dataframe to gap format
     """
 
@@ -53,13 +48,13 @@ def to_gap_barrier_list(barriers_mod_df: pd.DataFrame,
     barrier_list = []
     for idx, row in barriers_mod_df.iterrows():
 
-        ID, strt_depth, end_depth = row['diameter_m'], row['top_msl'], row['bottom_msl']
+        ID, strt_depth, end_depth, barrier_perms = row['diameter_m'], row['top_msl'], row['bottom_msl'], row['barrier_perm']
 
         # qc it
         # print(idx, ID, strt_depth, end_depth)
         
         barrier = ElemModel(ID=ID, 
-                            pipe=DepthModel(strt_depth=strt_depth, end_depth=end_depth, perm=barrier_perms[ib])
+                            pipe=DepthModel(strt_depth=strt_depth, end_depth=end_depth, perm=barrier_perms)
                         )
         ib = ib + 1
         #

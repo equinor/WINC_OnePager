@@ -21,7 +21,7 @@ class WellHeaderModel(BaseModel):
     sf_temp: int|float
     geo_tgrad: int|float
 
-class DrillingModel(BaseModel):
+class DrillingRawModel(BaseModel):
     """ Information about the drilling intervals of the well
 
         Args:
@@ -41,18 +41,29 @@ class DrillingModel(BaseModel):
             return fraction_float(v)
         else:
             raise ValueError('diameter_in must be a float or string')
+        
+class DrillingModel(DrillingRawModel):
+    """ Information about the drilling intervals of the well
 
-class CasingCementModel(DrillingModel):
+        Args:
+            oh_perm (float): faked permeability for open-hole 
+    """
+    oh_perm: float|int = 10000
+
+
+class CasingCementModel(DrillingRawModel):
     """ Information about the casing and cementing intervals of the well
 
         Args:
           toc_rkb (float): top of cement-bond in RKB  
           boc_rkb (float): bottom of cement-bond in RKB 
           shoe (bool): whether or not it has a shoe
+          cb_perm (float): permeability for cement-bond
     """
     toc_rkb: float|int
     boc_rkb: float|int
     shoe: bool
+    cb_perm: float|int = 5
 
 class BarrierModel(BaseModel):
     """ Information about the barrier in the well 
@@ -62,11 +73,13 @@ class BarrierModel(BaseModel):
             barrier_type (str): the barrier type 
             top_rkb (float): the top depth in RKB
             bottom_rkb (float): the bottom depth in RKB
+            barrier_perm (float): permeability for the barrier
     """
     barrier_name: str
     barrier_type: str
     top_rkb: float|int
     bottom_rkb: float|int
+    barrier_perm: float|int = 0.5
 
 class GeologyModel(BaseModel):
     """ The geological units encountered in the well

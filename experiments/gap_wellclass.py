@@ -185,15 +185,6 @@ def main(args):
     # set up permeability
     
 
-    # open hole
-    oh_perm = 1e5
-
-    # cemont bond
-    cb_perm = 0.5
-
-    # barrier
-    barrier_perm = 0.5
-
     # TODO(hzh): test with original permeabilities
 
     # open hole
@@ -203,15 +194,6 @@ def main(args):
 
     # barrier
     barrier_perm = 0.5
-
-    # TODO(hzh): need to figure out a better to load barrier perms.
-    # here manually set them
-    barriers_defaults = [0.5, 100, 5, 5, 10]
-
-    # barriers
-    barrier_perms = []
-    for i in range(len(barriers_mod_df)):
-        barrier_perms.append(barriers_defaults[i])
 
     # set up permeability
     grid_refine.set_permeability(oh_perm, cb_perm, barrier_perm)
@@ -224,12 +206,10 @@ def main(args):
 
     # prepare info about Casing, Cement Bond and Open hole  for GaP
     casing_list = to_gap_casing_list(drilling_df, 
-                                     casings_df, 
-                                     oh_perm, cb_perm)
+                                     casings_df)
 
     # prepare info about Barrier for GaP 
-    barrier_list = to_gap_barrier_list(barriers_mod_df, 
-                                       barrier_perms)
+    barrier_list = to_gap_barrier_list(barriers_mod_df)
 
     # generate .grdecl file
     # TODO(hzh): add 1s to indices here
