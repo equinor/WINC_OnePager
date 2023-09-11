@@ -13,7 +13,7 @@ class LGR:
     def __init__(self,
                  grid_init: GridCoarse, 
                  annulus_df,
-                 drilling_df, casings_df, 
+                 drilling_df, casings_df, borehole_df,
                  Ali_way):
         """ LGR grid information in x, y, z directions 
         """
@@ -22,7 +22,7 @@ class LGR:
         self.NX, self.NY = grid_init.NX, grid_init.NY
         self.main_grd_dx, self.main_grd_dy = grid_init.main_grd_dx, grid_init.main_grd_dy
         self.main_grd_i, self.main_grd_j = grid_init.main_grd_i, grid_init.main_grd_j
-        self.main_grd_min_, self.main_grd_max = grid_init.main_grd_min_k, grid_init.main_grd_max_k
+        self.main_grd_min_k, self.main_grd_max_k = grid_init.main_grd_min_k, grid_init.main_grd_max_k
 
         # DZs for reservoir and overburden
         self.DZ_rsrv = grid_init.DZ_rsrv
@@ -44,7 +44,7 @@ class LGR:
         self.min_grd_size = min_grd_size
 
         # #### 2. Compute number of cells of horizontal LGR
-        self.no_latral_fine_grd = self._compute_no_latral_fine_grd(drilling_df)
+        self.no_latral_fine_grd = self._compute_no_latral_fine_grd(drilling_df, casings_df, borehole_df)
 
         # #### 3. compute LGR sizes
 
@@ -72,15 +72,19 @@ class LGR:
 
         return min_grd_size
     
-    def _compute_no_latral_fine_grd(self, drilling_df):
+    def _compute_no_latral_fine_grd(self, drilling_df, casings_df, borehole_df):
         """ compute number of LGR laternal grids
         """
 
         # only for convenience
         min_grd_size = self.min_grd_size
 
-        # for drilling
-        # drilling_df['n_grd_id']  = drilling_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+        # n_grd_id for well elements
+        drilling_df['n_grd_id']  = drilling_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+        casings_df[ 'n_grd_id']  = casings_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+        borehole_df['n_grd_id'] = borehole_df['id_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+
+        # 
         drilling_series = drilling_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
 
         return drilling_series.max()

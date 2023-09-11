@@ -172,8 +172,8 @@ class GridCoarse:
         self.DZ_ovb_coarse = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ > @dz0')['DZ'].values
     
     
-    def extract_xy_corn_coords(self):
-        """ generate xcorn and ycorn coordinates
+    def extract_xz_corn_coords(self):
+        """ generate xcorn and zcorn coordinates
         """
 
         # for convenience
@@ -196,7 +196,7 @@ class GridCoarse:
         xcorn -= self.xcoord0
         ycorn -= self.ycoord0    
 
-        return xcorn, ycorn
+        return xcorn, zcorn
     
     def extract_xz_slice(self):
         """ generate x-z PERM slice

@@ -133,6 +133,8 @@ def main():
     annulus_df = well_df.annulus_df
     drilling_df = well_df.drilling_df
     casings_df = well_df.casings_df
+    borehole_df = well_df.borehole_df
+
     barriers_df = well_df.barriers_df
     barriers_mod_df = well_df.barriers_mod_df
 
@@ -161,7 +163,7 @@ def main():
 
     lgr = LGR(grid_coarse, 
               annulus_df, 
-              drilling_df, casings_df, 
+              drilling_df, casings_df, borehole_df,
               Ali_way)
 
     #####################################
@@ -170,14 +172,23 @@ def main():
     grid_refine = GridRefine(grid_coarse,
                             lgr.LGR_sizes_x, lgr.LGR_sizes_y, 
                             lgr.LGR_sizes_z, 
-                            drilling_df,
-                            casings_df, 
-                            barriers_df,
-                            barriers_mod_df)
+                            )
 
+    #############################################
+
+    # # Bounding box for well elements
+    well_df.compute_bbox(grid_refine.mesh_df, grid_refine.nx)
+
+    #################################################
+    # set up material type
+
+    grid_refine.set_material_type(drilling_df,
+                                  casings_df, 
+                                  barriers_df)
+    
     ##############################
     # set up permeability
-    ##############################
+    
 
     # open hole
     oh_perm = 1e5
@@ -209,11 +220,6 @@ def main():
 
     # set up permeability
     grid_refine.set_permeability(oh_perm, cb_perm, barrier_perm)
-
-    #############################################
-
-    # # Bounding box for well elements
-    well_df.compute_bbox(grid_refine.mesh_df, grid_refine.nx)
 
     #############################################
 
