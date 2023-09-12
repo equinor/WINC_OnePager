@@ -22,7 +22,12 @@ def compute_barriers_diam(barriers: dict, borehole: dict) -> dict:
         b_type = row['barrier_type']    # row[1]
         top = row['top_msl']
         bottom = row['bottom_msl']
-        barrier_perm = row['barrier_perm']           # barrier permeability
+
+        # TODO(hzh): for compatibility with .csv file
+        try:
+            barrier_perm = row['barrier_perm']           # barrier permeability
+        except KeyError:
+            barrier_perm = 0.5    # make a fake one if doesn't exist
 
         check_top_int_top = top >= borehole_df['top_msl']
         check_bottom_int_top = top < borehole_df['bottom_msl']

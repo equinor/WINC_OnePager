@@ -92,17 +92,16 @@ class Pressure:
                     print(RP, 'ignored')
                     continue    
 
-    def compute_barrier_leakage(self, well: Well, main_barrier: dict) -> pd.DataFrame:
+    def compute_barrier_leakage(self, well: Well, barrier_name: str) -> pd.DataFrame:
         """ Compute leakage rate from the given barrier
 
             Args:
                 well (Well): well information
-                main_barrier (dict): barrier to check the leakage rate
+                barrier_name (str): barrier to check the leakage rate
         """
 
         # for convenience
-        barrier_name = main_barrier['barrier_name']
-        barrier_perm = well['barrier_perm']
+        barrier_perm = well.barrier_perm
 
         # barrier geometries
         barrier_props = well.compute_barrier_props(barrier_name)

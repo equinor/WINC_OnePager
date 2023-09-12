@@ -105,7 +105,7 @@ class Well(WellRaw):
         barrier_props.update(barrier_h_d)
         
         # radius
-        barrier_r = get_barrier_radius(barriers_mod, barrier_name)
+        barrier_r = get_barrier_radius(barriers_mod, barriers_names, barrier_name)
         barrier_props.update(barrier_r)
 
         return barrier_props
