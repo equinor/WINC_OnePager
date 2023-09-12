@@ -41,7 +41,7 @@ def get_hydrostatic_P(well_header: dict, *, dz=1, pvt_path: str) -> pd.DataFrame
 
     #Make the depth-vector from msl and downwards
     td_msl = well_header['well_td_rkb']-well_header['well_rkb']
-    z_vec  = np.arange(0, int(td_msl)+2, dz)
+    z_vec  = np.arange(0, int(td_msl)+200, dz)
 
     #Create dataframe for storing pressures and temperatures. hs_p_df -> HydroStatic_Pressure_DataFrane
     hs_p_df = pd.DataFrame(data=z_vec, columns = ['depth_msl'])

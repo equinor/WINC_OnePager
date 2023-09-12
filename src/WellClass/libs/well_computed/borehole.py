@@ -34,8 +34,8 @@ def compute_borehole(casings: dict, drilling: dict) -> dict:
             diam = min_q.iloc[0]['diameter_m']
 
     borehole = np.array(borehole)
-    # borehole[:-1, 1] = borehole[1:, 0]
-    borehole[1:, 0] = borehole[:-1, 1]
+    borehole[:-1, 1] = borehole[1:, 0]
+    # borehole[1:, 0] = borehole[:-1, 1]
 
     borehole_df = pd.DataFrame(data=borehole, columns=['top_msl', 'bottom_msl', 'id_m'])
 
