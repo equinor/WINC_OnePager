@@ -11,7 +11,15 @@ from ecl.eclfile import EclInitFile
 class GridCoarse:
 
     def __init__(self, simcase: str):
-        """ initialize the grid
+        """ Loading the model
+             
+             - Load the PFT grid, init and restart files
+
+             - Grid contains geometry specs
+
+             - INIT contains static properties (i.e. poro., perm., transmissibilities)
+             
+             - RST contains dynamic properties (i.e. saturations, pressure)
 
             Args:
                 simcase (str): name prefix for ECL grid

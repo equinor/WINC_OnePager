@@ -1,4 +1,5 @@
 
+import pandas as pd
 
 from .LGR_grid_utils import (
     compute_ngrd,
@@ -8,14 +9,31 @@ from .LGR_grid_utils import (
 
 from .grid_coarse import GridCoarse
 
+from .df2gap import (
+    to_gap_casing_list,
+    to_gap_barrier_list
+)
+
+from src.GaP.libs.carfin import build_grdecl
+
 class LGR:
 
     def __init__(self,
                  grid_init: GridCoarse, 
-                 annulus_df,
-                 drilling_df, casings_df, borehole_df,
-                 Ali_way):
-        """ LGR grid information in x, y, z directions 
+                 annulus_df: pd.DataFrame,
+                 drilling_df: pd.DataFrame, 
+                 casings_df: pd.DataFrame, 
+                 borehole_df: pd.DataFrame,
+                 Ali_way: bool):
+        """ LGR grid information in x, y, z directions. We are going to compute the grid sizes in lateral (x and y) and vertical directions
+
+            Args:
+                grid_init (GridCoarse): all information about coarse grid
+                annulus_df (pd.DataFrame): information about annulus
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                borehold_df (pd.DataFrame): borehole
+                Ali_way (bool): use Ali's algorithm to compute lateral grids and apply refdepth in z direction
         """
 
         # initialize coarse grid parameters
@@ -89,7 +107,7 @@ class LGR:
 
         return drilling_series.max()
     
-    def _compute_LGR_sizes_xy(self, Ali_way):
+    def _compute_LGR_sizes_xy(self, Ali_way: bool):
         """ Compute LGR grid sizes in x-y directions
         """
 
@@ -121,3 +139,34 @@ class LGR:
         LGR_sizes_z, LGR_numb_z, LGR_depths, _ = generate_LGR_z(DZ_rsrv, DZ_ovb_coarse, ref_depth)
 
         return LGR_sizes_z, LGR_numb_z, LGR_depths
+
+    def build_grdecl(self, 
+                     output_dir: str, output_name: str,
+                     drilling_df: pd.DataFrame, 
+                     casings_df: pd.DataFrame, 
+                     barriers_mod_df: pd.DataFrame):
+        """ build grdecl file and output it
+        """
+
+        # prepare info about Casing, Cement Bond and Open hole  for GaP
+        casing_list = to_gap_casing_list(drilling_df, 
+                                         casings_df)
+
+        # prepare info about Barrier for GaP 
+        barrier_list = to_gap_barrier_list(barriers_mod_df)
+
+        # generate .grdecl file
+        # TODO(hzh): add 1s to indices here
+        build_grdecl(output_dir, output_name,
+                     casing_list,
+                     barrier_list,
+                     self.LGR_sizes_x, 
+                     self.LGR_depths, 
+                     self.LGR_numb_z, 
+                     self.min_grd_size,
+                     self.NX, self.NY,
+                     self.main_grd_i + 1, self.main_grd_j + 1,
+                     self.main_grd_min_k + 1, self.main_grd_max_k + 1,
+                     self.no_of_layers_in_OB)
+
+

@@ -7,7 +7,10 @@ Locate a folder at your local machine that you intend to investigate the codes, 
 ```
 $ git clone https://github.com/equinor/SCREEN
 ```
-Note here `$` is a linux command prompt. There is no need to type it. Now you should have a folder named `SCREEN` at your local machine. then `cd` to it.
+Note here `$` is a linux command prompt. There is no need to type it. Now you should have a folder named `SCREEN` at your local machine. then change the directory with
+```
+$ cd SCREEN
+```
 
 It's normal for us to make a new branch if we indend to make some changes of the codes. This can be done with the `-b` option, for example:
 ```
@@ -46,6 +49,10 @@ You should now be ready to play with the source codes.
 The following represents the current code structures:
 
 ```
+├── experiments
+│   ├── gap_wellclass.py
+│   ├── __init__.py
+│   └── LEG_HIRES.grdecl
 ├── INSTALLATION.md
 ├── mkdocs.yml
 ├── notebooks
@@ -97,13 +104,23 @@ It was generated with the linux command `tree`:
 $ tree -I 'docs|site|venv_screen|*pycache*|Equinor*|originals' -L 3
 ```
 ## Experiments
-To run the experiments, change directory to `notebooks` and launch jupyter notebooks:
+There are at least two ways to test the codes. One is to run the experiments with Jupyter lab, change directory to `notebooks` and launch jupyter notebooks:
 ```
 $ jupyter-lab
 ```
-You can now play with the notebook `GaP-WellClass.ipynb` to test the integration of `GaP` and `WellClass`. And notebook `Pressure-WellClass.ipynb` to test pressure. And notebook `WellClass_csv_yaml.ipynb` to test loading `.csv` and `.yaml` input files.
+There are currently three notebooks for now:
+- Notebook `GaP-WellClass.ipynb` is used to test the integration of `GaP` and `WellClass`. 
+- Notebook `Pressure-WellClass.ipynb` is used to test pressure. 
+- Notebook `WellClass_csv_yaml.ipynb` is used to test pressure and loading `.csv` and `.yaml` input files.
 
-The test data is located at folder `test_data`. Three sub-directories, such as `cosmo`, `smeaheia_v1` and `smeaheia_v2`, contain the data for testing. In addition, the PVT values are included in the directory `pvt_contants` for self-consistent testing of pressure-related computes.
+The other is to use commandline option. The main codes are located at directory `experiments`. For example, to test `GaP`code, run the following command inside the ```SCREEN``` directory:
+```python
+$ python -m experiments.gap_wellclass --plot --use-yaml --case-type cosmo
+```
+This will output file `LEG_HIRES.grdecl` in `experiments` directory.
+
+## Test data
+The test data is located at folder `test_data`. It includes at least three sub-directories, such as `cosmo`, `smeaheia_v1` and `smeaheia_v2`, which contain the data for testing. In addition, the PVT values are included in the directory `pvt_contants` for self-consistent testing of pressure-related computes.
 
 ## Documentation
 

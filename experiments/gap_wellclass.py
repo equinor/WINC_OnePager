@@ -1,7 +1,13 @@
 
 """ To run it, type the following:
 
-$ python -m experiments.gap_wellclass --plot --ali-way --use-yaml --case-type cosmo
+$ python -m experiments.gap_wellclass --use-yaml --case-type smeaheia_v1 --plot --ali-way 
+
+for comparing the output from smeaheia data with the output using Ali's grid logic.
+
+Otherwise, use the following:
+
+$ python -m experiments.gap_wellclass --use-yaml --case-type cosmo --plot 
 
 """
 import os
@@ -9,22 +15,14 @@ import json
 
 import argparse
 
-from src.GaP.libs.carfin import build_grdecl
-
-# WellClass
-from src.WellClass.libs.well_class import Well
-
 from src.WellClass.libs.utils import (
     csv_parser,
     yaml_parser,
 )
 
-from src.WellClass.libs.grid_utils.df2gap import (
-    to_gap_casing_list,
-    to_gap_barrier_list
-)
+# WellClass
+from src.WellClass.libs.well_class import Well
 
-# 
 from src.WellClass.libs.grid_utils import (
     WellDataFrame,
     GridCoarse,
@@ -67,15 +65,16 @@ examples = {
 
 def main(args):
 
-    # ## Some user options
+    ############# 0. User options ######################
 
-    # TODO(hzh): use Ali's algorithm
+    # TODO(hzh): use Ali's grid logic
     Ali_way = args.ali_way
 
     # use yaml or csv input file
     use_yaml = args.use_yaml
 
-    # pick an example from given three options
+    # pick an example from given three options: 
+    #  i.e, smeaheia_v1, smeaheia_v2 and cosmo
     case_type = args.case_type
 
     # output
@@ -84,18 +83,16 @@ def main(args):
     LGR_NAME = args.output_name
 
 
-    # # Load well CSV or yaml configuration file
-    # 
-    # Process CSV with well class.
-    # Predefine a dictionary that includes the input CSV well file, the simulation path, and the PFT sim case name
+    ############# 1. Selected case ####################
 
     # the selected example for testing
     case = examples[case_type]
 
-    # root_path = '/scratch/SCS/gpb/SCREEN/GaP_code'
-
     # where the location for the input parameters and eclipse .EGRID and .INIT files
     sim_path = case['sim_path']
+
+
+    ############ 2. Load well configuration file ###############
 
     if use_yaml:
         # where well configuration file is located
@@ -111,7 +108,9 @@ def main(args):
         # load the well information
         well_csv = csv_parser(well_name)
 
-    #Process well by running well class
+    ########### 3. build Well class ######################
+
+    # build well class
     my_well = Well( header       = well_csv['well_header'], 
                     drilling     = well_csv['drilling'],
                     casings      = well_csv['casing_cement'],
@@ -121,97 +120,73 @@ def main(args):
                     co2_datum    = well_csv['co2_datum'],
             )
 
-    # well dataframe
+    # to well dataframe
     well_df = WellDataFrame(my_well)
 
-    # dataframes
+    # for convenience
+
+    # extract dataframes
     annulus_df = well_df.annulus_df
     drilling_df = well_df.drilling_df
     casings_df = well_df.casings_df
     borehole_df = well_df.borehole_df
 
-    barriers_df = well_df.barriers_df
     barriers_mod_df = well_df.barriers_mod_df
 
-    # # Loading the model
-    # 
-    # - Load the PFT grid, init and restart files.
-    # - Grid contains geometry specs
-    # - INIT contains static properties (i.e. poro., perm., transmissibilities)
-    # - RST contains dynamic properties (i.e. saturations, pressure)
-    # 
+    ############### 4. various grids #####################
 
-    # simulation case without legacy well 
-
-    # path = '/scratch/SCS/bkh/wbook/realization-0/iter-0/pflotran/model'
+    ##### 4.1 grid_coarse 
 
     # location of .egrid
     simcase = os.path.join(sim_path, case['simcase'])
 
-    ############################# grid_coarse ################
+    # Loading the model
     grid_coarse = GridCoarse(simcase)
 
-    ##############
-    # # LGR grid information in x, y, z directions
-    # 
-    # We are going to compute the grid sizes in lateral (x and y) and vertical directions
+    ##### 4.2 LGR grid 
 
+    # LGR grid information in x, y, z directions
     lgr = LGR(grid_coarse, 
               annulus_df, 
               drilling_df, casings_df, borehole_df,
               Ali_way)
 
-    #####################################
-    # # Set up dataframe for LGR mesh
-
+    ##### 4.3 grid refine 
+    
+    # Set up dataframe for LGR mesh
     grid_refine = GridRefine(grid_coarse,
                             lgr.LGR_sizes_x, lgr.LGR_sizes_y, 
                             lgr.LGR_sizes_z, 
                             )
 
-    #############################################
+    ############### 5. build LGR #####################
 
-    # # Bounding box for well elements
+    ##### 5.1 compute bounding box 
+
+    # Bounding box for well elements
     well_df.compute_bbox(grid_refine.mesh_df, grid_refine.nx)
 
-    #################################################
-    # set up material type
+    ##### 5.2 set up material type 
 
+    # set up material type
     grid_refine.set_material_type(drilling_df,
                                   casings_df, 
                                   barriers_mod_df)
     
-    ##############################
-    # set up permeability
+    ##### 5.3 set up permeability 
 
     # set up permeability
     grid_refine.set_permeability(drilling_df, casings_df, barriers_mod_df)
 
-    #############################################
+    ########### 6. output grdecl file ###################
 
-    # # Write LGR file
-
-    # prepare info about Casing, Cement Bond and Open hole  for GaP
-    casing_list = to_gap_casing_list(drilling_df, 
-                                     casings_df)
-
-    # prepare info about Barrier for GaP 
-    barrier_list = to_gap_barrier_list(barriers_mod_df)
-
-    # generate .grdecl file
-    # TODO(hzh): add 1s to indices here
-    build_grdecl(output_dir, LGR_NAME,
-                 casing_list,
-                 barrier_list,
-                 lgr.LGR_sizes_x, 
-                 lgr.LGR_depths, 
-                 lgr.LGR_numb_z, 
-                 lgr.min_grd_size,
-                 lgr.NX, lgr.NY,
-                 lgr.main_grd_i + 1, lgr.main_grd_j + 1,
-                 lgr.main_grd_min_k + 1, lgr.main_grd_max_k + 1,
-                 lgr.no_of_layers_in_OB)
-
+    # Write LGR file
+    lgr.build_grdecl(output_dir, LGR_NAME,
+                     drilling_df,
+                     casings_df,
+                     barriers_mod_df)
+    
+    # for qc
     if args.plot:
         plot_coarse(my_well, grid_coarse)
         plot_refine(my_well, grid_refine)
