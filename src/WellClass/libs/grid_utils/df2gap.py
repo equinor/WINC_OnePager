@@ -28,8 +28,8 @@ def to_gap_casing_list(drilling_df: pd.DataFrame,
         strt_depth_oph, end_depth_oph, oh_perm = drilling_df.loc[idx, ['top_msl', 'bottom_msl', 'oh_perm']]
 
         # qc it
-        # print(idx, ID, strt_depth, end_depth, strt_depth_cement, end_depth_cement, strt_depth_oph, end_depth_oph)
-        print(idx, ID, ', cb_perm=', cb_perm)
+        # print('casing===>', idx, ID, strt_depth, end_depth, strt_depth_cement, end_depth_cement, strt_depth_oph, end_depth_oph)
+        # print('casing===>', idx, ID, ', cb_perm=', cb_perm)
         
         casing_geom = PipeCementModel(ID=ID, 
                                       pipe=DepthModel(strt_depth=strt_depth, end_depth=end_depth, perm=oh_perm),
@@ -52,7 +52,7 @@ def to_gap_barrier_list(barriers_mod_df: pd.DataFrame) -> list[ElemModel]:
         ID, strt_depth, end_depth, barrier_perms = row['diameter_m'], row['top_msl'], row['bottom_msl'], row['barrier_perm']
 
         # qc it
-        print(idx, ID, strt_depth, end_depth, barrier_perms)
+        # print('barrier===>', idx, ID, strt_depth, end_depth, barrier_perms)
         
         barrier = ElemModel(ID=ID, 
                             pipe=DepthModel(strt_depth=strt_depth, end_depth=end_depth, perm=barrier_perms)
