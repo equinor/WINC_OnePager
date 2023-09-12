@@ -141,13 +141,8 @@ spec:
 
   co2_datum: 2370
 
-  main_barrier:
-    barrier_name: cplug2
+  main_barrier: cplug1
 
   barrier_permeability:
-    - quality: good
-      kv: 0.01
-    - quality: mid
-      kv: 10
-    - quality: poor
-      kv: 1.00E+03
+    quality: ['good', 'mid', 'poor']
+    kv: [0.01, 10, 1.00E+03]
