@@ -141,15 +141,9 @@ class BarrierPermeabilityModel(BaseModel):
     """ model for Barrier permeability
 
         Args:
-            quality (str): quality level
-            kv (float): corresponding value to the quality level
+            quality (str): list of quality level
+            kv (float): list of permeability values
     """
-    quality: str
-    kv: float
+    quality: list[str]|None = None
+    kv: list[float|int]
 
-    @validator('quality')
-    def validate_perm(cls, v):
-        if v in ['good', 'mid', 'poor']:
-            return v
-        else:
-            raise ValueError("quality must be good, mid or poor")

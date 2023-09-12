@@ -64,10 +64,14 @@ def _get_barrier_leakage(barrier_perm: dict, barrier_p_rho: pd.DataFrame, barrie
         Then the parameteters could be case dependent and an input
     '''
 
-    # print('barrier_perm: ', barrier_perm)
+    print('barrier_perm: ', barrier_perm['kv'])
 
+    # TODO(hzh): to be compatible with .csv file
     #Get the permeabilty values to use
-    perms = barrier_perm['kv'].values()
+    try:
+        perms = barrier_perm['kv'].values()
+    except Exception:
+        perms = barrier_perm['kv']
 
     #Get the pressure cases to use (RP1, RP2 etc)
     cases = barrier_p_rho.index
