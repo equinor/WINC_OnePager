@@ -4,6 +4,13 @@ import pandas as pd
 def compute_cement_bond(casings: dict, drilling: dict) -> dict:
     '''
     Processes cement bond intervals. Reads both casing and borehole sizes to estimate cement bond width
+
+        Args:
+            casings (dict): contains casing information
+            drilling (dict): contains drilling information
+
+        Returns:
+            cement bond (dict): contains cement bond information
     '''
 
     casings_df = pd.DataFrame(casings)

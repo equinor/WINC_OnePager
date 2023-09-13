@@ -43,6 +43,7 @@ import json
 from ..well_computed import (
     compute_borehole,
     compute_cement_bond,
+    compute_annulus,
     compute_barriers_diam,
     get_barriers_names,
     get_barrier_height_and_depth,
@@ -57,12 +58,14 @@ class Well(WellRaw):
 
         Args:
             borehold (dict): for borehole information
-            cement_bond (dict): contails information about cement bond
+            cement_bond (dict): contains information about cement bond
+            annulus (dict): gap between casing and openhole
             barriers_mod (dict): extra information about barriers
             barriers_names (dict): reorgainze barrier names
     """
     borehole      : dict = None
     cement_bond   : dict = None
+    annulus       : dict = None
     barriers_mod  : dict = None
     barriers_names: dict = None
 
@@ -78,7 +81,8 @@ class Well(WellRaw):
         
         self.borehole = compute_borehole(self.casings, self.drilling)
         self.cement_bond = compute_cement_bond(self.casings, self.drilling)
-
+        self.annulus= compute_annulus(self.casings, self.drilling)
+        
         self.barriers_mod = compute_barriers_diam(self.barriers, self.borehole)
         self.barriers_names = get_barriers_names(self.barriers_mod)
 
@@ -101,7 +105,7 @@ class Well(WellRaw):
         barrier_props.update(barrier_h_d)
         
         # radius
-        barrier_r = get_barrier_radius(barriers_mod, barrier_name)
+        barrier_r = get_barrier_radius(barriers_mod, barriers_names, barrier_name)
         barrier_props.update(barrier_r)
 
         return barrier_props

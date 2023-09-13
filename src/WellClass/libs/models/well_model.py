@@ -32,7 +32,7 @@ class WellSpec(BaseModel):
             drilling (list[DrillingModel]): list of drilling information
             casing_cement (list[CasingCementModel]): list of casing information
             barrier (list[BarrierModel]):  list of barrier information
-            barrier_permeability (list[BarrierPermeabilityModel]): list of barrier permeability
+            barrier_permeability (BarrierPermeabilityModel): list of barrier permeability
             geology (list[GeologyModel]): list of geology, such as formations, information
             assumptions (AssumptionsModel): misceleaneous information
             co2_datum (CO2DatumModel): co2 datum 
@@ -41,7 +41,7 @@ class WellSpec(BaseModel):
     drilling: list[DrillingModel]
     casing_cement: list[CasingCementModel]
     barriers: list[BarrierModel] | None = None
-    barrier_permeability: list[BarrierPermeabilityModel]|None = None
+    barrier_permeability: BarrierPermeabilityModel|None = None
     geology: list[GeologyModel] | None = None
     assumptions: AssumptionsModel|None = None
     co2_datum: float|int                                       # CO2DatumModel
@@ -50,10 +50,10 @@ class WellPressureSpec(WellSpec):
     """ extra specs for pressure information
         Args:
             reservoir_pressure (ReservoirPressureModel): general reservoir pressure information
-            main_barrier (MainBarrierModel): main barrier to compute pressure
+            main_barrier (str): main barrier name to compute pressure
     """
     reservoir_pressure: ReservoirPressureModel|None = None
-    main_barrier: MainBarrierModel|None = None
+    main_barrier: str|None = None
 
 class WellModel(BaseModel):
     """ model including all parameters

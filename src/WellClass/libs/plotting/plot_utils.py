@@ -20,6 +20,8 @@ def plot_well_perm(my_well, *, x, y, Z, on_coarse=True):
 
     fig.tight_layout(h_pad = 0)
 
+    plt.show()
+
 def plot_perm(x, y, Z, *, ax, on_coarse=True):
     """ plot permeability, x-z slice
     """
@@ -29,6 +31,10 @@ def plot_perm(x, y, Z, *, ax, on_coarse=True):
     zmax = Z.max()
     if zmin == 0:
         zmin = 1e-4
+
+    # print(f' zmin = {zmin}, zmax = {zmax}')
+    # print(f' x shape = {x.shape}, y shape = {y.shape}')
+    # print(f' Z shape = {Z.shape}')
 
     if on_coarse:    
         # ax.pcolor(Z,  norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()))
