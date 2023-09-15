@@ -1,6 +1,9 @@
 """ pydantic model for pipe and cement
 """
 
+# handle type hints problem for python version < 3.10
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 from .model_depth import DepthModel

@@ -1,4 +1,7 @@
 
+# handle type hints problem for python version < 3.10
+from __future__ import annotations
+
 from pydantic import BaseModel, validator
 
 from ..utils.fraction_float import fraction_float

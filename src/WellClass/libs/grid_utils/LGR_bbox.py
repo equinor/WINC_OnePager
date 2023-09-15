@@ -1,4 +1,8 @@
 
+
+# handle type hints problem for python version < 3.10
+from __future__ import annotations
+
 import pandas as pd
 
 def get_k_indices(df: pd.DataFrame, top: float|int, bottom: float|int) -> tuple[int, int]:

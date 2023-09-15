@@ -38,6 +38,9 @@ Now additional functionalities that can be explicitely called are
 
 '''
 
+# handle type hints problem for python version < 3.10
+from __future__ import annotations
+
 from dataclasses import dataclass
 import json
 

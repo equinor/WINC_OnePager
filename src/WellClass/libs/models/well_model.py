@@ -1,4 +1,7 @@
 
+# handle type hints problem for python version < 3.10
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 from .well_model_utils import (

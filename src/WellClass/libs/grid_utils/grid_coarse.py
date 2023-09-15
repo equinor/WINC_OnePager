@@ -1,4 +1,7 @@
 
+# handle type hints problem for python version < 3.10
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 

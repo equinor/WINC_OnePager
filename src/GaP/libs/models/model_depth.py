@@ -1,6 +1,9 @@
 """ BoundingBox of element in depth direction
 """
 
+# handle type hints problem for python version < 3.10
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 class DepthModel(BaseModel):
