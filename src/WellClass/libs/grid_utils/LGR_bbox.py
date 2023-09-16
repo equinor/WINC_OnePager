@@ -1,11 +1,11 @@
 
 
 # handle type hints problem for python version < 3.10
-from __future__ import annotations
+from typing import Union, Tuple
 
 import pandas as pd
 
-def get_k_indices(df: pd.DataFrame, top: float|int, bottom: float|int) -> tuple[int, int]:
+def get_k_indices(df: pd.DataFrame, top: Union[float, int], bottom: Union[float, int]) -> Tuple[int, int]:
         """
         Takes the mesh data frame and a value of top and bottom depth interval.
         

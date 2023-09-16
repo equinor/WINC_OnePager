@@ -1,6 +1,6 @@
 
 # handle type hints problem for python version < 3.10
-from __future__ import annotations
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -166,7 +166,7 @@ class GridCoarse:
                          grid_init: pd.DataFrame, 
                          main_grd_i: int, 
                          main_grd_j: int, 
-                         dz0: float|int =10):
+                         dz0: Union[float, int] =10):
         """ DZs for rsrv and ovb
 
             Args:

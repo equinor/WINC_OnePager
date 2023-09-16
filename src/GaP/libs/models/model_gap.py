@@ -1,6 +1,6 @@
 
 # handle type hints problem for python version < 3.10
-from __future__ import annotations
+from typing import Union, List
 
 from pydantic import BaseModel
 
@@ -22,8 +22,8 @@ class GaPSpec(BaseModel):
     sim_case: FileModel
     lgr_out: FileModel
     
-    casings: list[PipeCementModel]
-    barriers: list[ElemModel] | None = None
+    casings: List[PipeCementModel]
+    barriers: Union[List[ElemModel], None] = None
 
 class MetaDataModel(BaseModel):
     """ meta data
@@ -33,8 +33,8 @@ class MetaDataModel(BaseModel):
             author (str): who made this yaml file
     """
     namespace: str = 'screen'
-    name: str|None = None
-    author: str|None = None
+    name: Union[str, None] = None
+    author: Union[str, None] = None
 
 class GaPModel(BaseModel):
     """ contains all necessary parameters
@@ -46,5 +46,5 @@ class GaPModel(BaseModel):
     """
     apiVersion: str = 'gap/v0.1'
     kind: str = 'GaP'
-    metadata: MetaDataModel|None = None
+    metadata: Union[MetaDataModel, None] = None
     spec: GaPSpec

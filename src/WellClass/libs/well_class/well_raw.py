@@ -39,7 +39,7 @@ Now additional functionalities that can be explicitely called are
 '''
 
 # handle type hints problem for python version < 3.10
-from __future__ import annotations
+from typing import Union
 
 from dataclasses import dataclass
 import json
@@ -66,7 +66,7 @@ class WellRaw:
     barriers      : dict = None
     barrier_perm  : dict = None
     geology       : dict = None
-    co2_datum     : float|int = None
+    co2_datum     : Union[float, int] = None
 
     def __post_init__(self):
         """ compute basic well information
