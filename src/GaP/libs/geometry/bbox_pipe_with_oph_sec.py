@@ -1,5 +1,6 @@
 """ pipe builder with open hole sections
 """
+from typing import List
 
 import numpy as np
 
@@ -10,7 +11,7 @@ from ..models import (
 from .bbox_utils import BBoxXY, BBoxZ
 
 def bbox_for_pipe_with_oph_sec (cg: PipeCementModel,
-                                LGR_sizes_xy: list[float], 
+                                LGR_sizes_xy: List[float], 
                                 LGR_depths: np.ndarray, 
                                 min_grd_size: float) -> tuple:
     """ build bounding box for pipe with open hole sections

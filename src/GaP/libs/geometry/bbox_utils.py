@@ -1,13 +1,14 @@
 """ compute bounding boxes for lateral x-y and depth z directions
 """
+from typing import Tuple, List
 
 import math
 import numpy as np
 
 def BBoxXY(ID: float,
-            LGR_sizes_xy: list[float], 
+            LGR_sizes_xy: List[float], 
             min_grd_size: float
-           ) -> tuple[int, int, int, int]:
+           ) -> Tuple[int, int, int, int]:
     """ Compute bounding box in x-y directions
 
         Args:
@@ -41,7 +42,7 @@ def BBoxXY(ID: float,
 def BBoxZ(strt_depth: float,
           end_depth: float,
           LGR_depths: np.ndarray
-          ) -> tuple[int, int]:
+          ) -> Tuple[int, int]:
     """ Compute bounding box in z direction
 
         Args:

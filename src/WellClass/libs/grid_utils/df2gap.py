@@ -1,4 +1,6 @@
 
+from typing import List
+
 import pandas as pd
 
 from src.GaP.libs.models import (
@@ -8,7 +10,7 @@ from src.GaP.libs.models import (
 )
 
 def to_gap_casing_list(drilling_df: pd.DataFrame, 
-                        casings_df: pd.DataFrame) -> list[PipeCementModel]:
+                        casings_df: pd.DataFrame) -> List[PipeCementModel]:
     """ convert casing dataframe to gap format
 
         Args:
@@ -41,7 +43,7 @@ def to_gap_casing_list(drilling_df: pd.DataFrame,
 
     return casings_list
 
-def to_gap_barrier_list(barriers_mod_df: pd.DataFrame) -> list[ElemModel]:
+def to_gap_barrier_list(barriers_mod_df: pd.DataFrame) -> List[ElemModel]:
     """ convert barrier dataframe to gap format
     """
 

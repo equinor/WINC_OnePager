@@ -1,5 +1,6 @@
 """ generate fine grid from well casing geometries
 """
+from typing import Tuple, List
 
 import numpy as np
 
@@ -10,12 +11,12 @@ from .LGR_grid_utils import (
     compute_LGR_z,
 )
 
-def generate_LGR_grids(casing_IDs: list[float],
+def generate_LGR_grids(casing_IDs: List[float],
                         main_grd_dx, main_DZ,
                         ref_depth: float,
                         main_grd_min_k: int, main_grd_max_k: int, 
                         no_of_layers_in_OB: int,
-                        use_default_grid_size=True) -> tuple[list[float], np.ndarray, np.ndarray, float]:
+                        use_default_grid_size=True) -> Tuple[List[float], np.ndarray, np.ndarray, float]:
     """ generate LGR grid information
 
     Args:

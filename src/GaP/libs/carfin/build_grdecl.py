@@ -1,5 +1,6 @@
 """ Module to output the .grdecl file for LGR grid
 """
+from typing import List
 
 import os
 import sys
@@ -20,9 +21,9 @@ from .CARFIN_core import (
 
 def build_grdecl(output_folder: str, 
                  LGR_NAME: str,
-                 casing_list: list[PipeCementModel],
-                 barrier_list: list[ElemModel], 
-                 LGR_sizes_xy: list[float], 
+                 casing_list: List[PipeCementModel],
+                 barrier_list: List[ElemModel], 
+                 LGR_sizes_xy: List[float], 
                  LGR_depths: np.ndarray,
                  LGR_numb_z: np.ndarray,
                  min_grd_size: float,

@@ -1,5 +1,7 @@
 """ combine pipe withe cement bond
 """
+from typing import List
+
 import numpy as np
 from typing import TextIO
 
@@ -17,7 +19,7 @@ from .CARFIN_cement_bond import CARFIN_cement_bond
 from .CARFIN_barrier import CARFIN_barrier
 
 def CARFIN_pipe_and_cement_bond_builder(casing_geom: PipeCementModel, 
-                                        LGR_sizes_xy: list[float], 
+                                        LGR_sizes_xy: List[float], 
                                         LGR_depths: np.ndarray, 
                                         min_grd_size: float,
                                         LGR_NAME: str, 
@@ -69,7 +71,7 @@ def CARFIN_pipe_and_cement_bond_builder(casing_geom: PipeCementModel,
                         O)
     
 def CARFIN_barrier_builder(barrier_geom: ElemModel, 
-                            LGR_sizes_xy: list[float],
+                            LGR_sizes_xy: List[float],
                             LGR_depths: np.ndarray,
                             min_grd_size: float,
                             LGR_NAME: str, 

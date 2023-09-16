@@ -38,7 +38,7 @@ class DrillingRawModel(BaseModel):
 
     @validator('diameter_in')
     def diameter_in_converter(cls, v):
-        if isinstance(v, Union[float, int]):
+        if isinstance(v, (float, int)):
             return v
         elif isinstance(v, str):
             return fraction_float(v)

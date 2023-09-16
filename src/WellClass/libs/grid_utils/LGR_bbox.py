@@ -43,7 +43,7 @@ def get_k_indices(df: pd.DataFrame, top: Union[float, int], bottom: Union[float,
 
         return k_min, k_max
 
-def get_ij_indices(nxy: int, n_grd: int) -> tuple[int, int]:
+def get_ij_indices(nxy: int, n_grd: int) -> Tuple[int, int]:
     """ compute x-y min/max indices
 
         Args:

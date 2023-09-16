@@ -47,7 +47,7 @@ import json
 import pandas as pd
 import scipy
 
-@dataclass(kw_only=True)
+@dataclass              # @dataclass(kw_only=True)
 class WellRaw:
     """ Basic user input well information
 
