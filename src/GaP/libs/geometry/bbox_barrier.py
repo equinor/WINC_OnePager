@@ -1,5 +1,6 @@
 """ barrier builder 
 """
+from typing import List, Tuple
 
 import numpy as np
 
@@ -10,9 +11,9 @@ from ..models import (
 from .bbox_utils import BBoxXY, BBoxZ
 
 def bbox_for_barrier (cg: ElemModel, 
-                      LGR_sizes_xy: list[float], 
+                      LGR_sizes_xy: List[float], 
                       LGR_depths: np.ndarray, 
-                      min_grd_size: float) -> tuple:
+                      min_grd_size: float) -> Tuple:
     """ build bouding box for barrier
 
         Args:

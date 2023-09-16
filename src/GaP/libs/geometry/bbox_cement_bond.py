@@ -1,5 +1,6 @@
 """ cemont bond builder
 """
+from typing import List
 
 import numpy as np
 
@@ -10,7 +11,7 @@ from ..models import (
 from .bbox_utils import BBoxXY, BBoxZ
 
 def bbox_for_cement_bond(cg: PipeCementModel, 
-                         LGR_sizes_xy: list[float], 
+                         LGR_sizes_xy: List[float], 
                          LGR_depths: np.ndarray, 
                          min_grd_size: float) -> tuple:
     """ build building box for cement bond

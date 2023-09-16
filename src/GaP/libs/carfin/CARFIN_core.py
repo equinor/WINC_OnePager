@@ -1,5 +1,6 @@
 """ generate grdecl grid
 """
+from typing import List
 
 import os
 import math
@@ -65,7 +66,7 @@ def pre_CARFIN(LGR_NAME: str,
 def CARFIN_keywords(LGR_NAME: str,
                     main_grd_i: int, main_grd_j: int, 
                     main_grd_min_k: int, main_grd_max_k: int, 
-                    LGR_sizes_xy: list[float], 
+                    LGR_sizes_xy: List[float], 
                     LGR_numb_z: np.ndarray, 
                     min_grd_size: float,
                     O: TextIO):
@@ -144,9 +145,9 @@ def CARFIN_keywords(LGR_NAME: str,
     print (' ',file=O)
 
 def coreCARFIN(LGR_NAME: str,
-                casing_list: list[PipeCementModel],
-                barrier_list: list[ElemModel],
-                LGR_sizes_xy: list[float], 
+                casing_list: List[PipeCementModel],
+                barrier_list: List[ElemModel],
+                LGR_sizes_xy: List[float], 
                 LGR_depths: np.ndarray, 
                 min_grd_size: float,
                 O: TextIO):
@@ -187,7 +188,7 @@ def coreCARFIN(LGR_NAME: str,
 
 def endCARFIN(LGR_NAME: str,
              reopen_ID: float,
-             LGR_sizes_xy: list[float], 
+             LGR_sizes_xy: List[float], 
              main_grd_min_k: float, 
              min_grd_size: float,
              no_of_layers_in_OB: int,

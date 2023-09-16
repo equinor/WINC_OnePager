@@ -1,5 +1,8 @@
 
-def fraction_float(frac_str: str) -> float|int:
+# handle type hints problem for python version < 3.10
+from typing import Union
+
+def fraction_float(frac_str: str) -> Union[float, int]:
     ''' Evaluates numbers as e.g. 12 1/4 
     '''
     frac_str = frac_str.split()    # "12"  "1/4"

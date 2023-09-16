@@ -15,7 +15,7 @@ from .co2_pressure import (
     compute_CO2_pressures,
 )
 
-@dataclass(kw_only=True)
+@dataclass              # @dataclass(kw_only=True)
 class Pressure:
     """ This is used to compute leakeage rate of legacy well
 
@@ -28,7 +28,7 @@ class Pressure:
     header        : dict = None
     reservoir_P   : dict = None    
     co2_datum     : dict = None
-    pvt_path      : str
+    pvt_path      : str = None
 
     def __post_init__(self):
         self._check_init_pressure()

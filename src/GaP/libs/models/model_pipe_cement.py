@@ -1,6 +1,9 @@
 """ pydantic model for pipe and cement
 """
 
+# handle type hints problem for python version < 3.10
+from typing import Union
+
 from pydantic import BaseModel
 
 from .model_depth import DepthModel
@@ -10,9 +13,9 @@ class ElemModel(BaseModel):
     """
     ID: float
     pipe: DepthModel
-    type: str|None = None
+    type: Union[str, None] = None
     
 class PipeCementModel(ElemModel):
 
-    cement: DepthModel|None = None
-    oph: DepthModel|None = None
+    cement: Union[DepthModel, None] = None
+    oph: Union[DepthModel, None] = None

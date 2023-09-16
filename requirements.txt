@@ -6,6 +6,7 @@ pandas
 scipy
 ecl
 CoolProp
+welly
 jupyter
 jupyterlab
 ipympl

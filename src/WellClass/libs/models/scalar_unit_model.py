@@ -1,4 +1,7 @@
 
+# handle type hints problem for python version < 3.10
+from typing import Union
+
 from pydantic import BaseModel
 
 class ScalarUnitModel(BaseModel):
@@ -7,5 +10,5 @@ class ScalarUnitModel(BaseModel):
             value (float): float value
             unit (str): name of metric unit
     """
-    value: float|int
+    value: Union[float, int]
     unit: str

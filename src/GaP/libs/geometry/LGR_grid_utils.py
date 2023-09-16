@@ -1,10 +1,12 @@
 
+from typing import List, Tuple
+
 import math
 import numpy as np
 
 def compute_cement_bonds(cond_Casing_ID: float, 
                          surf_Casing_ID: float, 
-                         prod_Casing_ID: float) -> list[float, float, float]:
+                         prod_Casing_ID: float) -> Tuple[float, float, float]:
     """ compute cement bonds
     """
 
@@ -14,7 +16,7 @@ def compute_cement_bonds(cond_Casing_ID: float,
     surf_bond = surf_Casing_ID - prod_Casing_ID
     prod_bond = surf_Casing_ID - prod_Casing_ID
 
-    return [cond_bond, surf_bond, prod_bond]
+    return cond_bond, surf_bond, prod_bond
 
 def compute_min_grid_size(cond_Casing_ID: float, 
                           surf_Casing_ID: float, 
@@ -116,7 +118,7 @@ def compute_max_num_of_fine_grid_xy(cond_Casing_ID: float,
 
 def compute_LGR_xy(no_latral_fine_grd: int, 
                    main_grd_dx: float, 
-                   min_grd_size: float) -> list[float]:
+                   min_grd_size: float) -> List[float]:
     """ LGR grid list in x-y direction
 
         Thinking laterally we need ones to the right and one to the left
@@ -149,7 +151,7 @@ def compute_LGR_xy(no_latral_fine_grd: int,
 def compute_LGR_z(main_DZ,
                     ref_depth,
                     main_grd_min_k, main_grd_max_k, 
-                    no_of_layers_in_OB) -> tuple[np.ndarray, np.ndarray]:
+                    no_of_layers_in_OB) -> Tuple[np.ndarray, np.ndarray]:
     """ LGR grid in z direction
 
     The idea is not to refine too much in the Z direction, mainly because of the computational time. 

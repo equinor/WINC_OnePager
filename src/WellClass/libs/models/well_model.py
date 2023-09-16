@@ -1,4 +1,7 @@
 
+# handle type hints problem for python version < 3.10
+from typing import Union, List
+
 from pydantic import BaseModel
 
 from .well_model_utils import (
@@ -22,8 +25,8 @@ class MetaDataModel(BaseModel):
             author (str): who made this yaml file
     """
     namespace: str = 'screen'
-    name: str|None = None
-    author: str|None = None
+    name: Union[str, None] = None
+    author: Union[str, None] = None
 
 class WellSpec(BaseModel):
     """ specs for standard well information
@@ -38,13 +41,13 @@ class WellSpec(BaseModel):
             co2_datum (CO2DatumModel): co2 datum 
     """
     well_header: WellHeaderModel
-    drilling: list[DrillingModel]
-    casing_cement: list[CasingCementModel]
-    barriers: list[BarrierModel] | None = None
-    barrier_permeability: BarrierPermeabilityModel|None = None
-    geology: list[GeologyModel] | None = None
-    assumptions: AssumptionsModel|None = None
-    co2_datum: float|int                                       # CO2DatumModel
+    drilling: List[DrillingModel]
+    casing_cement: List[CasingCementModel]
+    barriers: Union[List[BarrierModel], None] = None
+    barrier_permeability: Union[BarrierPermeabilityModel, None] = None
+    geology: Union[List[GeologyModel], None] = None
+    assumptions: Union[AssumptionsModel, None] = None
+    co2_datum: Union[float, int]                                       # CO2DatumModel
 
 class WellPressureSpec(WellSpec):
     """ extra specs for pressure information
@@ -52,8 +55,8 @@ class WellPressureSpec(WellSpec):
             reservoir_pressure (ReservoirPressureModel): general reservoir pressure information
             main_barrier (str): main barrier name to compute pressure
     """
-    reservoir_pressure: ReservoirPressureModel|None = None
-    main_barrier: str|None = None
+    reservoir_pressure: Union[ReservoirPressureModel, None] = None
+    main_barrier: Union[str, None] = None
 
 class WellModel(BaseModel):
     """ model including all parameters
@@ -61,9 +64,9 @@ class WellModel(BaseModel):
             apiVersion (str): current version of this yaml format
             kind (str): for GaP
             metadata (MetaDataModel): miscelaneous data
-            spec (WellSpec|WellPressureSpec): well specification
+            spec (WellPressureSpec): well specification
     """
     apiVersion: str = 'well/v0.1'
     kind: str = 'Well'
-    metadata: MetaDataModel|None = None
+    metadata: Union[MetaDataModel, None] = None
     spec: WellPressureSpec

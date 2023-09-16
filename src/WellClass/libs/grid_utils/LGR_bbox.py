@@ -1,7 +1,11 @@
 
+
+# handle type hints problem for python version < 3.10
+from typing import Union, Tuple
+
 import pandas as pd
 
-def get_k_indices(df: pd.DataFrame, top: float|int, bottom: float|int) -> tuple[int, int]:
+def get_k_indices(df: pd.DataFrame, top: Union[float, int], bottom: Union[float, int]) -> Tuple[int, int]:
         """
         Takes the mesh data frame and a value of top and bottom depth interval.
         
@@ -39,7 +43,7 @@ def get_k_indices(df: pd.DataFrame, top: float|int, bottom: float|int) -> tuple[
 
         return k_min, k_max
 
-def get_ij_indices(nxy: int, n_grd: int) -> tuple[int, int]:
+def get_ij_indices(nxy: int, n_grd: int) -> Tuple[int, int]:
     """ compute x-y min/max indices
 
         Args:

@@ -1,4 +1,7 @@
 
+# handle type hints problem for python version < 3.10
+from typing import Union, List
+
 from pydantic import BaseModel, validator
 
 from ..utils.fraction_float import fraction_float
@@ -15,11 +18,11 @@ class WellHeaderModel(BaseModel):
             geo_tgrad  (float): geothermal gradient
     """
     well_name: str
-    well_rkb: int|float
-    sf_depth_msl: int|float
-    well_td_rkb: int|float
-    sf_temp: int|float
-    geo_tgrad: int|float
+    well_rkb: Union[int, float]
+    sf_depth_msl: Union[int, float]
+    well_td_rkb: Union[int, float]
+    sf_temp: Union[int, float]
+    geo_tgrad: Union[int, float]
 
 class DrillingRawModel(BaseModel):
     """ Information about the drilling intervals of the well
@@ -27,15 +30,15 @@ class DrillingRawModel(BaseModel):
         Args:
             top_rkb (float): the top depth in RKB
             bottom_rkb (float): the bottom depth in RKB 
-            diameter_in (float|str): the diameter of the borehole in inches
+            diameter_in (float, str): the diameter of the borehole in inches
     """
-    top_rkb: float|int
-    bottom_rkb: float|int
-    diameter_in: float|int|str
+    top_rkb: Union[int, float]
+    bottom_rkb: Union[int, float]
+    diameter_in: Union[float, int, str]
 
     @validator('diameter_in')
     def diameter_in_converter(cls, v):
-        if isinstance(v, float|int):
+        if isinstance(v, (float, int)):
             return v
         elif isinstance(v, str):
             return fraction_float(v)
@@ -48,7 +51,7 @@ class DrillingModel(DrillingRawModel):
         Args:
             oh_perm (float): faked permeability for open-hole 
     """
-    oh_perm: float|int = 10000
+    oh_perm: Union[int, float] = 10000
 
 
 class CasingCementModel(DrillingRawModel):
@@ -60,10 +63,10 @@ class CasingCementModel(DrillingRawModel):
           shoe (bool): whether or not it has a shoe
           cb_perm (float): permeability for cement-bond
     """
-    toc_rkb: float|int
-    boc_rkb: float|int
+    toc_rkb: Union[int, float]
+    boc_rkb: Union[int, float]
     shoe: bool
-    cb_perm: float|int = 5
+    cb_perm: Union[int, float] = 5
 
 class BarrierModel(BaseModel):
     """ Information about the barrier in the well 
@@ -77,9 +80,9 @@ class BarrierModel(BaseModel):
     """
     barrier_name: str
     barrier_type: str
-    top_rkb: float|int
-    bottom_rkb: float|int
-    barrier_perm: float|int = 0.5
+    top_rkb: Union[int, float]
+    bottom_rkb: Union[int, float]
+    barrier_perm: Union[int, float] = 0.5
 
 class GeologyModel(BaseModel):
     """ The geological units encountered in the well
@@ -89,7 +92,7 @@ class GeologyModel(BaseModel):
             geol_unit (str): name 
             reservoir_flag (bool): whether or not it is considered a reservoir  
     """
-    top_rkb: float|int
+    top_rkb: Union[int, float]
     geol_unit: str
     reservoir_flag: bool
 
@@ -107,14 +110,14 @@ class ReservoirPressureModel(BaseModel):
             RP2 (str): reservoir pressure
             RP3 (str): reservoir pressure
     """
-    depth_msl: float|int
-    RP1: str|float|int|None = None
-    RP2: str|float|int|None = None
-    RP3: str|float|int|None = None
+    depth_msl: Union[int, float]
+    RP1: Union[str, float, int, None] = None
+    RP2: Union[str, float, int, None] = None
+    RP3: Union[str, float, int, None] = None
 
     # @validator('RP1', 'RP2', 'RP3')
     # def diameter_in_converter(cls, v):
-    #     if isinstance(v, float|int):
+    #     if isinstance(v, float, int):
     #         return v
     #     elif isinstance(v, str):
     #         return float(v)
@@ -127,7 +130,7 @@ class CO2DatumModel(BaseModel):
         Args:
             co2_msl (float): CO2 datum depth
     """
-    co2_msl: float|int
+    co2_msl: Union[int, float]
 
 class MainBarrierModel(BaseModel):
     """ model for main barrier
@@ -144,6 +147,6 @@ class BarrierPermeabilityModel(BaseModel):
             quality (str): list of quality level
             kv (float): list of permeability values
     """
-    quality: list[str]|None = None
-    kv: list[float|int]
+    quality: Union[List[str], None] = None
+    kv: List[Union[float, int]]
 

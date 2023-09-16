@@ -38,13 +38,16 @@ Now additional functionalities that can be explicitely called are
 
 '''
 
+# handle type hints problem for python version < 3.10
+from typing import Union
+
 from dataclasses import dataclass
 import json
 
 import pandas as pd
 import scipy
 
-@dataclass(kw_only=True)
+@dataclass              # @dataclass(kw_only=True)
 class WellRaw:
     """ Basic user input well information
 
@@ -63,7 +66,7 @@ class WellRaw:
     barriers      : dict = None
     barrier_perm  : dict = None
     geology       : dict = None
-    co2_datum     : float|int = None
+    co2_datum     : Union[float, int] = None
 
     def __post_init__(self):
         """ compute basic well information

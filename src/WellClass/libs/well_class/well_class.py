@@ -52,7 +52,7 @@ from ..well_computed import (
 
 from .well_raw import WellRaw
 
-@dataclass(kw_only=True)
+@dataclass              # @dataclass(kw_only=True)
 class Well(WellRaw):
     """ This contains not only the basic well information but also its computed information.
 
