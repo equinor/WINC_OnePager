@@ -136,7 +136,17 @@ class GridRefine:
 
                 mesh_df.loc[(mesh_df['Z']>=top) & (mesh_df['Z']<base), field] = row[field]
 
-    def set_material_type(self,
+    def set_permeability(self, drilling_df, casings_df, barriers_mod_df):
+        """ Assign permeability according to material type
+        """
+
+        # set material type
+        self._set_material_type(drilling_df, casings_df, barriers_mod_df)
+
+        # set permeability
+        self._set_permeability(drilling_df, casings_df, barriers_mod_df)
+
+    def _set_material_type(self,
                            drilling_df, 
                            casings_df, 
                            barriers_mod_df):
@@ -205,8 +215,9 @@ class GridRefine:
                         (k >= @b_k_min) & (k <= @b_k_max)' 
             mesh_df.loc[mesh_df.eval(criteria), 'material'] = f'barrier_{ib}'
 
-    def set_permeability(self, drilling_df, casings_df, barriers_mod_df):
-        """ Assign permeability according to material type
+
+    def _set_permeability(self, drilling_df, casings_df, barriers_mod_df):
+        """ Actual function to assign permeability according to material type
         """
 
         # for convenience only
