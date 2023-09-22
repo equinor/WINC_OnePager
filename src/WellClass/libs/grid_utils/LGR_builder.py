@@ -16,7 +16,7 @@ from .df2gap import (
 
 from src.GaP.libs.carfin import build_grdecl
 
-class LGR:
+class LGRBuilder:
 
     def __init__(self,
                  grid_init: GridCoarse, 

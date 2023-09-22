@@ -38,13 +38,12 @@ from src.WellClass.libs.grid_utils import (
     WellDataFrame,
     GridCoarse,
     GridRefine,
-    LGR,
+    LGRBuilder,
 )
 
 # plots
-from src.WellClass.libs.plotting.plot_grids import (
-    plot_coarse,
-    plot_refine,
+from src.WellClass.libs.plotting import (
+    plot_grid,
 )
 
 # # Examples
@@ -149,10 +148,10 @@ def main(args):
     ##### 4.2 LGR grid 
 
     # LGR grid information in x, y, z directions
-    lgr = LGR(grid_coarse, 
-              annulus_df, 
-              drilling_df, casings_df, borehole_df,
-              Ali_way)
+    lgr = LGRBuilder(grid_coarse, 
+                     annulus_df, 
+                     drilling_df, casings_df, borehole_df,
+                     Ali_way)
 
     ##### 4.3 grid refine 
     
@@ -191,8 +190,8 @@ def main(args):
     
     # for qc
     if args.plot:
-        plot_coarse(my_well, grid_coarse)
-        plot_refine(my_well, grid_refine)
+        plot_grid(my_well, grid_coarse, on_coarse=True)
+        plot_grid(my_well, grid_refine, on_coarse=False)
 
 if __name__ == '__main__':
 
