@@ -91,7 +91,7 @@ def main(args):
 
     ########### 3. build Well class ######################
 
-    # build well class
+    # 3.1 build well class
     my_well = Well( header       = well_csv['well_header'], 
                     drilling     = well_csv['drilling'],
                     casings      = well_csv['casing_cement'],
@@ -101,12 +101,12 @@ def main(args):
                     co2_datum    = well_csv['co2_datum'],
             )
 
-    # to well dataframe
+    # 3.2 to well dataframe
     well_df = WellDataFrame(my_well)
 
     # for convenience
 
-    # extract dataframes
+    # 3.3 extract dataframes
     annulus_df = well_df.annulus_df
     drilling_df = well_df.drilling_df
     casings_df = well_df.casings_df
