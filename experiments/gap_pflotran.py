@@ -1,23 +1,12 @@
 
-""" This module utilizes user-given .EGRID and .INIT files to generate .grdecl file for lgr grid.
+""" This module will generate .grdecl file for lgr grid. It uses pflotran's dry runs to generate coarse grid information and lgr grid information.
 
-$ python -m experiments.gap_wellclass -p ./test_data/examples/smeaheia_v1 -w smeaheia.yaml -s GEN_NOLGR_PH2 --plot --ali-way 
-
-for comparing the output from smeaheia data with the output using Ali's grid logic.
-
-Otherwise, for other examples,
-
-# 1. smeaheia_v1
-
-$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v1 --well smeaheia.yaml --sim-case GEN_NOLGR_PH2 --plot 
-
-# 2. smeaheia_v2
-
-$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v2 --well smeaheia.yaml --sim-case TEMP-0 --plot
-
-# 3. cosmo
-
-$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/cosmo --well cosmo.yaml --sim-case TEMP-0 --plot
+$ python -m experiments.gap_pflotran \
+    --sim-path ./test_data/examples/cosmo-pflotran \
+    --well cosmo.yaml \
+    --sim-case1 TEMP-0_NOSIM \
+    --sim-case2 TEMP-0 \
+    --plot
 
 """
 
@@ -26,6 +15,7 @@ import json
 
 import argparse
 import pathlib
+import subprocess
 
 from src.WellClass.libs.utils import (
     csv_parser,
@@ -39,6 +29,7 @@ from src.WellClass.libs.grid_utils import (
     WellDataFrame,
     GridCoarse,
     GridRefine,
+    GridLGR,
     LGRBuilder,
 )
 
@@ -55,29 +46,54 @@ def main(args):
     Ali_way = args.ali_way
 
     # where the location for the input parameters and eclipse .EGRID and .INIT files
-    # configuration path, for example './test_data/examples/smeaheia_v1'
+    # configuration path, for example './test_data/examples/cosmo-pflotran'
     sim_path = pathlib.Path(args.sim_path)
 
-    # input configuration file name, for example, 'smeaheia.yaml'
-    well_config = pathlib.Path(args.well)
+    # configuration filename
+    well_input = pathlib.Path(args.well)
 
-    # extract suffix
-    suffix = well_config.suffix
+    # dry run: filename prefix on coarse grid, e.g., TEMP-0_NOSIM
+    sim_case_NOSIM = args.sim_case1
+
+    # lgr run: filename prefix on lgr grid, e.g., TEMP-0
+    sim_case_LGR = args.sim_case2
+
+    ############# 1. computed parameters ######################
+
+    # extract suffix from the configuration file name
+    file_extension = well_input.suffix
+
     # .yaml or .csv?
-    use_yaml = suffix in ['.yaml', '.yml']
+    use_yaml = False
+    if file_extension in ['.yaml', '.yml']:
+        use_yaml = True
 
-    # location of .egrid, for example, TEMP-0.EGID, etc.
-    simcase = sim_path/args.sim_case
+    # file prefix for dry run
+    # where eclipse .EGRID and .INIT files will be located
+    simcase1 = sim_path/'model'/sim_case_NOSIM
+    simcase1
 
-    # output directory
-    output_dir = pathlib.Path(args.output_dir)
-    # LRG name 
-    LGR_NAME = args.output_name
+    # LGR
+    simcase2 = sim_path/'model'/sim_case_LGR
+    simcase2
+
+    ############ 1.5 Run coarse simulation ######################
+    # file name (coarse grid) for pflotran run
+    run_config_coarse = simcase1.with_suffix('.in')
+
+    # the command
+    run_command = f'runpflotran1.8 -i -nm 6 {run_config_coarse}'
+    command_array = run_command.split()
+
+    # launch the command
+    results = subprocess.run(command_array, capture_output=True)
+    print(results.stdout.decode("utf-8"))
+
 
     ############ 2. Load well configuration file ###############
 
     # where well configuration file is located
-    well_name = sim_path/well_config
+    well_name = sim_path/well_input
     
     if use_yaml:
         
@@ -119,7 +135,7 @@ def main(args):
     ##### 4.1 grid_coarse 
 
     # Loading the model from .EGRID and .INIT
-    grid_coarse = GridCoarse(str(simcase))
+    grid_coarse = GridCoarse(str(simcase1))
 
     ##### 4.2 LGR grid 
 
@@ -142,7 +158,11 @@ def main(args):
     # set up LGR grid
     grid_refine.build_LGR(drilling_df, casings_df, barriers_mod_df)
 
+
     ########### 6. output grdecl file ###################
+
+    LGR_NAME = 'TEMP_LGR'
+    output_dir = sim_path/'include'
 
     # Write LGR file
     lgr.build_grdecl(output_dir, LGR_NAME,
@@ -150,10 +170,32 @@ def main(args):
                      casings_df,
                      barriers_mod_df)
     
+    ########### 7. Run LGR simulation ###################
+    # file name (LGR grid) for pflotran run
+    run_config_lgr = simcase2.with_suffix('.in')
+
+    # the command
+    run_command = f'runpflotran1.8 -i -nm 6 {run_config_lgr}'
+    command_array = run_command.split()
+
+    # launch the command
+    results = subprocess.run(command_array, capture_output=True)
+    print(results.stdout.decode("utf-8"))
+
     # for qc
     if args.plot:
+
+        # load LGR grid from simulation file
+        grid_lgr = GridLGR(str(simcase2))
+
+        # coarse grid
         plot_grid(my_well, grid_coarse)
+
+        # LGR grid from dataframe
         plot_grid(my_well, grid_refine)
+
+        # LGR grid from pflotran output
+        plot_grid(my_well, grid_lgr)
 
 if __name__ == '__main__':
 
@@ -169,13 +211,11 @@ if __name__ == '__main__':
     parser.add_argument('-w', "--well", type=str, required=True,
                         help="input well configuration file name, can be .yaml or .csv format")
 
-    parser.add_argument('-s', "--sim-case", type=str, required=True,
-                        help="file path of simulation case")
-            
-    parser.add_argument('--output-dir', type=str, default='./experiments',
-                        help="output directory")
-    parser.add_argument('--output-name', type=str, default='LEG_HIRES', 
-                        help='output file name')
+    parser.add_argument('-s1', "--sim-case1", type=str, required=True,
+                        help="file name prefix for dry run")
+
+    parser.add_argument('-s2', "--sim-case2", type=str, required=True,
+                        help="file name prefix  for lrg run")
     
     parser.add_argument('--plot', action='store_true', help='plot well sketch and well grids')
 
