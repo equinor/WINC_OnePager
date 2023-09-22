@@ -25,6 +25,7 @@ import os
 import json
 
 import argparse
+import pathlib
 
 from src.WellClass.libs.utils import (
     csv_parser,
@@ -46,27 +47,6 @@ from src.WellClass.libs.plotting import (
     plot_grid,
 )
 
-# # Examples
-# The following are the test examples.
-
-# examples
-smeaheia_v1 = {'well_input': r'GaP_input_Smeaheia_v3.csv', 
-            'well_input_yaml': r'smeaheia.yaml', 
-            #    'sim_path': r'/scratch/SCS/eim/SMEAHEIA', 
-            'sim_path': r'./test_data/examples/smeaheia_v1',
-            'simcase': r'GEN_NOLGR_PH2'}
-smeaheia_v2 = {'well_input': r'GaP_input_Smeaheia_v3.csv', 
-            'well_input_yaml': r'smeaheia.yaml', 
-            #    'sim_path': r'/scratch/SCS/bkh/wbook/realization-0/iter-0/pflotran/model', 
-            'sim_path': r'./test_data/examples/smeaheia_v2', 
-            'simcase': r'TEMP-0'}
-cosmo = {
-        'well_input': r'GaP_input_Cosmo_v3.csv', 
-        'well_input_yaml': r'cosmo.yaml', 
-        #  'sim_path': r'/scratch/SCS/bkh/well_class_test1/realization-0/iter-0/pflotran/model', 
-        'sim_path': r'./test_data/examples/cosmo', 
-        'simcase': r'TEMP-0'}
-
 def main(args):
 
     ############# 0. User options ######################
@@ -76,36 +56,35 @@ def main(args):
 
     # where the location for the input parameters and eclipse .EGRID and .INIT files
     # configuration path, for example './test_data/examples/smeaheia_v1'
-    sim_path = args.sim_path
+    sim_path = pathlib.Path(args.sim_path)
 
     # input configuration file name, for example, 'smeaheia.yaml'
-    well_config = args.well
+    well_config = pathlib.Path(args.well)
+
     # extract suffix
-    suffix = well_config.split('.')[-1]
-    # .yaml or .csv
-    use_yaml = suffix in ['yaml', 'yml']
+    suffix = well_config.suffix
+    # .yaml or .csv?
+    use_yaml = suffix in ['.yaml', '.yml']
 
-    # file path for simulation case, for example, 'TEMP-0'
-    sim_case = args.sim_case
+    # location of .egrid, for example, TEMP-0.EGID, etc.
+    simcase = sim_path/args.sim_case
 
-    # output
-    output_dir = args.output_dir
+    # output directory
+    output_dir = pathlib.Path(args.output_dir)
     # LRG name 
     LGR_NAME = args.output_name
 
-
     ############ 2. Load well configuration file ###############
 
+    # where well configuration file is located
+    well_name = sim_path/well_config
+    
     if use_yaml:
-        # where well configuration file is located
-        well_name = os.path.join(sim_path, well_config)
         
         # # pydantic model
         well_model = yaml_parser(well_name)
         well_csv = json.loads(well_model.spec.model_dump_json())
     else:
-        # where well configuration file is located
-        well_name = os.path.join(sim_path, well_config)
 
         # load the well information
         well_csv = csv_parser(well_name)
@@ -139,11 +118,8 @@ def main(args):
 
     ##### 4.1 grid_coarse 
 
-    # location of .egrid
-    simcase = os.path.join(sim_path, sim_case)
-
-    # Loading the model
-    grid_coarse = GridCoarse(simcase)
+    # Loading the model from .EGRID and .INIT
+    grid_coarse = GridCoarse(str(simcase))
 
     ##### 4.2 LGR grid 
 
@@ -190,8 +166,8 @@ def main(args):
     
     # for qc
     if args.plot:
-        plot_grid(my_well, grid_coarse, on_coarse=True)
-        plot_grid(my_well, grid_refine, on_coarse=False)
+        plot_grid(my_well, grid_coarse)
+        plot_grid(my_well, grid_refine)
 
 if __name__ == '__main__':
 
