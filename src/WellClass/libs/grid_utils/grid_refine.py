@@ -1,8 +1,15 @@
 
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 
 from .grid_coarse import GridCoarse
+
+from .extract_grid_utils import (
+    extract_xz_corn_coords,
+    extract_xz_prop_slice,
+)
 
 class GridRefine:
 
@@ -224,39 +231,29 @@ class GridRefine:
             criteria = f'material == "barrier_{ib}"'
             mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = barrier_perm
 
-    def extract_xz_corn_coords(self):
+    def extract_xz_corn_coords(self) -> Tuple[np.ndarray, np.ndarray]:
         """ generate xcorn and zcorn coordinates
         """
 
+        # for convenience
         mesh_df = self.mesh_df
 
-        # grid coordinates at LGR grids for plotting
-        xcorn  = (mesh_df.query("j==0&k==0").DX.cumsum()).values
-        ycorn  = (mesh_df.query("i==0&k==0").DY.cumsum()).values
-        zcorn  = (mesh_df.query("i==0&j==0").DZ.cumsum()).values
+        # for shifting
+        sDX = self.main_grd_dx/2
+        sDY = self.main_grd_dy/2
 
-        # add origin
-        xcorn = np.append(0, xcorn)
-        ycorn = np.append(0, ycorn)
-        zcorn = np.append(0, zcorn)
-
-        # shift it
-        xcorn -= self.main_grd_dx/2
-        ycorn -= self.main_grd_dy/2
+        # generate grid coordinates for plotting
+        xcorn, zcorn = extract_xz_corn_coords(mesh_df, sDX, sDY)
 
         return xcorn, zcorn
     
-    def extract_xz_slice(self):
+    def extract_xz_slice(self) -> np.ndarray:
         """ generate x-z PERM slice
         """
-
-        # center y grid index
-        mid_j = self.mesh_df.j.max()//2
-
-        # extract 2D xz slice at middle of y
-        XZ_slice = self.mesh_df.query('j==@mid_j')
+        # for convenience
+        mesh_df = self.mesh_df
 
         # extract permeability
-        Z = XZ_slice.PERMX.values.reshape(self.nz, self.nx)
+        Z = extract_xz_prop_slice(mesh_df)
 
-        return Z
+        return Z 

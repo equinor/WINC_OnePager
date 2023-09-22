@@ -1,15 +1,26 @@
 
 """ To run it, type the following:
 
-$ python -m experiments.gap_wellclass --use-yaml --case-type smeaheia_v1 --plot --ali-way 
+$ python -m experiments.gap_wellclass -p ./test_data/examples/smeaheia_v1 -w smeaheia.yaml -s GEN_NOLGR_PH2 --plot --ali-way 
 
 for comparing the output from smeaheia data with the output using Ali's grid logic.
 
-Otherwise, use the following:
+Otherwise, for other examples,
 
-$ python -m experiments.gap_wellclass --use-yaml --case-type cosmo --plot 
+# 1. smeaheia_v1
+
+$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v1 --well smeaheia.yaml --sim-case GEN_NOLGR_PH2 --plot 
+
+# 2. smeaheia_v2
+
+$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v2 --well smeaheia.yaml --sim-case TEMP-0 --plot
+
+# 3. cosmo
+
+$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/cosmo --well cosmo.yaml --sim-case TEMP-0 --plot
 
 """
+
 import os
 import json
 
@@ -57,12 +68,6 @@ cosmo = {
         'sim_path': r'./test_data/examples/cosmo', 
         'simcase': r'TEMP-0'}
 
-examples = {
-    'smeaheia_v1': smeaheia_v1,
-    'smeaheia_v2': smeaheia_v2,
-    'cosmo': cosmo
-}
-
 def main(args):
 
     ############# 0. User options ######################
@@ -70,12 +75,19 @@ def main(args):
     # TODO(hzh): use Ali's grid logic
     Ali_way = args.ali_way
 
-    # use yaml or csv input file
-    use_yaml = args.use_yaml
+    # where the location for the input parameters and eclipse .EGRID and .INIT files
+    # configuration path, for example './test_data/examples/smeaheia_v1'
+    sim_path = args.sim_path
 
-    # pick an example from given three options: 
-    #  i.e, smeaheia_v1, smeaheia_v2 and cosmo
-    case_type = args.case_type
+    # input configuration file name, for example, 'smeaheia.yaml'
+    well_config = args.well
+    # extract suffix
+    suffix = well_config.split('.')[-1]
+    # .yaml or .csv
+    use_yaml = suffix in ['yaml', 'yml']
+
+    # file path for simulation case, for example, 'TEMP-0'
+    sim_case = args.sim_case
 
     # output
     output_dir = args.output_dir
@@ -83,27 +95,18 @@ def main(args):
     LGR_NAME = args.output_name
 
 
-    ############# 1. Selected case ####################
-
-    # the selected example for testing
-    case = examples[case_type]
-
-    # where the location for the input parameters and eclipse .EGRID and .INIT files
-    sim_path = case['sim_path']
-
-
     ############ 2. Load well configuration file ###############
 
     if use_yaml:
         # where well configuration file is located
-        well_name = os.path.join(sim_path, case['well_input_yaml'])
+        well_name = os.path.join(sim_path, well_config)
         
         # # pydantic model
         well_model = yaml_parser(well_name)
         well_csv = json.loads(well_model.spec.model_dump_json())
     else:
         # where well configuration file is located
-        well_name = os.path.join(sim_path, case['well_input'])
+        well_name = os.path.join(sim_path, well_config)
 
         # load the well information
         well_csv = csv_parser(well_name)
@@ -138,7 +141,7 @@ def main(args):
     ##### 4.1 grid_coarse 
 
     # location of .egrid
-    simcase = os.path.join(sim_path, case['simcase'])
+    simcase = os.path.join(sim_path, sim_case)
 
     # Loading the model
     grid_coarse = GridCoarse(simcase)
@@ -199,12 +202,14 @@ if __name__ == '__main__':
     parser.add_argument("--ali-way", action="store_true",
                         help="Use Ali's logic to generate LGR grids")
 
-    parser.add_argument("--use-yaml", action="store_true",
-                        help="Use yaml format as input configuration file")
+    parser.add_argument('-p', "--sim-path", type=str, required=True,
+                        help='The file path to the configuration folder')
+    
+    parser.add_argument('-w', "--well", type=str, required=True,
+                        help="input well configuration file name, can be .yaml or .csv format")
 
-    parser.add_argument("--case-type", type=str, default='smeaheia_v1',
-                        choices=['smeaheia_v1', 'smeaheia_v2', 'cosmo'],
-                        help="name of test example")
+    parser.add_argument('-s', "--sim-case", type=str, required=True,
+                        help="file path of simulation case")
             
     parser.add_argument('--output-dir', type=str, default='./experiments',
                         help="output directory")

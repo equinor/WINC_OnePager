@@ -1,6 +1,6 @@
 """ generate grdecl grid
 """
-from typing import List
+from typing import List, Union
 
 import os
 import math
@@ -10,6 +10,7 @@ import numpy as np
 
 from .CARFIN_builders import (
     CARFIN_pipe_and_cement_bond_builder,
+    CARFIN_oph_builder,
     CARFIN_barrier_builder,
 )
 
@@ -145,7 +146,7 @@ def CARFIN_keywords(LGR_NAME: str,
     print (' ',file=O)
 
 def coreCARFIN(LGR_NAME: str,
-                casing_list: List[PipeCementModel],
+                casing_list: List[Union[PipeCementModel, ElemModel]],
                 barrier_list: List[ElemModel],
                 LGR_sizes_xy: List[float], 
                 LGR_depths: np.ndarray, 
@@ -169,12 +170,21 @@ def coreCARFIN(LGR_NAME: str,
 
     # loop around Conductor casing, Surface casing, and Production casing
     for idx, casing in enumerate(casing_list):
-        CARFIN_pipe_and_cement_bond_builder(casing, 
-                                            LGR_sizes_xy, LGR_depths, 
-                                            min_grd_size,
-                                            LGR_NAME, 
-                                            O)
-
+        if type(casing) is PipeCementModel:
+            CARFIN_pipe_and_cement_bond_builder(casing, 
+                                                LGR_sizes_xy, LGR_depths, 
+                                                min_grd_size,
+                                                LGR_NAME, 
+                                                O)
+        elif type(casing) is ElemModel:
+            CARFIN_oph_builder(casing, 
+                                LGR_sizes_xy, LGR_depths, 
+                                min_grd_size,
+                                LGR_NAME, 
+                                O)
+        else:
+            continue
+            
     # 4. optional: to add barrier inside the well
     if len(barrier_list):
 
