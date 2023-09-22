@@ -86,9 +86,8 @@ def main(args):
     command_array = run_command.split()
 
     # launch the command
-    results = subprocess.run(command_array, capture_output=True)
-    print(results.stdout.decode("utf-8"))
-
+    results = subprocess.run(command_array, capture_output=True, encoding="utf-8")
+    print(results.stdout)
 
     ############ 2. Load well configuration file ###############
 
@@ -179,8 +178,8 @@ def main(args):
     command_array = run_command.split()
 
     # launch the command
-    results = subprocess.run(command_array, capture_output=True)
-    print(results.stdout.decode("utf-8"))
+    results = subprocess.run(command_array, capture_output=True, encoding="utf-8")
+    print(results.stdout)
 
     # for qc
     if args.plot:
