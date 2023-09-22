@@ -139,15 +139,8 @@ def main(args):
 
     ############### 5. build LGR #####################
 
-    ##### 5.1 compute bounding box 
-
-    # Bounding box for well elements
-    well_df.compute_bbox(grid_refine.mesh_df, grid_refine.nx)
-    
-    ##### 5.2 set up permeability 
-
-    # set up permeability
-    grid_refine.set_permeability(drilling_df, casings_df, barriers_mod_df)
+    # set up LGR grid
+    grid_refine.build_LGR(drilling_df, casings_df, barriers_mod_df)
 
     ########### 6. output grdecl file ###################
 
