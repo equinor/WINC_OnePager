@@ -1,5 +1,5 @@
 
-from typing import List
+from typing import List, Union
 
 import pandas as pd
 
@@ -10,7 +10,7 @@ from src.GaP.libs.models import (
 )
 
 def to_gap_casing_list(drilling_df: pd.DataFrame, 
-                        casings_df: pd.DataFrame) -> List[PipeCementModel]:
+                        casings_df: pd.DataFrame) -> List[Union[PipeCementModel, ElemModel]]:
     """ convert casing dataframe to gap format
 
         Args:
@@ -22,12 +22,22 @@ def to_gap_casing_list(drilling_df: pd.DataFrame,
     """
 
     casings_list = []
-    for idx, row in casings_df.iterrows():
+    for idx, row in drilling_df.iterrows():
 
-        ID = row['diameter_m'] 
-        strt_depth, end_depth = row['top_msl'], row['bottom_msl']
-        strt_depth_cement, end_depth_cement, cb_perm = row['toc_msl'], row['boc_msl'], row['cb_perm']
-        strt_depth_oph, end_depth_oph, oh_perm = drilling_df.loc[idx, ['top_msl', 'bottom_msl', 'oh_perm']]
+        ID_oph, strt_depth_oph, end_depth_oph, oh_perm = drilling_df.loc[idx, ['diameter_m', 'top_msl', 'bottom_msl', 'oh_perm']]
+
+        try:
+            # casings
+            ID, strt_depth, end_depth = casings_df.loc[idx, ['diameter_m', 'top_msl', 'bottom_msl']]
+            # cement
+            strt_depth_cement, end_depth_cement, cb_perm = casings_df.loc[idx, ['toc_msl', 'boc_msl', 'cb_perm']]
+        except:
+            print('DEBUG ==============> handling open hole section')
+            casing_geom = ElemModel(ID=ID_oph,
+                                    pipe=DepthModel(strt_depth=strt_depth_oph, end_depth=end_depth_oph, perm=oh_perm))
+            casings_list.append(casing_geom)
+
+            continue
 
         # qc it
         # print('casing===>', idx, ID, strt_depth, end_depth, strt_depth_cement, end_depth_cement, strt_depth_oph, end_depth_oph)

@@ -14,8 +14,14 @@ class ElemModel(BaseModel):
     ID: float
     pipe: DepthModel
     type: Union[str, None] = None
-    
-class PipeCementModel(ElemModel):
 
-    cement: Union[DepthModel, None] = None
+class PipeModel(ElemModel):
+    """ define model for pipe
+    """
     oph: Union[DepthModel, None] = None
+
+class PipeCementModel(PipeModel):
+    """ define model for pipe and cement
+    """
+    cement: Union[DepthModel, None] = None
+

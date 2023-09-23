@@ -1,6 +1,6 @@
 
 # handle type hints problem for python version < 3.10
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,11 @@ from ecl.eclfile import EclInitFile
 
 # from ecl.eclfile import EclFile, EclRestartFile
 #import rips 
+
+from .extract_grid_utils import (
+    extract_xz_corn_coords,
+    extract_xz_prop_slice,
+)
 
 class GridCoarse:
 
@@ -183,43 +188,30 @@ class GridCoarse:
         self.DZ_ovb_coarse = grid_init.query('i==@main_grd_i & j == @main_grd_j & DZ > @dz0')['DZ'].values
     
     
-    def extract_xz_corn_coords(self):
+    def extract_xz_corn_coords(self) -> Tuple[np.ndarray, np.ndarray]:
         """ generate xcorn and zcorn coordinates
         """
 
         # for convenience
         grid_init = self.grid_init
 
-        # generate grid coordinates for plotting
-
-        # grid coordinates
-        xcorn  = (grid_init.query("j==0&k==0").DX.cumsum()).values
-        ycorn  = (grid_init.query("i==0&k==0").DY.cumsum()).values
-        zcorn  = (grid_init.query("i==0&j==0").DZ.cumsum()).values
-
-        # add origin coordinates
-        xcorn = np.append(0, xcorn)
-        ycorn = np.append(0, ycorn)
-        zcorn = np.append(0, zcorn)
-
         # shift grid coordinates half-length in x-y directions, i.e., [0, 3900] => [-1900, 2100]
         # but not in z direction
-        xcorn -= self.xcoord0
-        ycorn -= self.ycoord0    
+        sDX = self.xcoord0
+        sDY = self.ycoord0
 
-        return xcorn, zcorn
-    
-    def extract_xz_slice(self):
+        # generate grid coordinates for plotting
+        xcorn, zcorn = extract_xz_corn_coords(grid_init, sDX, sDY)
+
+        return xcorn, zcorn 
+ 
+    def extract_xz_slice(self) -> np.ndarray:
         """ generate x-z PERM slice
         """
-
-        # center y grid index
-        mid_j = self.main_grd_j
-
-        # extract 2D xz slice at middle of y
-        XZ_slice = self.grid_init.query('j==@mid_j')
+        # for convenience
+        grid_init = self.grid_init
 
         # extract permeability
-        Z = XZ_slice.PERMX.values.reshape(self.NZ, self.NX)
+        Z = extract_xz_prop_slice(grid_init)
 
         return Z

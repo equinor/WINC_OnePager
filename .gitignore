@@ -4,10 +4,27 @@ __pycache__/
 *$py.class
 
 # ignore ecl grid
-*.grdecl
+notebooks/*.grdecl
+experiments/*.grdecl
 
 # venv
 venv_screen/
+
+# pflotran artifacts
+test_data/**/model/*.UNSMRY
+test_data/**/model/*.UNRST
+test_data/**/model/*.LOG
+test_data/**/model/*.out
+test_data/**/model/*-mas.dat
+test_data/**/model/*-mas.csv
+test_data/**/model/*.SMSPEC
+test_data/**/model/*.ERR
+test_data/**/model/*.gzip
+test_data/**/model/*.run
+test_data/**/model/*.EGRID
+test_data/**/model/*.INIT
+test_data/**/include/*LGR.grdecl
+
 
 # C extensions
 *.so
