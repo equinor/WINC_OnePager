@@ -2,7 +2,7 @@
 # handle type hints problem for python version < 3.10
 from typing import Union, List
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 from ..utils.fraction_float import fraction_float
 
@@ -36,7 +36,7 @@ class DrillingRawModel(BaseModel):
     bottom_rkb: Union[int, float]
     diameter_in: Union[float, int, str]
 
-    @validator('diameter_in')
+    @field_validator('diameter_in')
     def diameter_in_converter(cls, v):
         if isinstance(v, (float, int)):
             return v
@@ -115,7 +115,7 @@ class ReservoirPressureModel(BaseModel):
     RP2: Union[str, float, int, None] = None
     RP3: Union[str, float, int, None] = None
 
-    # @validator('RP1', 'RP2', 'RP3')
+    # @field_validator('RP1', 'RP2', 'RP3')
     # def diameter_in_converter(cls, v):
     #     if isinstance(v, float, int):
     #         return v
