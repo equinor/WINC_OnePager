@@ -7,6 +7,8 @@ scipy
 ecl
 CoolProp
 welly
+pytest
+pytest-cov
 jupyter
 jupyterlab
 ipympl
