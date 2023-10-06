@@ -167,6 +167,20 @@ Another sub-directory `frigg` contains information for testing deviated wells.
 
 In addition, the PVT values are included in the directory `pvt_contants` for self-consistent testing of pressure-related computes.
 
+## Unit testing and code coverage
+We are using `pytest` to run unit testing and report code coverage. Here is a command example:
+```pyton
+$ python -m pytest tests
+```
+This will report the unit testing results. And the following will report not only unit testing but also code coverage:
+```python
+$ python -m pytest --cov tests
+```
+or a litle bit complex command:
+```python
+$ python -m pytest --cov --cov-branch --cov-report term-missing tests
+```
+
 ## Documentation
 
 To deploy the document to github pages, type the following at the command line:
