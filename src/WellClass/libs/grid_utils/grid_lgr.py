@@ -41,10 +41,11 @@ class GridLGR:
         # 
         self.lgr_index = lgr_index
 
-        # compute DX and DY
+        # compute middle index for extraction of DX and DY
         mid_i = lgr_index.i.max()//2
         mid_j = lgr_index.j.max()//2
- 
+
+        # compute DX and DY on the coarse grid by summing LGR grid
         self.main_grd_dx = lgr_index.query("j==@mid_j&k==0").DX.sum()
         self.main_grd_dy = lgr_index.query("i==@mid_i&k==0").DY.sum()
 
@@ -55,22 +56,28 @@ class GridLGR:
         # for convenience
         lgr_index = self.lgr_index
 
-        # for shifting
+        # shifting half coarse grid
         sDX = self.main_grd_dx/2
         sDY = self.main_grd_dy/2
 
-        # generate grid coordinates for plotting
+        # generate corner grid coordinates for plotting
         xcorn, zcorn = extract_xz_corn_coords(lgr_index, sDX, sDY)
 
         return xcorn, zcorn 
     
-    def extract_xz_slice(self) -> np.ndarray:
+    def extract_xz_slice(self, prop='PERMX') -> np.ndarray:
         """ generate x-z PERM slice
+
+            Args:
+                prop (str): the property name, default: PERMX
+
+            Returns:
+                np.ndarray: x-z slice of the property
         """
         # for convenience
         lgr_index = self.lgr_index
 
         # extract permeability
-        Z = extract_xz_prop_slice(lgr_index)
+        Z = extract_xz_prop_slice(lgr_index, prop=prop)
 
         return Z 
