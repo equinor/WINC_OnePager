@@ -243,11 +243,12 @@ class GridRefineBase:
         nxy = self.nx
 
         # ### 1. Drillings
-
-        drilling_df['k_min'] = np.nan
-        drilling_df['k_max'] = np.nan
-        drilling_df['ij_min'] = np.nan
-        drilling_df['ij_max'] = np.nan
+        # z
+        drilling_df['k_min'] = -1
+        drilling_df['k_max'] = -1
+        # xy
+        drilling_df['ij_min'] = -1
+        drilling_df['ij_max'] = -1
 
         for idx, row in drilling_df.iterrows():
             
@@ -270,14 +271,14 @@ class GridRefineBase:
         # ### 2. Casings
 
         # casing, k
-        casings_df['k_min'] = np.nan
-        casings_df['k_max'] = np.nan
+        casings_df['k_min'] = -1
+        casings_df['k_max'] = -1
         # cement bond, k
-        casings_df['toc_k_min'] = np.nan
-        casings_df['toc_k_max'] = np.nan
+        casings_df['toc_k_min'] = -1
+        casings_df['toc_k_max'] = -1
         # casing, xy
-        casings_df['ij_min'] = np.nan
-        casings_df['ij_max'] = np.nan
+        casings_df['ij_min'] = -1
+        casings_df['ij_max'] = -1
 
         for idx, row in casings_df.iterrows():
 
@@ -306,8 +307,12 @@ class GridRefineBase:
 
         # ### 3. Barriers
 
-        barriers_mod_df['k_min'] = np.nan
-        barriers_mod_df['k_max'] = np.nan
+        # z
+        barriers_mod_df['k_min'] = -1
+        barriers_mod_df['k_max'] = -1
+        # xy
+        barriers_mod_df['ij_min'] = -1
+        barriers_mod_df['ij_max'] = -1
 
         for idx, row in barriers_mod_df.iterrows():
             
@@ -315,6 +320,11 @@ class GridRefineBase:
 
             # convert to indices
             k_min, k_max = get_k_indices(mesh_df, top, bottom)
-            
+
+            # C) xy ranges
+            ij_min, ij_max = get_ij_indices(nxy, row['n_grd_id'])
+
             barriers_mod_df.loc[idx, 'k_min'] = k_min
             barriers_mod_df.loc[idx, 'k_max'] = k_max
+            barriers_mod_df.loc[idx, 'ij_min'] = ij_min
+            barriers_mod_df.loc[idx, 'ij_max'] = ij_max

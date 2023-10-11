@@ -127,6 +127,7 @@ def main(args):
     lgr = LGRBuilder(grid_coarse, 
                      annulus_df, 
                      drilling_df, casings_df, borehole_df,
+                     barriers_mod_df,
                      Ali_way)
 
     ##### 4.3 grid refine 
