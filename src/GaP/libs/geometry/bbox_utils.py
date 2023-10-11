@@ -24,17 +24,23 @@ def BBoxXY(ID: float,
     # x
     no_grd_elem_x = math.floor(ID/min_grd_size)
 
-    x_min_elem = math.ceil((len (LGR_sizes_xy)-no_grd_elem_x)/2)
-    if x_min_elem < 0:
+    xa = (len (LGR_sizes_xy)-no_grd_elem_x)/2
+    if xa < 0:
         raise ValueError('ERROR:The ID of barrier is larger than refined area')
+    
+    x_min_elem = math.ceil(xa)
+
     x_max_elem = x_min_elem + no_grd_elem_x 
     
     # y
     no_grd_elem_y = math.floor(ID/min_grd_size)
 
-    y_min_elem = math.ceil((len (LGR_sizes_xy)-no_grd_elem_y)/2)
-    if y_min_elem < 0:
+    ya = (len (LGR_sizes_xy)-no_grd_elem_y)/2
+    if ya < 0:
         raise ValueError('ERROR:The ID of tube is larger than refined area')
+    
+    y_min_elem = math.ceil(ya)
+
     y_max_elem = y_min_elem + no_grd_elem_y 
 
     return x_min_elem, x_max_elem, y_min_elem, y_max_elem
