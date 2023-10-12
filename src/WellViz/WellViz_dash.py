@@ -123,8 +123,6 @@ Xcoord = Xcoord - Xcoord.max()/2
 Ycoord = lgr_init.query("j=={:d}&i==i.min()".format(mid_j_index)).DZ.cumsum().tolist()
 Ycoord = [0] + Ycoord
 
-print('xcoord=>', Xcoord)
-print('ycoord=>', Ycoord)
 ### Start on Dash
 app = Dash(__name__)
 
@@ -214,13 +212,11 @@ def update_figure(select_background_name, select_foreground_name, selected_tstep
         # background
         if select_background_name in lgr_init.columns:
                 Zvalues = lgr_init.query("j=={:d}".format(mid_j_index))[select_background_name].values
-                print('lgr_init, background: j===>', mid_j_index, Zvalues.shape, len(Ycoord), len(Xcoord))
                 Zvalues = Zvalues.reshape(len(Ycoord)-1, len(Xcoord)-1)
                 Zmin = Zvalues.min()
                 Zmax = Zvalues.max()
         else:
                 Zvalues = lgr_rst.query("j=={:d} & tstep=={:}".format(mid_j_index, selected_tstep))[select_background_name].values
-                print('lgr_rst, background: j===>', mid_j_index, Zvalues.shape, len(Ycoord), len(Xcoord))
                 Zvalues = Zvalues.reshape(len(Ycoord)-1, len(Xcoord)-1)
                 Zmin = lgr_rst.query("j=={:d}".format(mid_j_index))[select_background_name].min()
                 Zmax = lgr_rst.query("j=={:d}".format(mid_j_index))[select_background_name].max()
@@ -228,15 +224,13 @@ def update_figure(select_background_name, select_foreground_name, selected_tstep
         # foreground
         if select_foreground_name in lgr_init.columns: #Opens up for having more than SGAS as foregound
                 Zvalues_fg = lgr_init.query("j=={:d}".format(mid_j_index))[select_foreground_name].values
-                print('lgr_init, foreground: j===>', mid_j_index, Zvalues.shape, len(Ycoord), len(Xcoord))
                 Zvalues_fg = Zvalues_fg.reshape(len(Ycoord)-1, len(Xcoord)-1)
                 Zmin_fg = Zvalues_fg.min()
                 Zmax_fg = Zvalues_fg.max()
         elif select_foreground_name == "None":
                 pass
         else: #Foreground value is a dynamic (restart) vector
-                Zvalues_fg = lgr_rst.query("j=={:d} & tstep=={:}".format(mid_j_index, selected_tstep))[select_foreground_name].values
-                print('lgr_rst, foreground: j===>', mid_j_index, Zvalues.shape, len(Ycoord), len(Xcoord))                
+                Zvalues_fg = lgr_rst.query("j=={:d} & tstep=={:}".format(mid_j_index, selected_tstep))[select_foreground_name].values         
                 Zvalues_fg = Zvalues_fg.reshape(len(Ycoord)-1, len(Xcoord)-1)
                 Zmin_fg = lgr_rst.query("j=={:d}".format(mid_j_index))[select_foreground_name].min()
                 Zmax_fg = lgr_rst.query("j=={:d}".format(mid_j_index))[select_foreground_name].max()
