@@ -321,6 +321,22 @@ def toggle(n,playing):
                 return not playing, style
         return playing, style
 
+def open_browser(url):
+        import webbrowser
+        webbrowser.open_new(url)
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+
+        import socket
+        from threading import Timer
+        # url
+        hostname = socket.gethostname()
+        port = 8050
+        url = f'http://{hostname}:{port}/'
+
+        # launch browser
+        Timer(1, open_browser, args=[url]).start()
+
+        # launch server
+        app.run_server(debug=True, port=port)
+
