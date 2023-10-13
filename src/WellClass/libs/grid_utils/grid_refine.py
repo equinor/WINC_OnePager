@@ -36,7 +36,6 @@ class GridRefine(GridRefineBase):
 
                 drilling_df (pd.DataFrame): information about drilling
                 casings_df (pd.DataFrame): information about casings and cement-bond
-                borehold_df (pd.DataFrame): information about borehole
                 barriers_mod_df (pd.DataFrame): information about barrier                  
         """
 
