@@ -31,19 +31,21 @@ def compute_annulus(casings: dict, drilling: dict) -> dict:
         hole_top, hole_bottom, hole_d = hole[['top_msl', 'bottom_msl', 'diameter_m']]
 
         # collect them
-        annulus_fields.append((hole_d, hole_top, hole_bottom))
+        annulus_fields.append((hole_d, d, hole_top, hole_bottom))
 
     # make a dataframe
-    annulus_df = pd.DataFrame(data=annulus_fields, columns=['ann_od_m', 'top_msl', 'bottom_msl'])
+    annulus_df = pd.DataFrame(data=annulus_fields, columns=['ann_od_m', 'ann_id_m', 'top_msl', 'bottom_msl'])
+    # sorted it
+    annulus_df = annulus_df.sort_values(by=['ann_od_m'], ascending=False, ignore_index=True)
 
     #Compute inner area
-    annulus_df['A_i'] = np.pi * (casings_df['diameter_m']/2)**2
+    annulus_df['A_i'] = np.pi * (annulus_df['ann_id_m']/2)**2
 
     #Compute outer area
     annulus_df['A_o'] = np.pi * (annulus_df['ann_od_m']/2)**2
 
     # annulus thickness: (od-id)/2
-    annulus_df['thick_m'] = (annulus_df['ann_od_m'] - casings_df['diameter_m'])/2
+    annulus_df['thick_m'] = (annulus_df['ann_od_m'] - annulus_df['ann_id_m'])/2
 
     return annulus_df.to_dict()
 
