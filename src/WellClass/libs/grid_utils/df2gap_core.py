@@ -27,12 +27,15 @@ def df_to_gap_casing(drilling_df: pd.DataFrame,
         oph_columns = ['diameter_m', 'ij_min', 'ij_max', 'k_min', 'k_max', 'oh_perm']
         ID_oph, ij_min_oph, ij_max_oph, k_min_oph, k_max_oph, oh_perm = drilling_df.loc[idx, oph_columns]
 
-        print('drilling===>', idx, ID_oph, ij_min_oph, ij_max_oph, k_min_oph, k_max_oph)
+        # print('drilling===>', idx, ID_oph, ij_min_oph, ij_max_oph, k_min_oph, k_max_oph)
 
         try:
             # bbox for casings
             pipe_columns = ['diameter_m', 'ij_min', 'ij_max', 'k_min', 'k_max']
             ID_pipe, ij_min_pipe, ij_max_pipe, k_min_pipe, k_max_pipe  = casings_df.loc[idx, pipe_columns]
+
+            # the thickness of cement bond
+            x_thickness = int((drilling_df.loc[idx, 'ij_max'] - casings_df.loc[idx, 'ij_max']))
 
             # bbox for cement bond
             cb_columns = ['toc_k_min', 'toc_k_max', 'cb_perm']
@@ -73,9 +76,11 @@ def df_to_gap_casing(drilling_df: pd.DataFrame,
                             int(ij_min_pipe+1), int(ij_max_pipe+1),
                             int(ij_min_pipe+1), int(ij_max_pipe+1),
                             int(toc_k_min_cb+1), int(toc_k_max_cb+1),
-                            cb_perm,
-                            LGR_NAME, 
-                            O)
+                            x_bd=x_thickness,
+                            y_bd=x_thickness,
+                            perm=cb_perm,
+                            LGR_NAME=LGR_NAME, 
+                            O=O)
 
 
 def df_to_gap_barrier(barriers_mod_df: pd.DataFrame,

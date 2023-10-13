@@ -141,14 +141,14 @@ def main(args):
     ############### 5. build LGR #####################
 
     # set up LGR grid
-    grid_refine.build_LGR(drilling_df, casings_df, barriers_mod_df)
+    gap_casing_df = grid_refine.build_LGR(drilling_df, casings_df, barriers_mod_df)
 
     ########### 6. output grdecl file ###################
 
     # Write LGR file
     lgr.build_grdecl(output_dir, LGR_NAME,
                      drilling_df,
-                     casings_df,
+                     gap_casing_df, # casings_df,
                      barriers_mod_df)
     
     # for qc
