@@ -47,6 +47,11 @@ import json
 import pandas as pd
 import scipy
 
+from .well_raw_validation import (
+    valid_drilling,
+    valid_casings    
+)
+
 @dataclass              # @dataclass(kw_only=True)
 class WellRaw:
     """ Basic user input well information
@@ -84,6 +89,9 @@ class WellRaw:
         drilling_df['top_msl']    = drilling_df['top_rkb'] - self.header['well_rkb']
         drilling_df['bottom_msl'] = drilling_df['bottom_rkb'] - self.header['well_rkb']
 
+        # validate drilling
+        valid_drilling(drilling_df)
+
         self.drilling = drilling_df.to_dict()
 
     def _process_casings(self):
@@ -95,6 +103,9 @@ class WellRaw:
         casings_df['bottom_msl'] = casings_df['bottom_rkb'] - self.header['well_rkb']
         casings_df['toc_msl']    = casings_df['toc_rkb']    - self.header['well_rkb']
         casings_df['boc_msl']    = casings_df['boc_rkb']    - self.header['well_rkb']
+
+        # validate casings
+        valid_casings(casings_df)
 
         self.casings = casings_df.to_dict()
 
