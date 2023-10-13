@@ -23,9 +23,6 @@ class LGRBuilder(LGRBuilderBase):
                  grid_init: GridCoarse, 
                  annulus_df: pd.DataFrame,
                  drilling_df: pd.DataFrame, 
-                 casings_df: pd.DataFrame, 
-                 borehole_df: pd.DataFrame,
-                 barriers_mod_df: pd.DataFrame,
                  Ali_way: bool):
         """ LGR grid information in x, y, z directions. We are going to compute the grid sizes in lateral (x and y) and vertical directions
 
@@ -33,9 +30,6 @@ class LGRBuilder(LGRBuilderBase):
                 grid_init (GridCoarse): all information about coarse grid
                 annulus_df (pd.DataFrame): information about annulus
                 drilling_df (pd.DataFrame): information about drilling
-                casings_df (pd.DataFrame): information about casings and cement-bond
-                borehold_df (pd.DataFrame): information about borehole
-                barriers_mod_df (pd.DataFrame): information about barrier
                 Ali_way (bool): use Ali's algorithm to compute lateral grids and apply refdepth in z direction
         """
 
@@ -43,9 +37,6 @@ class LGRBuilder(LGRBuilderBase):
             grid_init,
             annulus_df,
             drilling_df,
-            casings_df,
-            borehole_df,
-            barriers_mod_df,
             Ali_way
         )
 

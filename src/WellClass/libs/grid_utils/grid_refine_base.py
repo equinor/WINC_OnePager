@@ -8,14 +8,21 @@ from .grid_coarse import GridCoarse
 
 from .LGR_bbox import compute_bbox
 
+from .LGR_grid_utils import (
+    compute_ngrd,
+)
+
 class GridRefineBase:
 
     def __init__(self, 
                  grid_coarse: GridCoarse,
                  LGR_sizes_x, LGR_sizes_y, LGR_sizes_z,
+                 min_grd_size
                  ):
         """ dataframe for LGR mesh for the center coarse grid
         """
+
+        self.min_grd_size = min_grd_size
 
         # dx/dy of coarse grid
         self.main_grd_dx = grid_coarse.main_grd_dx
@@ -26,7 +33,7 @@ class GridRefineBase:
         ny = len(LGR_sizes_y)
         nz = len(LGR_sizes_z)
 
-        print(f'nx={nx}, ny={ny}, nz={nz}')
+        print(f'LGR dimension: nx={nx}, ny={ny}, nz={nz}')
 
         # set dimensions
         self.nx, self.ny, self.nz = nx, ny, nz
@@ -230,6 +237,29 @@ class GridRefineBase:
             barrier_perm = row['barrier_perm']
             criteria = f'material == "barrier_{ib}"'
             mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = barrier_perm
+
+    def _compute_num_lateral_fine_grd(self, 
+                                        drilling_df: pd.DataFrame, 
+                                        casings_df: pd.DataFrame, 
+                                        barriers_mod_df: pd.DataFrame):
+        """ compute number of fine grid in x-y directions
+
+           Args:
+
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                borehold_df (pd.DataFrame): information about borehole
+                barriers_mod_df (pd.DataFrame): information about barrier            
+        """
+        # for convenience
+        min_grd_size = self.min_grd_size
+
+        # n_grd_id for well elements
+        drilling_df['n_grd_id']  = drilling_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+        casings_df[ 'n_grd_id']  = casings_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+        barriers_mod_df['n_grd_id'] = barriers_mod_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+
+        # borehole_df['n_grd_id'] = borehole_df['id_m'].map(lambda x: compute_ngrd(x, min_grd_size))
 
     def _compute_bbox(self, drilling_df, casings_df, barriers_mod_df):
         """ Compute bounding boxes for drillings, casings and barriers.

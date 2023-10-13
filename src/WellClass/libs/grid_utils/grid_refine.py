@@ -17,24 +17,39 @@ class GridRefine(GridRefineBase):
     def __init__(self, 
                  grid_coarse: GridCoarse,
                  LGR_sizes_x, LGR_sizes_y, LGR_sizes_z,
+                 min_grd_size: float
                  ):
         """ dataframe for LGR mesh for the center coarse grid
         """
 
         super().__init__(grid_coarse, 
-                         LGR_sizes_x, LGR_sizes_y, LGR_sizes_z)
+                         LGR_sizes_x, LGR_sizes_y, LGR_sizes_z,
+                         min_grd_size)
         
-    def build_LGR(self, drilling_df, casings_df, barriers_mod_df):
-        """ assign material types to corresponding permeabilities 
+    def build_LGR(self, 
+                  drilling_df: pd.DataFrame, 
+                  casings_df: pd.DataFrame, 
+                  barriers_mod_df: pd.DataFrame) -> None:
+        """ assign material types to corresponding permeabilities
+
+            Args:
+
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                borehold_df (pd.DataFrame): information about borehole
+                barriers_mod_df (pd.DataFrame): information about barrier                  
         """
 
-        # set bounding box
+        # 1. compute lateral number of refined grid
+        self._compute_num_lateral_fine_grd(drilling_df, casings_df, barriers_mod_df)
+
+        # 2. set bounding box
         self._compute_bbox(drilling_df, casings_df, barriers_mod_df)
 
-        # set material type
+        # 3. set material type
         self._set_material_type(drilling_df, casings_df, barriers_mod_df)
 
-        # set permeability
+        # 4. set permeability
         self._set_permeability(drilling_df, casings_df, barriers_mod_df)
 
  

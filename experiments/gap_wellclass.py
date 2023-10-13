@@ -126,8 +126,7 @@ def main(args):
     # LGR grid information in x, y, z directions
     lgr = LGRBuilder(grid_coarse, 
                      annulus_df, 
-                     drilling_df, casings_df, borehole_df,
-                     barriers_mod_df,
+                     drilling_df,
                      Ali_way)
 
     ##### 4.3 grid refine 
@@ -136,6 +135,7 @@ def main(args):
     grid_refine = GridRefine(grid_coarse,
                             lgr.LGR_sizes_x, lgr.LGR_sizes_y, 
                             lgr.LGR_sizes_z, 
+                            lgr.min_grd_size
                             )
 
     ############### 5. build LGR #####################

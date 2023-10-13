@@ -14,6 +14,11 @@ from .extract_grid_utils import (
 class GridLGR:
 
     def __init__(self, sim_case: str) -> None:
+        """ This is used to process .EGRID file
+        
+            Args:
+                sim_case (str): name prefix for eclipse/pflotran case
+        """
 
         #Get grid dimensions and coordinates
         grid = EclGrid(sim_case + ".EGRID") 

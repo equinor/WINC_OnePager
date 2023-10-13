@@ -15,9 +15,6 @@ class LGRBuilderBase:
                  grid_init: GridCoarse, 
                  annulus_df: pd.DataFrame,
                  drilling_df: pd.DataFrame, 
-                 casings_df: pd.DataFrame, 
-                 borehole_df: pd.DataFrame,
-                 barriers_mod_df: pd.DataFrame,
                  Ali_way: bool):
         """ LGR grid information in x, y, z directions. We are going to compute the grid sizes in lateral (x and y) and vertical directions
 
@@ -25,9 +22,6 @@ class LGRBuilderBase:
                 grid_init (GridCoarse): all information about coarse grid
                 annulus_df (pd.DataFrame): information about annulus
                 drilling_df (pd.DataFrame): information about drilling
-                casings_df (pd.DataFrame): information about casings and cement-bond
-                borehold_df (pd.DataFrame): information about borehole
-                barriers_mod_df (pd.DataFrame): information about barrier
                 Ali_way (bool): use Ali's algorithm to compute lateral grids and apply refdepth in z direction
         """
 
@@ -57,7 +51,7 @@ class LGRBuilderBase:
         self.min_grd_size = min_grd_size
 
         # #### 2. Compute number of cells of horizontal LGR
-        self.no_latral_fine_grd = self._compute_no_latral_fine_grd(drilling_df, casings_df, borehole_df, barriers_mod_df)
+        self.num_lateral_fine_grd = self._compute_num_lateral_fine_grd(drilling_df)
 
         # #### 3. compute LGR sizes
 
@@ -67,7 +61,17 @@ class LGRBuilderBase:
         # 3.2 comptue LGR sizes in z direction
         self.LGR_sizes_z, self.LGR_numb_z, self.LGR_depths = self._compute_LGR_sizes_z()
 
-    def _compute_min_grd_size(self, annulus_df, Ali_way):
+    def _compute_min_grd_size(self, annulus_df, Ali_way) -> float:
+        """ Compute minimum grid size
+
+            Args:
+
+                annulus_df (pd.DataFrame): information about annulus
+                Ali_way (bool): use Ali's algorithm to compute lateral grids and apply refdepth in z direction
+
+            Returns:
+                float: minimum grid size
+        """
 
         # 0. minimum grid size
 
@@ -85,20 +89,19 @@ class LGRBuilderBase:
 
         return min_grd_size
     
-    def _compute_no_latral_fine_grd(self, 
-                                    drilling_df, casings_df, borehole_df, 
-                                    barriers_mod_df):
-        """ compute number of LGR laternal grids
+    def _compute_num_lateral_fine_grd(self, drilling_df) -> float:
+        """ compute number of LGR lateral grids
+
+            Args:
+
+                drilling_df (pd.DataFrame): information about drilling
+
+            Returns:
+                float: number of LGR lateral grids
         """
 
         # only for convenience
         min_grd_size = self.min_grd_size
-
-        # n_grd_id for well elements
-        drilling_df['n_grd_id']  = drilling_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
-        casings_df[ 'n_grd_id']  = casings_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
-        borehole_df['n_grd_id'] = borehole_df['id_m'].map(lambda x: compute_ngrd(x, min_grd_size))
-        barriers_mod_df['n_grd_id'] = barriers_mod_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
 
         # 
         drilling_series = drilling_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
@@ -107,16 +110,20 @@ class LGRBuilderBase:
     
     def _compute_LGR_sizes_xy(self, Ali_way: bool):
         """ Compute LGR grid sizes in x-y directions
+
+            Args:
+
+                Ali_way (bool): use Ali's algorithm to compute lateral grids and apply refdepth in z direction
         """
 
         # for convenience
-        no_latral_fine_grd = self.no_latral_fine_grd
+        num_lateral_fine_grd = self.num_lateral_fine_grd
         min_grd_size = self.min_grd_size
         main_grd_dx = self.main_grd_dx
         main_grd_dy = self.main_grd_dy
 
         # 3.1 generate the LGR grid sizes in x-y
-        LGR_sizes_x, LGR_sizes_y, _ = generate_LGR_xy(no_latral_fine_grd, 
+        LGR_sizes_x, LGR_sizes_y, _ = generate_LGR_xy(num_lateral_fine_grd, 
                                                         min_grd_size, 
                                                         main_grd_dx, main_grd_dy,
                                                         Ali_way=Ali_way)
