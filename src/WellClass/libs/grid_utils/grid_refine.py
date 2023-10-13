@@ -36,7 +36,10 @@ class GridRefine(GridRefineBase):
 
                 drilling_df (pd.DataFrame): information about drilling
                 casings_df (pd.DataFrame): information about casings and cement-bond
-                barriers_mod_df (pd.DataFrame): information about barrier                  
+                barriers_mod_df (pd.DataFrame): information about barrier 
+
+            Returns:
+                an updated dataframe specifically for GaP code                 
         """
 
         # 1. compute lateral number of refined grid
@@ -51,6 +54,10 @@ class GridRefine(GridRefineBase):
         # 4. set permeability
         self._set_permeability(drilling_df, casings_df, barriers_mod_df)
 
+        # 0. for GaP code
+        gap_casing_df = self._compute_bbox_gap_casing(drilling_df, casings_df)
+
+        return gap_casing_df
  
     def extract_xz_corn_coords(self) -> Tuple[np.ndarray, np.ndarray]:
         """ generate xcorn and zcorn coordinates

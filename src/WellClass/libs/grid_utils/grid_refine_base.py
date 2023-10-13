@@ -8,9 +8,9 @@ from .grid_coarse import GridCoarse
 
 from .LGR_bbox import compute_bbox
 
-from .LGR_grid_utils import (
-    compute_ngrd,
-)
+from .LGR_grid_utils import compute_ngrd
+
+from .well_casings_gap import gap_casings
 
 class GridRefineBase:
 
@@ -142,11 +142,16 @@ class GridRefineBase:
 
 
 
-    def _set_material_type(self,
-                           drilling_df, 
-                           casings_df, 
-                           barriers_mod_df):
+    def _set_material_type(self, 
+                            drilling_df: pd.DataFrame, 
+                            casings_df: pd.DataFrame, 
+                            barriers_mod_df: pd.DataFrame):
         """ Assign material types, such as openholes, overburden, cement bond, etc.
+
+            Args:
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                barriers_mod_df (pd.DataFrame): information about barrier    
         """
 
         # only for convenience
@@ -212,8 +217,16 @@ class GridRefineBase:
             mesh_df.loc[mesh_df.eval(criteria), 'material'] = f'barrier_{ib}'
 
 
-    def _set_permeability(self, drilling_df, casings_df, barriers_mod_df):
+    def _set_permeability(self, 
+                            drilling_df: pd.DataFrame, 
+                            casings_df: pd.DataFrame, 
+                            barriers_mod_df: pd.DataFrame) -> None:
         """ Actual function to assign permeability according to material type
+
+            Args:
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                barriers_mod_df (pd.DataFrame): information about barrier    
         """
 
         # for convenience only
@@ -244,8 +257,7 @@ class GridRefineBase:
                                         barriers_mod_df: pd.DataFrame):
         """ compute number of fine grid in x-y directions
 
-           Args:
-
+            Args:
                 drilling_df (pd.DataFrame): information about drilling
                 casings_df (pd.DataFrame): information about casings and cement-bond
                 barriers_mod_df (pd.DataFrame): information about barrier            
@@ -260,8 +272,16 @@ class GridRefineBase:
 
         # borehole_df['n_grd_id'] = borehole_df['id_m'].map(lambda x: compute_ngrd(x, min_grd_size))
 
-    def _compute_bbox(self, drilling_df, casings_df, barriers_mod_df):
+    def _compute_bbox(self, 
+                        drilling_df: pd.DataFrame, 
+                        casings_df: pd.DataFrame, 
+                        barriers_mod_df: pd.DataFrame) -> None:
         """ Compute bounding boxes for drillings, casings and barriers.
+
+            Args:
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                barriers_mod_df (pd.DataFrame): information about barrier       
         """
 
         # for convenience
@@ -279,3 +299,33 @@ class GridRefineBase:
 
         # ### 3. Barriers
         compute_bbox(mesh_df, barriers_mod_df, nxy=nxy, maxDepth=maxDepth)
+
+    def _compute_bbox_gap_casing(self, 
+                                 drilling_df: pd.DataFrame, 
+                                 casings_df: pd.DataFrame) -> pd.DataFrame:
+        """ compute bbox of casing for GaP 
+
+            Args:
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+
+            Returns:
+                an updated dataframe specifically for GaP code
+        """
+
+        # for convenience
+        mesh_df = self.mesh_df
+        nxy = self.nx
+        min_grd_size = self.min_grd_size
+
+        # generate new pd.DataFrame by trimming drilling/casings
+        gap_casing_df = gap_casings(drilling_df, casings_df)
+
+        # compute number of lateral grid (refined)
+        gap_casing_df[ 'n_grd_id']  = casings_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+
+        # Casings
+        compute_bbox(mesh_df, gap_casing_df, nxy=nxy, is_casing=True)
+
+        return gap_casing_df
+    

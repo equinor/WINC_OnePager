@@ -1,8 +1,15 @@
 import pandas as pd
 
 def gap_casings(drilling_df: pd.DataFrame, 
-                casings_df: pd.DataFrame):
-    """ casings for GaP
+                casings_df: pd.DataFrame) -> pd.DataFrame:
+    """ Generate casings for GaP
+
+        Args:
+            drilling_df (pd.DataFrame): information about drilling
+            casings_df (pd.DataFrame): information about casings and cement-bond
+
+        Returns:
+            trimmed casing information ready for GaP code
     """
 
     # drilling columns
