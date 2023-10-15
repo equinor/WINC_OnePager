@@ -16,15 +16,15 @@ def CARFIN_cement_bond(ID: float,
         The cement bond can be mimicked by low perm vertical layer adjustment to the casing with given depth and interval. 
 
         Args:
-            ID (float): Internal Diameter (m)
-            x_min_pipe (int): minimum x
-            x_max_pipe (int): maximum x
-            y_min_pipe (int): minimum y
-            y_max_pipe (int): maximum y
-            k_min_CB (int): minimum k
-            k_max_CB (int): maximum k
-            x_bd (int): x thickness, default: 1
-            y_bd (int): y thickness, default: 1
+            ID (float): Internal Diameter (m), only for comments, not used in calculation
+            x_min_pipe (int): minimum x for actual internal open hole
+            x_max_pipe (int): maximum x for actual internal open hole
+            y_min_pipe (int): minimum y for actual internal open hole
+            y_max_pipe (int): maximum y for actual internal open hole
+            k_min_CB (int): minimum k for actual internal open hole
+            k_max_CB (int): maximum k for actual internal open hole
+            x_bd (int): x thickness for out extension, default: 1
+            y_bd (int): y thickness  for out extension, default: 1
             perm (float): permeability value
             LGR_NAME (str): LGR name
             O (TextIO): opened file handle
