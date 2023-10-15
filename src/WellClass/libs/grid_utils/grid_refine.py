@@ -55,7 +55,7 @@ class GridRefine(GridRefineBase):
         self._set_permeability(drilling_df, casings_df, barriers_mod_df)
 
         # 0. for GaP code
-        gap_casing_df = self._compute_bbox_gap_casing(drilling_df, casings_df)
+        gap_casing_df = self._compute_bbox_gap_casing(casings_df)
 
         return gap_casing_df
  

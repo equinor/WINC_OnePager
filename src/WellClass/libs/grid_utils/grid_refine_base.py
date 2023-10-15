@@ -10,7 +10,7 @@ from .LGR_bbox import compute_bbox
 
 from .LGR_grid_utils import compute_ngrd
 
-from .well_casings_gap import gap_casings
+from .casings_cement import trim_casings_cement
 
 class GridRefineBase:
 
@@ -301,12 +301,10 @@ class GridRefineBase:
         compute_bbox(mesh_df, barriers_mod_df, nxy=nxy, maxDepth=maxDepth)
 
     def _compute_bbox_gap_casing(self, 
-                                 drilling_df: pd.DataFrame, 
                                  casings_df: pd.DataFrame) -> pd.DataFrame:
         """ compute bbox of casing for GaP 
 
             Args:
-                drilling_df (pd.DataFrame): information about drilling
                 casings_df (pd.DataFrame): information about casings and cement-bond
 
             Returns:
@@ -318,8 +316,8 @@ class GridRefineBase:
         nxy = self.nx
         min_grd_size = self.min_grd_size
 
-        # generate new pd.DataFrame by trimming drilling/casings
-        gap_casing_df = gap_casings(drilling_df, casings_df)
+        # generate new pd.DataFrame by trimming casings
+        gap_casing_df = trim_casings_cement(casings_df)
 
         # compute number of lateral grid (refined)
         gap_casing_df[ 'n_grd_id']  = casings_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
