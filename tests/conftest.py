@@ -13,15 +13,11 @@ from src.WellClass.libs.utils import (
 
 from src.WellClass.libs.well_class import Well
 
-from src.WellClass.libs.grid_utils import (
-    WellDataFrame,
-)
-
-# a test example
+# a test example: cosmo
 example = {
-    'sim_path': './test_data/examples/smeaheia_v1',
-    'well_config': 'smeaheia.yaml',
-    'sim_case': 'GEN_NOLGR_PH2.EGRID'
+    'sim_path': './test_data/examples/cosmo',
+    'well_config': 'cosmo.yaml',
+    'sim_case': 'TEMP-0.EGRID'
 }
 
 @pytest.fixture(scope='session')
@@ -89,12 +85,3 @@ def well_class_dict_fixture():
 
     return my_well_dict
 
-@pytest.fixture(scope='session')
-def well_dataframe_fixture(well_class_fixture):
-    """ Well DataFrame fixture
-        Args:
-            well_class_fixture: fixture for WellClass
-    """
-    well_df = WellDataFrame(well_class_fixture)
-
-    return well_df
