@@ -67,7 +67,7 @@ def main(args):
     use_yaml = suffix in ['.yaml', '.yml']
 
     # location of .egrid, for example, TEMP-0.EGID, etc.
-    simcase = sim_path/args.sim_case
+    simcase = sim_path/'model'/args.sim_case
 
     # output directory
     output_dir = pathlib.Path(args.output_dir)

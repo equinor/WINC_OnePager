@@ -71,11 +71,9 @@ def main(args):
     # file prefix for dry run
     # where eclipse .EGRID and .INIT files will be located
     simcase1 = sim_path/'model'/sim_case_NOSIM
-    simcase1
 
     # LGR
     simcase2 = sim_path/'model'/sim_case_LGR
-    simcase2
 
     ############ 1.5 Run coarse simulation ######################
     # file name (coarse grid) for pflotran run
