@@ -10,7 +10,7 @@ from src.GaP.libs.carfin.CARFIN_core import (
 
 from .grid_coarse import GridCoarse
 
-from .df2gap_core import (
+from .LGR2GaP import (
     df_to_gap_casing,
     df_to_gap_barrier
 )

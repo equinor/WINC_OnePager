@@ -10,7 +10,7 @@ from .LGR_bbox import compute_bbox
 
 from .LGR_grid_utils import compute_ngrd
 
-from .casings_cement import trim_casings_cement
+from ..well_computed.casings_cement import trim_casings_cement
 
 class GridRefineBase:
 

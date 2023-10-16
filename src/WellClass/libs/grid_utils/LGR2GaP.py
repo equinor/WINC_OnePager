@@ -22,7 +22,7 @@ def df_to_gap_casing(drilling_df: pd.DataFrame,
     """
     # assume oh_perm is the same for open hole
     oh_perm = drilling_df['oh_perm'].values[0]
-    drilling_k_maxs = drilling_df['oh_perm'].values
+    drilling_k_maxs = drilling_df['k_max'].values
 
     # saved for open hole section
     k_max_oph_saved = -1
@@ -74,40 +74,46 @@ def df_to_gap_casing(drilling_df: pd.DataFrame,
                     O)
 
     # 3. cement-bond sections
-    k_max_saved = -1
     for idx in casings_df.index:
 
         # bbox for cement bond
         cb_columns = ['diameter_m', 'ij_min', 'ij_max','toc_k_min', 'toc_k_max', 'cb_perm']
         ID_pipe, ij_min_pipe, ij_max_pipe, toc_k_min_cb, toc_k_max_cb, cb_perm = casings_df.loc[idx, cb_columns]
 
-        # locate the interval of cement-bond within drilling
-        for index, row in drilling_df.iterrows():
-            kmin, kmax = row['k_min'], row['k_max']
+        # locate the intervals of cement-bond within drilling
+        df_kmin = drilling_df[(drilling_df.k_min <= toc_k_min_cb) & (drilling_df.k_max> toc_k_min_cb)]
+        df_kmax = drilling_df[(drilling_df.k_min < toc_k_max_cb) & (drilling_df.k_max >= toc_k_max_cb)]
+        # the included drilling sections
+        df_drilling_new = drilling_df.iloc[df_kmin.index[0]:df_kmax.index[0]+1]  # include the last section
 
-            if toc_k_min_cb >= kmin and toc_k_min_cb < kmax:
-                toc_k_min = toc_k_min_cb
+        # split casings according to drilling sections
+        for ic, (_, row) in enumerate(df_drilling_new.iterrows()):
 
-            if toc_k_max_cb >= kmin and toc_k_max_cb < kmax:
-                toc_k_max = toc_k_max_cb
+            if ic == 0:   # first section
+                new_toc_k_min_cb = toc_k_min_cb
+                new_toc_k_max_cb = row['k_max']
+            elif ic == len(df_drilling_new)-1:
+                new_toc_k_min_cb = row['k_min']
+                new_toc_k_max_cb = toc_k_max_cb
+            else:
+                new_toc_k_min_cb = row['k_min']
+                new_toc_k_max_cb = row['k_max']
 
-        for ic, kmax in enumerate(drilling_k_maxs):
-            if toc_k_min_cb >= kmax:
-                idx_kmin = 
-                break
-        # the thickness of cement bond
-        x_thickness = int((drilling_df.iloc[idx0, 'ij_max'] - casings_df.loc[idx0, 'ij_max']))
+            # the thickness of cement bond
+            x_thickness = max(int(row['ij_max'] - ij_max_pipe)//2, 1)
 
-        # 2.2 CARFN output
-        CARFIN_cement_bond(ID_pipe, 
-                            int(ij_min_pipe+1), int(ij_max_pipe+1),
-                            int(ij_min_pipe+1), int(ij_max_pipe+1),
-                            int(toc_k_min_cb+1), int(toc_k_max_cb+1),
-                            x_bd=x_thickness,
-                            y_bd=x_thickness,
-                            perm=cb_perm,
-                            LGR_NAME=LGR_NAME, 
-                            O=O)
+            # print(f'===>ic={ic}, xthickness={x_thickness}, k_min={new_toc_k_min_cb}, k_max={new_toc_k_max_cb}')
+
+            # 2.2 CARFN output
+            CARFIN_cement_bond(ID_pipe, 
+                                int(ij_min_pipe+1), int(ij_max_pipe+1),
+                                int(ij_min_pipe+1), int(ij_max_pipe+1),
+                                int(new_toc_k_min_cb+1), int(new_toc_k_max_cb+1),
+                                x_bd=x_thickness,
+                                y_bd=x_thickness,
+                                perm=cb_perm,
+                                LGR_NAME=LGR_NAME, 
+                                O=O)
 
 
 def df_to_gap_barrier(barriers_mod_df: pd.DataFrame,
