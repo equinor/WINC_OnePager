@@ -74,7 +74,8 @@ def well_class_dict_fixture():
     assert use_yaml is True
 
     # convert .yaml file suffix to .pkl
-    well_name_pkl = well_name.with_suffix('.pkl')
+    well_name_tuple = str(well_name).split('.')
+    well_name_pkl = well_name_tuple[0]+'_well_pytest.pkl'
 
     # load .pkl file
     with open(well_name_pkl, 'rb') as f:
