@@ -1,8 +1,10 @@
 name: SCREEN-pytest
 
 on:
-  workflow_dispatch:
+
+  push:
     branches: [ hzh/unittest ]
+  workflow_dispatch:
 
 permissions:
   contents: read
