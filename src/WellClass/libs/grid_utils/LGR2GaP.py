@@ -100,7 +100,8 @@ def df_to_gap_casing(drilling_df: pd.DataFrame,
                 new_toc_k_max_cb = row['k_max']
 
             # the thickness of cement bond
-            x_thickness = max(int(row['ij_max'] - ij_max_pipe)//2, 1)
+            x_thickness = int(row['ij_max'] - ij_max_pipe)
+            assert x_thickness >= 1
 
             # print(f'===>ic={ic}, xthickness={x_thickness}, k_min={new_toc_k_min_cb}, k_max={new_toc_k_max_cb}')
 
