@@ -2,6 +2,8 @@
 
 This repository contains source codes and documentation for SCREEN project.
 
+[![SCREEN-pytest](https://github.com/equinor/SCREEN/actions/workflows/pytest.yaml/badge.svg)](https://github.com/equinor/SCREEN/actions/workflows/pytest.yaml)
+
 ## Clone the repository
 Locate a folder at your local machine that you intend to investigate the codes, and then clone the repository
 ```
