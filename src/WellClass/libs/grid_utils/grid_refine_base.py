@@ -1,5 +1,5 @@
 
-from typing import Tuple, List
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -192,7 +192,7 @@ class GridRefineBase:
         # ### 1. Drilling
         for idx, row in drilling_df.iterrows():
             
-            top, bottom = row['top_msl'], row['bottom_msl']
+            top, bottom = row['top_msl'], row['bottom_msl']  # noqa: F841
 
             if top < mesh_df['Zcorn_bottom'].max():
 
@@ -210,9 +210,9 @@ class GridRefineBase:
         for ic, (idx, row) in enumerate(casings_df.iterrows()):
 
             # extract bounding box
-            k_min, k_max = row['k_min'], row['k_max']
-            ij_min, ij_max = row['ij_min'], row['ij_max']
-            toc_k_min, toc_k_max = row['toc_k_min'], row['toc_k_max']
+            k_min, k_max = row['k_min'], row['k_max']  # noqa: F841
+            ij_min, ij_max = row['ij_min'], row['ij_max']  # noqa: F841
+            toc_k_min, toc_k_max = row['toc_k_min'], row['toc_k_max']  # noqa: F841
             
             # 2.1 set material type to annulus
             # x
@@ -239,7 +239,7 @@ class GridRefineBase:
         # ### 3. Barriers
         for ib, (idx, row) in enumerate(barriers_mod_df.iterrows()):
             
-            b_k_min, b_k_max = row['k_min'], row['k_max']
+            b_k_min, b_k_max = row['k_min'], row['k_max']  # noqa: F841
             
             criteria = '(material == "openhole") & \
                         (k >= @b_k_min) & (k <= @b_k_max)' 

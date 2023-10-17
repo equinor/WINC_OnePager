@@ -11,7 +11,7 @@ from src.GaP.libs.carfin.CARFIN_barrier import CARFIN_barrier
 def df_to_gap_casing(drilling_df: pd.DataFrame, 
                      casings_df: pd.DataFrame,
                      LGR_NAME: str,
-                     O: TextIO) -> None:
+                     O: TextIO) -> None:  # noqa: E741
     """ convert casing dataframe to gap format
 
         Args:
@@ -119,7 +119,7 @@ def df_to_gap_casing(drilling_df: pd.DataFrame,
 
 def df_to_gap_barrier(barriers_mod_df: pd.DataFrame,
                       LGR_NAME: str,
-                      O: TextIO) -> None:
+                      O: TextIO) -> None:  # noqa: E741
     """ convert barrier dataframe to gap format
 
         Args:

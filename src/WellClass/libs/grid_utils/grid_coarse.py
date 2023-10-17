@@ -53,7 +53,7 @@ class GridCoarse:
         for key in init.keys():
                 try:
                         self.grid_init[key] = init[key][0].numpy_view()
-                except:
+                except Exception:
                         continue
 
         # set up other grid-related information

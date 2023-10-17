@@ -8,7 +8,7 @@ def CARFIN_barrier(ID: float,
                      k_min_bar: int, k_max_bar: int,
                      perm: float,
                      LGR_NAME: str, 
-                     O: TextIO):
+                     O: TextIO):  # noqa: E741
     """ CARFIN for barrier
     
         The barriers can be mimicked by very low permeability with the same size of pipe ID and have their own start and end depth. 

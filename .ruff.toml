@@ -1,0 +1,14 @@
+select = ["E", "F"]
+ignore = ["F405", "F403", "E501", "F401"]
+exclude = [
+    "build",
+    "dist",
+    "venv_screen",
+    "originals",
+    "test_data",
+    "tests"
+]
+line-length = 150
+
+[per-file-ignores]
+"tools/ignore.py" = ["F401"]

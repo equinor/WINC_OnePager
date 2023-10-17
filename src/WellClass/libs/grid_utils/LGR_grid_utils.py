@@ -1,5 +1,5 @@
 
-from typing import Tuple, List, Union
+from typing import Tuple
 
 import numpy as np
 

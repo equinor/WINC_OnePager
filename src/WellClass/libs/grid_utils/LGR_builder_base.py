@@ -40,10 +40,10 @@ class LGRBuilderBase:
         out_fname = os.path.join(output_folder, LGR_NAME+'.grdecl')
 
         # open it
-        if os.path.exists(out_fname) == True:
-            O = open(out_fname,"r+")
+        if os.path.exists(out_fname):
+            O = open(out_fname,"r+")  # noqa: E741
         else: 
-            O = open(out_fname,"x")
+            O = open(out_fname,"x")  # noqa: E741
 
         O.truncate(0)
 

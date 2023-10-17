@@ -9,4 +9,5 @@ CoolProp
 welly
 pytest
 pytest-cov
+ruff
 

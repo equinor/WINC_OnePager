@@ -2,7 +2,6 @@
 """
 from typing import List, Union
 
-import os
 import math
 from typing import TextIO
 
@@ -24,7 +23,7 @@ def pre_CARFIN(LGR_NAME: str,
                NX: int, NY: int,
                main_grd_i: int, main_grd_j: int, 
                no_of_layers_in_OB: int, 
-               O: TextIO):
+               O: TextIO):  # noqa: E741
     """ preCARFIN
 
         Before introducing the CARFIN, we need to make sure there is a sealing layer between the overburden and the reservoir.
@@ -70,7 +69,7 @@ def CARFIN_keywords(LGR_NAME: str,
                     LGR_sizes_xy: List[float], 
                     LGR_numb_z: np.ndarray, 
                     min_grd_size: float,
-                    O: TextIO):
+                    O: TextIO):  # noqa: E741
     """ CARFIN main parameters
 
         CARFIN is the main keyword which introduces LGR into the  grid. 
@@ -151,7 +150,7 @@ def coreCARFIN(LGR_NAME: str,
                 LGR_sizes_xy: List[float], 
                 LGR_depths: np.ndarray, 
                 min_grd_size: float,
-                O: TextIO):
+                O: TextIO):  # noqa: E741
     """ CARFIN for the main elements
 
         Args:
@@ -202,7 +201,7 @@ def endCARFIN(LGR_NAME: str,
              main_grd_min_k: float, 
              min_grd_size: float,
              no_of_layers_in_OB: int,
-             O):
+             O: TextIO):  # noqa: E741
     """ ENDFIN
 
         Before we finish the CARFIN with ENDFIN, we will have to close the area around the well inside the LGR:

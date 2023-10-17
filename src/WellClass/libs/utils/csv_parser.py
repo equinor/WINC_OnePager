@@ -24,7 +24,7 @@ def csv_parser(csv_file):
                 for attribute, value in table.items():
                     try:
                         table[attribute] = float(value)
-                    except:
+                    except Exception:
                         table[attribute] = value
 
             elif table_title.lower() == 'reservoir_pressure':
@@ -45,7 +45,7 @@ def csv_parser(csv_file):
             try:
                 well[table_title] = table.to_dict()
                 # well[table_title] = table
-            except:
+            except Exception:
                 well[table_title] = table
 
     return well
