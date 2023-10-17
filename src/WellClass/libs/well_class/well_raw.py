@@ -46,6 +46,7 @@ import json
 
 import pandas as pd
 import scipy
+import scipy.constants
 
 from .well_raw_validation import (
     valid_drilling,
