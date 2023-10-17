@@ -1,6 +1,6 @@
 # SCREEN
 
-This repository contains codes for SCREEN project.
+This repository contains source codes and documentation for SCREEN project.
 
 ## Clone the repository
 Locate a folder at your local machine that you intend to investigate the codes, and then clone the repository
@@ -16,7 +16,7 @@ It's normal for us to make a new branch if we indend to make some changes of the
 ```
 $ git checkout -b hzh/cleanup
 ```
-This would generate a new branch, named `hzh/cleanup`. Here I use my `equinor` account short name `hzh` concatenated with a feature description `cleanup`. There is no need to follow my convention. However, please note branch names have limitations. You probably should pick a branch name that makes sense. 
+This would generate a new branch, named `hzh/cleanup`. Here the branch name is created by concatenating a short name, such as `hzh`,  of `equinor` account with a feature description `cleanup`. There is no need to follow this convention. You could simply pick any branch name as long as it makes sense. However, please note branch names have limitations.
 
 ## Virtual environment
 
@@ -57,9 +57,7 @@ The following represents the current code structures:
 ├── INSTALLATION.md
 ├── mkdocs.yml
 ├── notebooks
-│   ├── GaP-WellClass2.ipynb
 │   ├── GaP-WellClass.ipynb
-│   ├── LEG_HIRES.grdecl
 │   ├── LEG_HIRES.grdecl.smeaheia
 │   ├── pflotran_gap.ipynb
 │   ├── Pressure-WellClass.ipynb
@@ -97,6 +95,7 @@ The following represents the current code structures:
     ├── examples
     │   ├── cosmo
     │   ├── cosmo-pflotran
+    │   ├── cosmo-pflotran-2
     │   ├── frigg
     │   ├── simple_well
     │   ├── smeaheia_v1
@@ -112,23 +111,25 @@ It was generated with the linux command `tree`:
 $ tree -I 'docs|site|venv_screen|*pycache*|Equinor*|originals' -L 3
 ```
 ## Experiments
-There are at least two ways to test the codes. One is to run the experiments with Jupyter lab, and the other is commnadline option.
+There are at least two ways to make experimenal runs of the codes. One is to run the experiments with Jupyter lab, and the other is commandline option. While Jupyter notebooks are mainly for QC tests and research purposes, the commandline option is aiming for production run.
 
 ### Jupyter notebooks
 Jupyter notebooks are located in directory `notebooks`. To test its functionaries, change current directory to `notebooks` and launch jupyter notebooks at the commandline:
 ```
 $ jupyter-lab
 ```
-There are currently six notebooks in the directory:
-- Notebook **GaP-WellClass.ipynb** is used to test the integration of `GaP` and `WellClass`. It involves testing of many low-level functions. We don't recommend that you start with this one.
-- Notebook **GaP-WellClass2.ipynb** is another test example for the integration of `GaP` and `WellClass`. It has a better structure and hides many details. Both this and previous notebook require eclipse `.EGRID` and `.INIT` files.
+Or if you prefer, you can run these Jupyter notebooks from Microsoft's VS code.
+
+There exist several Jupyter notebooks in the directory:
+
+- Notebook **GaP-WellClass.ipynb** is a test example for the integration of `GaP` and `WellClass`. It hides many details. It require eclipse `.EGRID` and `.INIT` as input files. This notebook also serves the role of generating `pytest` data for unit testing.
 - Notebook **pflotran-gap.ipynb** integrates `GaP` and `WellClass` too. But instead of the user-provided `.EGRID` and `.INIT` files, both files are generates by calling pflotran scripts.
-- Notebook **Pressure-WellClass_test.ipynb** is Alejandro's tests on deviated wells
+- Notebook **Pressure-WellClass_test.ipynb** is Alejandro's tests on deviated wells.
 - Notebook **Pressure-WellClass.ipynb** is used to test pressure. 
 - Notebook **WellClass_csv_yaml.ipynb** is used to test pressure and loading `.csv` and `.yaml` input files.
 
 ### Commandline option
-Two python scripts for commandline option are available in directory `experiments`. One script, **gap_plotran.py**, generates Eclipse `.EGRID` and `.INIT` on the fly, while the other script, **gap_wellclass.py**, requires the user to provide these two grid files.  
+Two python scripts for commandline option are available in directory `experiments`. One script, **gap_plotran.py**, can be used not only for generating Eclipse `.EGRID` and `.INIT` on the fly but also can be used for quick `pflotran` test, while the other script, **gap_wellclass.py**, requires the user to provide these two grid files.  
 
 The followings are some of  the sample runs. In either way, you should run the python script inside the ```SCREEN``` directory. 
 
@@ -159,16 +160,30 @@ $ python -m experiments.gap_pflotran \
     --plot
 ```
 ## Test data
-The test data are located in the folder `test_data/examples`. Three of its sub-directories, i.el, `cosmo`, `smeaheia_v1` and `smeaheia_v2`, contain the data for testing **gap_wellclass.py**. 
+In order for quick test of the codes, we include some test data in the folder `test_data/examples`. The input data structure is organized  similiar to the `pflotran`. For example, for test data
+`test_data/examples/cosmo-pflotran-2`, the input file structure should be like this:
+```
+├── cosmo.yaml
+├── include
+│   ├── co2_db_new.dat
+│   ├── temperature_gradient.inc
+│   ├── TEMP_GRD.grdecl
+│   ├── TEMP_GRD_NOSIM.grdecl
+│   └── tops_dz.inc
+└── model
+    ├── TEMP-0.in
+    └── TEMP-0_NOSIM.in
+```
+Sub-directories, such as `cosmo`, `smeaheia_v1` and `smeaheia_v2`, contain the necessary data, e.g., Eclipse  `.EGRID` and `.INIT` files, for testing **gap_wellclass.py**. 
 
 One sub-directory, `cosmo-plotran`, contains configuration parameters for testing **gap_pflotran.py**, i.e., use pfloatran to generate `.EGRID` and `.INIT`. 
 
 Another sub-directory `frigg` contains information for testing deviated wells.
 
-In addition, the PVT values are included in the directory `pvt_contants` for self-consistent testing of pressure-related computes.
+In addition, the **PVT** values are included in the directory `pvt_contants` for self-consistent testing of pressure-related computes.
 
 ## Unit testing and code coverage
-We are using `pytest` to run unit testing and report code coverage. Here is a command example:
+We are using `pytest` for unit testing and code coverage. The unit testing utilizes `cosmo` as the testing example. So please make sure the saved .pkl files in ```test_data/examples/cosmo/pytest``` exists and is updated. Here is a commandline example:
 ```pyton
 $ python -m pytest tests
 ```
@@ -176,15 +191,15 @@ This will report the unit testing results. And the following will report not onl
 ```python
 $ python -m pytest --cov tests
 ```
-or a litle bit complex command:
+or a litle bit more complex command:
 ```python
 $ python -m pytest --cov --cov-branch --cov-report term-missing tests
 ```
 
 ## Documentation
 
-To deploy the document to github pages, type the following at the command line:
+The document can be automatically generated and deployed to github pages. To do that, type the following at the command line:
 ```
 $ mkdocs gh-deploy
 ```
-It may take some minutes until the documentation goes live. And the documentation page can be found at [SCREEN docs](https://redesigned-dollop-m5l6pme.pages.github.io/).
+It may take some minutes until the documentation goes live. And the generated documentation page can be found at [SCREEN docs](https://redesigned-dollop-m5l6pme.pages.github.io/).

@@ -26,11 +26,14 @@ class GridRefine(GridRefineBase):
                          LGR_sizes_x, LGR_sizes_y, LGR_sizes_z,
                          min_grd_size)
         
+    # TODO(hzh): Here the input will be modified. 
+    # This is not a good practice of programming!!! 
+    # Will come back to this.
     def build_LGR(self, 
                   drilling_df: pd.DataFrame, 
                   casings_df: pd.DataFrame, 
                   barriers_mod_df: pd.DataFrame) -> None:
-        """ assign material types to corresponding permeabilities
+        """ assign material types to corresponding permeabilities.
 
             Args:
 

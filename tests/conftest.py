@@ -60,10 +60,12 @@ def well_class_fixture():
 def well_class_dict_fixture():
     """ fixture for loading WellClass .pkl file for unit testing
     """
+    # PYTEST folder
+    PYTEST_FOLDER = 'pytest'
 
     # the paths
-    sim_path = pathlib.Path(example['sim_path'])
-    well_name = sim_path/example['well_config']
+    pytest_path = pathlib.Path(example['sim_path'])/PYTEST_FOLDER
+    well_name = pytest_path/example['well_config']
 
     # extract suffix
     suffix = well_name.suffix
