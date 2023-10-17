@@ -3,8 +3,16 @@ name: SCREEN-pytest
 on:
 
   push:
-    branches: [ hzh/unittest ]
-  workflow_dispatch:
+    branches: 
+    - hzh/unittest
+    - main
+
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+  workflow_dispatch:{}
 
 permissions:
   contents: read
