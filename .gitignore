@@ -12,6 +12,9 @@ src/**/data/**/*.grdecl
 venv_*/
 .venv_*/
 
+# codespaces
+.devcontainer
+
 # pflotran artifacts
 test_data/**/model/*.UNSMRY
 test_data/**/model/*.UNRST

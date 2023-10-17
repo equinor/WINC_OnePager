@@ -57,7 +57,7 @@ class Well(WellRaw):
     """ This contains not only the basic well information but also its computed information.
 
         Args:
-            borehold (dict): for borehole information
+            borehole (dict): for borehole information
             cement_bond (dict): contains information about cement bond
             annulus (dict): gap between casing and openhole
             barriers_mod (dict): extra information about barriers
