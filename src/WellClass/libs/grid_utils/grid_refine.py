@@ -19,7 +19,7 @@ class GridRefine(GridRefineBase):
                  LGR_sizes_x, LGR_sizes_y, LGR_sizes_z,
                  min_grd_size: float
                  ):
-        """ dataframe for LGR mesh for the center coarse grid
+        """ class for LGR mesh
         """
 
         super().__init__(grid_coarse, 

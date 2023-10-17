@@ -1,5 +1,7 @@
 
-from typing import Tuple
+from typing import Tuple, Union
+
+import pathlib
 import numpy as np
 
 from ecl.eclfile import EclFile, EclRestartFile
@@ -13,12 +15,15 @@ from .extract_grid_utils import (
 
 class GridLGR:
 
-    def __init__(self, sim_case: str) -> None:
+    def __init__(self, sim_case: Union[str, pathlib.Path]) -> None:
         """ This is used to process .EGRID file
         
             Args:
                 sim_case (str): name prefix for eclipse/pflotran case
         """
+
+        # convert it to string, in case it is pathlib.Path
+        sim_case = str(sim_case)
 
         #Get grid dimensions and coordinates
         grid = EclGrid(sim_case + ".EGRID") 

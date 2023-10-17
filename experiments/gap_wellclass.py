@@ -37,8 +37,6 @@ from src.WellClass.libs.well_class import Well
 
 from src.WellClass.libs.grid_utils import (
     WellDataFrame,
-    GridCoarse,
-    GridRefine,
     LGRBuilder,
 )
 
@@ -110,49 +108,29 @@ def main(args):
     annulus_df = well_df.annulus_df
     drilling_df = well_df.drilling_df
     casings_df = well_df.casings_df
-    borehole_df = well_df.borehole_df
 
     barriers_mod_df = well_df.barriers_mod_df
 
-    ############### 4. various grids #####################
-
-    ##### 4.1 grid_coarse 
-
-    # Loading the model from .EGRID and .INIT
-    grid_coarse = GridCoarse(str(simcase))
-
-    ##### 4.2 LGR grid 
-
-    # LGR grid information in x, y, z directions
-    lgr = LGRBuilder(grid_coarse, 
+    ##### 4. LGR grid 
+    lgr = LGRBuilder(simcase, 
                      annulus_df, 
                      drilling_df,
                      Ali_way)
 
-    ##### 4.3 grid refine 
-    
-    # Set up dataframe for LGR mesh
-    grid_refine = GridRefine(grid_coarse,
-                            lgr.LGR_sizes_x, lgr.LGR_sizes_y, 
-                            lgr.LGR_sizes_z, 
-                            lgr.min_grd_size
-                            )
-
-    ############### 5. build LGR #####################
-
-    # set up LGR grid
-    gap_casing_df = grid_refine.build_LGR(drilling_df, casings_df, barriers_mod_df)
-
-    ########### 6. output grdecl file ###################
+    ########### 5. output grdecl file ###################
 
     # Write LGR file
     lgr.build_grdecl(output_dir, LGR_NAME,
                      drilling_df,
-                     gap_casing_df, # casings_df,
+                     casings_df,
                      barriers_mod_df)
     
     # for qc
     if args.plot:
+        grid_coarse = lgr.grid_coarse
+        grid_refine = lgr.grid_refine
+
+        # plot
         plot_grid(my_well, grid_coarse)
         plot_grid(my_well, grid_refine)
 

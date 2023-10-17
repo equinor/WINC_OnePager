@@ -1,147 +1,93 @@
 
+import os
 import pandas as pd
 
-from .grid_coarse import GridCoarse
+from src.GaP.libs.carfin.CARFIN_core import (
+    pre_CARFIN,
+    CARFIN_keywords,
+    endCARFIN
+)
 
-from .LGR_grid_utils import (
-    compute_ngrd,
-    generate_LGR_xy,
-    generate_LGR_z,
+from .LGR2GaP import (
+    df_to_gap_casing,
+    df_to_gap_barrier
 )
 
 class LGRBuilderBase:
 
-    def __init__(self,
-                 grid_init: GridCoarse, 
-                 annulus_df: pd.DataFrame,
-                 drilling_df: pd.DataFrame, 
-                 Ali_way: bool):
-        """ LGR grid information in x, y, z directions. We are going to compute the grid sizes in lateral (x and y) and vertical directions
-
-            Args:
-                grid_init (GridCoarse): all information about coarse grid
-                annulus_df (pd.DataFrame): information about annulus
-                drilling_df (pd.DataFrame): information about drilling
-                Ali_way (bool): use Ali's algorithm to compute lateral grids and apply refdepth in z direction
+    def _build_grdecl(self, 
+                      output_folder: str, 
+                      LGR_NAME: str,
+                      drilling_df: pd.DataFrame, 
+                      casings_df: pd.DataFrame, 
+                      barriers_mod_df: pd.DataFrame,
+                      NX: int, NY: int,
+                      main_grd_i: int, main_grd_j: int,
+                      main_grd_min_k: int, main_grd_max_k: int,
+                      no_of_layers_in_OB: int,
+                      LGR_sizes_x,
+                      LGR_numb_z,
+                      min_grd_size: float):
+        """ build grdecl file and output it
         """
+        # 0. prepare file for output
 
-        # initialize coarse grid parameters
-        self.NX, self.NY = grid_init.NX, grid_init.NY
-        self.main_grd_dx, self.main_grd_dy = grid_init.main_grd_dx, grid_init.main_grd_dy
-        self.main_grd_i, self.main_grd_j = grid_init.main_grd_i, grid_init.main_grd_j
-        self.main_grd_min_k, self.main_grd_max_k = grid_init.main_grd_min_k, grid_init.main_grd_max_k
+        # check output directory
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder, exist_ok=True)
 
-        # DZs for reservoir and overburden
-        self.DZ_rsrv = grid_init.DZ_rsrv
-        self.DZ_ovb_coarse = grid_init.DZ_ovb_coarse
+        # generate output file name
+        out_fname = os.path.join(output_folder, LGR_NAME+'.grdecl')
 
-        # number of layers of ovb
-        self.no_of_layers_in_OB = grid_init.no_of_layers_in_OB
+        # open it
+        if os.path.exists(out_fname) == True:
+            O = open(out_fname,"r+")
+        else: 
+            O = open(out_fname,"x")
 
-        # reference depth wheer LGR starts
-        self.ref_depth = 0
-        if Ali_way: 
-            self.ref_depth = grid_init.ref_depth
+        O.truncate(0)
 
-        ######################################
+        # 1. start the process
+        pre_CARFIN(LGR_NAME,
+                    NX, NY,
+                    main_grd_i+1, main_grd_j+1, 
+                    no_of_layers_in_OB, 
+                    O)
+        
+        # 2. keywods
+        CARFIN_keywords(LGR_NAME,
+                        main_grd_i+1, main_grd_j+1, 
+                        main_grd_min_k+1, main_grd_max_k+1, 
+                        LGR_sizes_x, 
+                        LGR_numb_z, 
+                        min_grd_size,
+                        O)
 
-        # ### 1. Compute minimum grid size
+        # 3. the pipes/openholes/barriers
+        df_to_gap_casing(drilling_df, 
+                         casings_df,
+                         LGR_NAME,
+                         O)
+        
+        df_to_gap_barrier(barriers_mod_df,
+                          LGR_NAME,
+                          O)
+        
+        # find minimum IDs for casings
+        reopen_ID = casings_df.diameter_m.min()
 
-        min_grd_size = self._compute_min_grd_size(annulus_df, Ali_way)
-        self.min_grd_size = min_grd_size
+        # 4. open hole
+        endCARFIN(LGR_NAME,
+                    reopen_ID,
+                    LGR_sizes_x, 
+                    main_grd_min_k+1, 
+                    min_grd_size,
+                    no_of_layers_in_OB,
+                    O)
 
-        # #### 2. Compute number of cells of horizontal LGR
-        self.num_lateral_fine_grd = self._compute_num_lateral_fine_grd(drilling_df)
+        # 2. done
+        O.close()
 
-        # #### 3. compute LGR sizes
-
-        # 3.1 compute LGR sizes in x-y directions
-        self.LGR_sizes_x, self.LGR_sizes_y = self._compute_LGR_sizes_xy(Ali_way)
-
-        # 3.2 comptue LGR sizes in z direction
-        self.LGR_sizes_z, self.LGR_numb_z, self.LGR_depths = self._compute_LGR_sizes_z()
-
-    def _compute_min_grd_size(self, annulus_df, Ali_way) -> float:
-        """ Compute minimum grid size
-
-            Args:
-
-                annulus_df (pd.DataFrame): information about annulus
-                Ali_way (bool): use Ali's algorithm to compute lateral grids and apply refdepth in z direction
-
-            Returns:
-                float: minimum grid size
-        """
-
-        # 0. minimum grid size
-
-        # minimum grid size depends on minimum annulus thickness
-        min_grd_size = annulus_df['thick_m'].min()
-
-        if min_grd_size < 0.05:
-            min_grd_size = 0.05
-
-        print(f'Minimimum grid size is {min_grd_size*100:.2f} cm')
-
-        # TODO(hzh): manually set it
-        if Ali_way:
-            min_grd_size = 0.05
-
-        return min_grd_size
-    
-    def _compute_num_lateral_fine_grd(self, drilling_df) -> float:
-        """ compute number of LGR lateral grids
-
-            Args:
-
-                drilling_df (pd.DataFrame): information about drilling
-
-            Returns:
-                float: number of LGR lateral grids
-        """
-
-        # only for convenience
-        min_grd_size = self.min_grd_size
-
-        # 
-        drilling_series = drilling_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
-
-        return drilling_series.max()
-    
-    def _compute_LGR_sizes_xy(self, Ali_way: bool):
-        """ Compute LGR grid sizes in x-y directions
-
-            Args:
-
-                Ali_way (bool): use Ali's algorithm to compute lateral grids and apply refdepth in z direction
-        """
-
-        # for convenience
-        num_lateral_fine_grd = self.num_lateral_fine_grd
-        min_grd_size = self.min_grd_size
-        main_grd_dx = self.main_grd_dx
-        main_grd_dy = self.main_grd_dy
-
-        # 3.1 generate the LGR grid sizes in x-y
-        LGR_sizes_x, LGR_sizes_y, _ = generate_LGR_xy(num_lateral_fine_grd, 
-                                                        min_grd_size, 
-                                                        main_grd_dx, main_grd_dy,
-                                                        Ali_way=Ali_way)
-
-        return LGR_sizes_x, LGR_sizes_y
-    
-    def _compute_LGR_sizes_z(self):
-        """ Compute LGR grid sizes in z direction
-        """
-        # for convenience
-        DZ_rsrv = self.DZ_rsrv
-        DZ_ovb_coarse = self.DZ_ovb_coarse 
-        ref_depth = self.ref_depth
-
-        # 3.2 generate the LGR grid sizes in x-y
-
-        # TODO(hzh): to make LGR starts at ref_depth
-        LGR_sizes_z, LGR_numb_z, LGR_depths, _ = generate_LGR_z(DZ_rsrv, DZ_ovb_coarse, ref_depth)
-
-        return LGR_sizes_z, LGR_numb_z, LGR_depths
+        # for qc
+        print ('Output LGR CARFIN to: ', os.path.abspath(out_fname))
 

@@ -43,6 +43,8 @@ class GridCoarse:
         # ## The grid dimensions
         self.NX, self.NY, self.NZ, _ = grid.get_dims()
 
+        print(f'Coarse grid dimension: nx={self.NX}, ny={self.NY}, nz={self.NZ}')
+
         # # Store INIT parameters into a Pandas Dataframe: grid_init
 
         self.grid_init = grid.export_index()
