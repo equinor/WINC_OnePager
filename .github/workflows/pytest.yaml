@@ -1,4 +1,4 @@
-name: pytest
+name: SCREEN-pytest
 
 on:
   push:
