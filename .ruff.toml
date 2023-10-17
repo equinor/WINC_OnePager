@@ -1,12 +1,16 @@
 select = ["E", "F"]
-ignore = ["F405", "F403", "E501", "F401"]
+ignore = ["E501"]
 exclude = [
     "build",
     "dist",
+    "site",
     "venv_screen",
     "originals",
     "test_data",
-    "tests"
+    "tests",
+    "GaP_HIRES.py",
+    "GaP_HIRES_15112022.py",
+    "__init__.py"
 ]
 line-length = 150
 
