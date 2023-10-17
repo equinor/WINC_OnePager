@@ -9,7 +9,8 @@ experiments/*.grdecl
 src/**/data/**/*.grdecl
 
 # venv
-venv_screen/
+venv_*/
+.venv_*/
 
 # pflotran artifacts
 test_data/**/model/*.UNSMRY
