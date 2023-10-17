@@ -51,7 +51,15 @@ class LGRBuilder (LGRBuilderBase):
                      drilling_df: pd.DataFrame, 
                      casings_df: pd.DataFrame, 
                      barriers_mod_df: pd.DataFrame) -> pd.DataFrame:
-        """ build grdecl file and output it
+        """ build .grdecl file and output it
+
+            Args:
+
+                output_folder (str): output folder
+                LGR_NAME (str): output file name
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                barriers_mod_df (pd.DataFrame): information about barrier                 
         """
 
         ##### 4. build LGR

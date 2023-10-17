@@ -1,4 +1,6 @@
 
+from typing import Tuple, List, Union
+
 import numpy as np
 
 # 0. Compute number of cells from the diameter and min grid size
@@ -64,7 +66,7 @@ def generate_LGR_xy(no_latral_fine_grd: int,
         # 6. LGR_sizes_xy, adding dx on both sides to make it one cell size
         LGR_sizes_xy = [(main_grd_dx - sum(LGR_size_no_outer))/2] + LGR_size_no_outer + [(main_grd_dx - sum(LGR_size_no_outer))/2]
 
-        return LGR_sizes_xy, LGR_sizes_xy, -1
+        return LGR_sizes_xy, LGR_sizes_xy, None
     
     else:
         # 1.1 generate a LGR array by repeating min_grd_size with the number of fine cells
@@ -96,7 +98,7 @@ def generate_LGR_xy(no_latral_fine_grd: int,
 def generate_LGR_z(DZ_rsrv: np.ndarray, 
                    DZ_ovb_coarse: np.ndarray,
                    ref_depth: float=0.0, 
-                   z_finer_scale=10):
+                   z_finer_scale=10) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """ generate LGR grid in z direction
 
         Args:

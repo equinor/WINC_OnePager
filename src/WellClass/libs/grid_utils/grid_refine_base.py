@@ -1,5 +1,5 @@
 
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 import pandas as pd
@@ -16,10 +16,19 @@ class GridRefineBase:
 
     def __init__(self, 
                  grid_coarse: GridCoarse,
-                 LGR_sizes_x, LGR_sizes_y, LGR_sizes_z,
-                 min_grd_size
-                 ):
-        """ dataframe for LGR mesh for the center coarse grid
+                 LGR_sizes_x: List[float], 
+                 LGR_sizes_y: List[float], 
+                 LGR_sizes_z: np.ndarray,
+                 min_grd_size: float):
+        """ dataframe for LGR mesh for the center coarse cell
+
+            Args:
+
+                grid_coarse (GridCoarse): information on coarse grid
+                LGR_sizes_x (list[float]): LGR x grid intervals
+                LGR_sizes_y (list[float]): LGR y grid intervals
+                LGR_sizes_z (np.ndarray): LGR DZ inernals
+                min_grd_size (float): minimize grid size
         """
 
         self.min_grd_size = min_grd_size
@@ -44,35 +53,41 @@ class GridRefineBase:
 
         #Create LGR Dataframe with indices
         mesh_df = pd.DataFrame(data = cell_ijk, columns = ['i', 'j', 'k'])
-        #
+
+        # TODO(hzh): why not in the order of ['k', 'j']?
         mesh_df.sort_values(by=['k', 'i'], inplace = True)
         mesh_df.reset_index(inplace=True, drop=True)
 
         #
         self.mesh_df = mesh_df
 
-
         # set up fields
         self._set_cell_intervals(self.mesh_df, 
                                  LGR_sizes_x, 
-                                 LGR_sizes_z, 
-                                 LGR_sizes_y)
+                                 LGR_sizes_y, 
+                                 LGR_sizes_z)
         self._set_cell_coords(self.mesh_df)
         self._set_z_corners(self.mesh_df)       
 
-        # TODO(hzh): do we suppose to use mid index of coarse grid?
-
         # indices for center finer grid
-        mid_i = grid_coarse.main_grd_i       # mesh_df.i.max()//2
-        mid_j = grid_coarse.main_grd_j       # mesh_df.j.max()//2
+        mid_i = grid_coarse.main_grd_i
+        mid_j = grid_coarse.main_grd_j
 
         self._upscale_properties(grid_coarse.grid_init, mid_i, mid_j)
         
-    def _set_cell_intervals(self, mesh_df, 
-                            LGR_sizes_x, 
-                            LGR_sizes_z, 
-                            LGR_sizes_y):
+    def _set_cell_intervals(self, 
+                            mesh_df: pd.DataFrame, 
+                            LGR_sizes_x: List[float], 
+                            LGR_sizes_y: List[float], 
+                            LGR_sizes_z: np.ndarray):
         """ Creat DX, DY, DZ for LGR mesh
+
+            Args:
+
+                mesh_df (pd.DataFrame): dataframe for LGR mesh of the center coarse cell
+                LGR_sizes_x (list[float]): LGR x grid intervals
+                LGR_sizes_y (list[float]): LGR y grid intervals
+                LGR_sizes_z (np.ndarray): LGR DZ grid inernals
         """
  
         # mesh
@@ -85,6 +100,10 @@ class GridRefineBase:
 
     def _set_cell_coords(self, mesh_df):
         """ Create cell coordinate X, Y, Z for LGR mesh
+
+            Args:
+
+                mesh_df (pd.DataFrame): dataframe for LGR mesh of the center coarse cell
         """
 
         # cell coordinates
@@ -104,14 +123,26 @@ class GridRefineBase:
         mesh_df['Z'] = mesh_df['k'].map(map_Z)
 
     def _set_z_corners(self, mesh_df):
-        """ save Corner Z points to dataframe 
+        """ save Corner Z points to dataframe
+
+            Args:
+
+                mesh_df (pd.DataFrame): dataframe for LGR mesh of the center coarse cell
         """
 
         mesh_df['Zcorn_top'] = mesh_df['Z'] - mesh_df['DZ']/2
         mesh_df['Zcorn_bottom'] = mesh_df['Z'] + mesh_df['DZ']/2
 
-    def _upscale_properties(self, grid_init, mid_i, mid_j):
+    def _upscale_properties(self, 
+                            grid_coarse: GridCoarse, 
+                            mid_i: int, 
+                            mid_j: int):
         """ Upscale coarse properties to LGR mesh
+
+            Args:
+                grid_coarse (GridCoarse): information on coarse grid
+                mid_i (int): x index of center cell on the coarse grid
+                mid_j (int): y index of center cell on the coarse grid
         """
 
         # for convenience only
@@ -130,7 +161,7 @@ class GridRefineBase:
             # mesh_df[field] = np.nan
             mesh_df[field] = 0.0                    # TODO(hzh): what should I put here?
             
-        for idx, row in grid_init.query('i==@mid_i & j==@mid_j').iterrows():
+        for idx, row in grid_coarse.query('i==@mid_i & j==@mid_j').iterrows():
 
             # switch to corner coords, coarse grid
             top  = row.Z - row.DZ/2
@@ -140,12 +171,10 @@ class GridRefineBase:
 
                 mesh_df.loc[(mesh_df['Z']>=top) & (mesh_df['Z']<base), field] = row[field]
 
-
-
     def _set_material_type(self, 
                             drilling_df: pd.DataFrame, 
                             casings_df: pd.DataFrame, 
-                            barriers_mod_df: pd.DataFrame):
+                            barriers_mod_df: pd.DataFrame) -> None:
         """ Assign material types, such as openholes, overburden, cement bond, etc.
 
             Args:

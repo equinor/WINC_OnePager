@@ -1,5 +1,5 @@
 
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 import pandas as pd
@@ -16,10 +16,19 @@ class GridRefine(GridRefineBase):
 
     def __init__(self, 
                  grid_coarse: GridCoarse,
-                 LGR_sizes_x, LGR_sizes_y, LGR_sizes_z,
-                 min_grd_size: float
-                 ):
-        """ class for LGR mesh
+                 LGR_sizes_x: List[float], 
+                 LGR_sizes_y: List[float], 
+                 LGR_sizes_z: np.ndarray,
+                 min_grd_size: float):
+        """ class for LGR mesh for the center coarse cell
+
+            Args:
+
+                grid_coarse (GridCoarse): information on coarse grid
+                LGR_sizes_x (list[float]): LGR x grid intervals
+                LGR_sizes_y (list[float]): LGR y grid intervals
+                LGR_sizes_z (np.ndarray): LGR DZ inernals
+                min_grd_size (float): minimize grid size
         """
 
         super().__init__(grid_coarse, 

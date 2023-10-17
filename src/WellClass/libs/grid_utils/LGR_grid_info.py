@@ -1,4 +1,7 @@
 
+from typing import Tuple
+
+import numpy as np
 import pandas as pd
 
 from .grid_coarse import GridCoarse
@@ -31,7 +34,7 @@ class LGRGridInfo:
         self.main_grd_i, self.main_grd_j = grid_coarse.main_grd_i, grid_coarse.main_grd_j
         self.main_grd_min_k, self.main_grd_max_k = grid_coarse.main_grd_min_k, grid_coarse.main_grd_max_k
 
-        # DZs for reservoir and overburden
+        # DZs for reservoir and overburden, only on center cell of coarse grid
         self.DZ_rsrv = grid_coarse.DZ_rsrv
         self.DZ_ovb_coarse = grid_coarse.DZ_ovb_coarse
 
@@ -59,7 +62,9 @@ class LGRGridInfo:
         # 3.2 comptue LGR sizes in z direction
         self.LGR_sizes_z, self.LGR_numb_z, self.LGR_depths = self._compute_LGR_sizes_z()
 
-    def _compute_min_grd_size(self, annulus_df, Ali_way) -> float:
+    def _compute_min_grd_size(self, 
+                              annulus_df: pd.DataFrame, 
+                              Ali_way: bool) -> float:
         """ Compute minimum grid size
 
             Args:
@@ -87,7 +92,8 @@ class LGRGridInfo:
 
         return min_grd_size
     
-    def _compute_num_lateral_fine_grd(self, drilling_df) -> float:
+    def _compute_num_lateral_fine_grd(self, 
+                                      drilling_df: pd.DataFrame) -> float:
         """ compute number of LGR lateral grids
 
             Args:
@@ -106,12 +112,17 @@ class LGRGridInfo:
 
         return drilling_series.max()
     
-    def _compute_LGR_sizes_xy(self, Ali_way: bool):
+    def _compute_LGR_sizes_xy(self, 
+                              Ali_way: bool) -> Tuple:
         """ Compute LGR grid sizes in x-y directions
 
             Args:
 
                 Ali_way (bool): use Ali's algorithm to compute lateral grids and apply refdepth in z direction
+
+            Returns:
+
+                Tuple: LGR_sizes_x, LGR_sizes_y
         """
 
         # for convenience
@@ -128,8 +139,12 @@ class LGRGridInfo:
 
         return LGR_sizes_x, LGR_sizes_y
     
-    def _compute_LGR_sizes_z(self):
+    def _compute_LGR_sizes_z(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """ Compute LGR grid sizes in z direction
+
+            Returns:
+
+                Tuple: LGR_sizes_z, LGR_numb_z, LGR_depths
         """
         # for convenience
         DZ_rsrv = self.DZ_rsrv
