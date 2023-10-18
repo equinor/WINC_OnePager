@@ -10,7 +10,8 @@ from .plot_utils import plot_well_perm
 def plot_grid(my_well, 
               grid: Union[GridCoarse, GridRefine, GridLGR], 
               *, 
-              on_coarse=None):
+              on_coarse=None,
+              prop='PERMX'):
     """ Plot well sketch and 2D slice of the permeability
     """
     
@@ -24,7 +25,7 @@ def plot_grid(my_well,
     xcorn, zcorn = grid.extract_xz_corn_coords()
 
     # extract z PERM values at center y coarse grid
-    Z = grid.extract_xz_slice()
+    Z = grid.extract_xz_slice(prop=prop)
 
     # plot x-z slice
     plot_well_perm(my_well, x=xcorn, y=zcorn, Z=Z, on_coarse=on_coarse)
