@@ -9,7 +9,7 @@ def CARFIN_pipe_with_oph(ID: float,
                             k_min_hole: int, k_max_hole: int,
                             perm: float,
                             LGR_NAME: str,
-                            O: TextIO):
+                            O: TextIO):  # noqa: E741
     """ CARFIN for pipe with open hole sections
 
         The pipes can be mimicked by a very narrow (in the size of ID of a pipe-20 to 50 cm) and high permeability grids. 

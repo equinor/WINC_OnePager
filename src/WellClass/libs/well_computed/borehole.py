@@ -1,5 +1,4 @@
 
-import numpy as np
 import pandas as pd
 
 def compute_borehole(casings: dict, drilling: dict) -> dict:

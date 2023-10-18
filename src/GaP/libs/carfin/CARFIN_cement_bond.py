@@ -10,7 +10,7 @@ def CARFIN_cement_bond(ID: float,
                         x_bd=1, y_bd=1,
                         perm: float,
                         LGR_NAME: str, 
-                        O: TextIO):
+                        O: TextIO):  # noqa: E741
     """ CARFIN for cement bond
     
         The cement bond can be mimicked by low perm vertical layer adjustment to the casing with given depth and interval. 

@@ -10,7 +10,6 @@ $ python -m experiments.gap_pflotran \
 
 """
 
-import os
 import json
 
 import argparse

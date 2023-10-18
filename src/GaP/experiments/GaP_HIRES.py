@@ -134,7 +134,7 @@ def main(args):
 
     # dx and dy (coarse grid)
     main_grd_dx = make_stat_3d_main(grid, init, 'DX', 0)[main_grd_i-1, main_grd_j-1, main_grd_min_k-1]       # 656.168 ft 
-    main_grd_dy = make_stat_3d_main(grid, init, 'DY', 0)[main_grd_i-1, main_grd_j-1, main_grd_min_k-1]       # 656.168 ft 
+    main_grd_dy = make_stat_3d_main(grid, init, 'DY', 0)[main_grd_i-1, main_grd_j-1, main_grd_min_k-1]       # 656.168 ft   # noqa: F841
 
     # list of DZ (coarse grid)
     main_DZ = make_stat_3d_main(grid, init, 'DZ', 0)[main_grd_i-1, main_grd_j-1, (main_grd_min_k-1):main_grd_max_k]

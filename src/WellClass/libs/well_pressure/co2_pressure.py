@@ -40,7 +40,7 @@ def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, p
     get_rho_h2o = RectBivariateSpline(p_vec, t_vec, rho_h2o_vec)
     get_rho_co2 = RectBivariateSpline(p_vec, t_vec, rho_co2_vec)
 
-    # TODO(hzh): no return value?????
+    # 
     def get_rho(phase, p, t):
         if phase=='co2':
             rho  = get_rho_co2(p,t)[0, 0]
@@ -60,8 +60,9 @@ def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, p
 
     #Find hydrostatic pressure and temperature at reference depth - typically at top reservoir
     ref_z = p_init['depth_msl']
-    ref_z_hsp = np.interp(ref_z, pt_df['depth_msl'], pt_df['hs_p'])
-    ref_z_temp = np.interp(ref_z, pt_df['depth_msl'], pt_df['temp'])
+    # TODO(hzh): the following two not used
+    # ref_z_hsp = np.interp(ref_z, pt_df['depth_msl'], pt_df['hs_p'])
+    # ref_z_temp = np.interp(ref_z, pt_df['depth_msl'], pt_df['temp'])
 
     #Integrate from reference depth and upwards given different starting pressures
     for key, value in p_init.items():                 #depth_msl, RP1, RP2, hydrostatic_pressure

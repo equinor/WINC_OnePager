@@ -13,8 +13,8 @@ from .well_model_utils import (
     GeologyModel,
     AssumptionsModel,
     ReservoirPressureModel,
-    CO2DatumModel,
-    MainBarrierModel,
+    # CO2DatumModel,
+    # MainBarrierModel,
 )
 
 class MetaDataModel(BaseModel):

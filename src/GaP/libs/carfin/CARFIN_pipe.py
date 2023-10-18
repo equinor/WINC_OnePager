@@ -8,7 +8,7 @@ def CARFIN_pipe(ID: float,
                 k_min_pipe: int, k_max_pipe: int,
                 perm: float,
                 LGR_NAME: str, 
-                O: TextIO):
+                O: TextIO):  # noqa: E741
     """ CARFIN for pipe
 
         The pipes can be mimicked by a very narrow (in the size of ID of a pipe-20 to 50 cm) and high permeability grids. 

@@ -4,7 +4,7 @@ from typing import Tuple, Union
 import pathlib
 import numpy as np
 
-from ecl.eclfile import EclFile, EclRestartFile
+# from ecl.eclfile import EclFile, EclRestartFile
 from ecl.eclfile import EclInitFile
 from ecl.grid import EclGrid
 
@@ -45,15 +45,15 @@ class GridLGR:
         for key in init.keys():
             try:
                 lgr_index[key] = init[key][1].numpy_view()
-            except:
+            except Exception:
                 continue
 
         # 
         self.lgr_index = lgr_index
 
         # compute middle index for extraction of DX and DY
-        mid_i = lgr_index.i.max()//2
-        mid_j = lgr_index.j.max()//2
+        mid_i = lgr_index.i.max()//2  # noqa: F841
+        mid_j = lgr_index.j.max()//2  # noqa: F841
 
         # compute DX and DY on the coarse grid by summing LGR grid
         self.main_grd_dx = lgr_index.query("j==@mid_j&k==0").DX.sum()

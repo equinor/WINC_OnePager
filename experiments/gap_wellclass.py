@@ -21,7 +21,6 @@ $ python -m experiments.gap_wellclass --sim-path ./test_data/examples/cosmo --we
 
 """
 
-import os
 import json
 
 import argparse

@@ -1,5 +1,4 @@
 
-import os
 import pandas as pd
 
 # coarse and refined grid
