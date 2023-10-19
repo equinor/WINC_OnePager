@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import argparse
 import numpy as np
 import sys
 import pandas as pd
@@ -11,19 +12,36 @@ from ecl.grid import EclGrid
 from dash import Dash, dcc, html, Input, Output, State
 import plotly.graph_objects as go
 
-print(sys.argv)
+# load cmd options
+parser = argparse.ArgumentParser(
+                prog='WellViz',
+                description="view the Eclipse/PFT grids"
+)
 
-ip_path = sys.argv[1]
+# the argument
+parser.add_argument('filename', type=str,
+                    help='Eclipse .in file name')   # positional argument
+parser.add_argument('-d', '--debug', action='store_true',
+                    help='set debug flag')
+parser.add_argument('-p', '--port', default=8050, 
+                    help='port number, default: 8050')
+
+# load the data
+args = parser.parse_args()
+
+# input file
+ip_path = args.filename
 if not os.path.isfile(ip_path):
-        print('ERROR:\nFile does not exist.\nEnter a valid path')
+        print(f'\n===>ERROR:\n===>File "{args.filename}" does not exist.\n===>Enter a valid path\n\n')
+        parser.print_help()
         sys.exit(1)
 
 # input file
 pr_path = os.path.dirname(ip_path)
 simfile = os.path.basename(ip_path)
 
-print(f'file: {simfile}')
-print(f'path: {pr_path}')
+print(f'===>file: {simfile}')
+print(f'===>path: {pr_path}')
 
 # case
 simname = simfile.split('.')[0]
@@ -59,32 +77,33 @@ for key in init.keys():
         except Exception:
                 continue
 
-# Create cell coordinate X, Y, Z (LGR)
-xcoord = (lgr_init.query("j==0&k==0").DX.cumsum()).values
-ycoord = (lgr_init.query("i==0&k==0").DY.cumsum()).values
-zcoord = (lgr_init.query("i==0&j==0").DZ.cumsum()).values
+if False:  # Note: not needed
+        # Create cell coordinate X, Y, Z (LGR)
+        xcoord = (lgr_init.query("j==0&k==0").DX.cumsum()).values
+        ycoord = (lgr_init.query("i==0&k==0").DY.cumsum()).values
+        zcoord = (lgr_init.query("i==0&j==0").DZ.cumsum()).values
 
-map_X = dict(zip(lgr_init.query("j==0&k==0")['i'], xcoord))
-map_Y = dict(zip(lgr_init.query("i==0&k==0")['j'], ycoord))
-map_Z = dict(zip(lgr_init.query("i==0&j==0")['k'], zcoord))
+        map_X = dict(zip(lgr_init.query("j==0&k==0")['i'], xcoord))
+        map_Y = dict(zip(lgr_init.query("i==0&k==0")['j'], ycoord))
+        map_Z = dict(zip(lgr_init.query("i==0&j==0")['k'], zcoord))
 
-#
-lgr_init['X'] = lgr_init['i'].map(map_X)
-lgr_init['Y'] = lgr_init['j'].map(map_Y)
-lgr_init['Z'] = lgr_init['k'].map(map_Z)
+        #
+        lgr_init['X'] = lgr_init['i'].map(map_X)
+        lgr_init['Y'] = lgr_init['j'].map(map_Y)
+        lgr_init['Z'] = lgr_init['k'].map(map_Z)
 
-# amount to shift to middle of X and Y
-X_radius = lgr_init['X'].max()/2
-Y_radius = lgr_init['Y'].max()/2
+        # amount to shift to middle of X and Y
+        X_radius = lgr_init['X'].max()/2
+        Y_radius = lgr_init['Y'].max()/2
 
-# cell coordinates and shift them to the x-y center
-# X-Y
-lgr_init['X'] = lgr_init['X'] - lgr_init['DX']/2
-lgr_init['X'] = lgr_init['X'] - X_radius
-lgr_init['Y'] = lgr_init['Y'] - lgr_init['DY']/2
-lgr_init['Y'] = lgr_init['Y'] - Y_radius
-# Z
-lgr_init['Z'] = lgr_init['Z'] - lgr_init['DZ']/2
+        # cell coordinates and shift them to the x-y center
+        # X-Y
+        lgr_init['X'] = lgr_init['X'] - lgr_init['DX']/2
+        lgr_init['X'] = lgr_init['X'] - X_radius
+        lgr_init['Y'] = lgr_init['Y'] - lgr_init['DY']/2
+        lgr_init['Y'] = lgr_init['Y'] - Y_radius
+        # Z
+        lgr_init['Z'] = lgr_init['Z'] - lgr_init['DZ']/2
 
 #Retrieve time steps from restart file
 tsteps = rst.timeList() #No. of timesteps and time value
@@ -145,7 +164,7 @@ app = Dash(__name__)
 
 #Names in pull down lists
 var_names    = lgr_init.columns.tolist() + lgr_rst.columns.tolist()
-var_names2   = ["SGAS", "TRANX", "TRANY", "PERMX", "MULTX", "PORO", "None"]
+var_names2   = ["SGAS", "PRESSURE", "TRANX", "TRANY", "PERMX", "MULTX", "PORO", "None"]
 
 #Names for freeze button
 #freeze_names = ["Freeze from next zoom", "Reset"]
@@ -388,11 +407,11 @@ if __name__ == '__main__':
         from threading import Timer
         # url
         hostname = socket.gethostname()
-        port = 8050
+        port = args.port
         url = f'http://{hostname}:{port}/'
 
         # launch browser
         Timer(1, open_browser, args=[url]).start()
 
         # launch server
-        app.run_server(debug=True, port=port)
+        app.run_server(debug=True if args.debug else False, port=port)
