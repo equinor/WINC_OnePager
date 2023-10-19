@@ -87,13 +87,19 @@ class GridRefine(GridRefineBase):
 
         return xcorn, zcorn
     
-    def extract_xz_slice(self) -> np.ndarray:
+    def extract_xz_slice(self, prop='PERMX') -> np.ndarray:
         """ generate x-z PERM slice
+
+            Args:
+                prop (str): the property name, default: PERMX
+
+            Returns:
+                np.ndarray: x-z slice of the property
         """
         # for convenience
         mesh_df = self.mesh_df
 
         # extract permeability
-        Z = extract_xz_prop_slice(mesh_df)
+        Z = extract_xz_prop_slice(mesh_df, prop=prop)
 
         return Z 
