@@ -1,19 +1,18 @@
-name: SCREEN-pytest
+name: SCREEN-unittest
 
 on:
 
-  push:
-    branches: 
+  pull_request:
+    branches:
     - main
 
-  pull_request:
-    types:
-      - opened
-      - synchronize
-
-  workflow_dispatch:
-    branches:
+  push:
+    branches: 
     - hzh/unittest
+
+  # workflow_dispatch:
+  #   branches:
+  #   - hzh/unittest
 
 permissions:
   contents: read
@@ -27,7 +26,7 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
@@ -45,4 +44,5 @@ jobs:
         pip install -r requirements_pytest.txt        
     - name: Run pytest
       run: | 
-        python -m pytest tests
+        python -m pytest --cov tests 
+
