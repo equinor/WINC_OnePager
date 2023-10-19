@@ -1,125 +1,209 @@
 # SCREEN
-## Simulation-based comparative risk estimation of well leakage in early phase evaluation (SCREEN)
 
-Compilation of scripts that support the actviities on the <a href="https://colab.equinor.com/technologies/4FAAF5BD-19C3-46A3-ACB6-5D38DD2C7A89/summary" target="_blank">SCREEN project</a>.
+This repository contains source codes and documentation for SCREEN project.
 
+[![SCREEN-unittest](https://github.com/equinor/SCREEN/actions/workflows/pytest.yaml/badge.svg)](https://github.com/equinor/SCREEN/actions/workflows/pytest.yaml)
+[![SCREEN-docs](https://github.com/equinor/SCREEN/actions/workflows/mkdocs.yaml/badge.svg)](https://github.com/equinor/SCREEN/actions/workflows/mkdocs.yaml)
+[![SCREEN-lint](https://github.com/equinor/SCREEN/actions/workflows/ruff.yaml/badge.svg)](https://github.com/equinor/SCREEN/actions/workflows/ruff.yaml)
 
-### Methodology
-
-The `SCREEN` method is a tool to analyze data relevant to legacy wells and estimate leakage of CO2. It consists of three main modules: `Data Preparation`, `Data Visualization and Proxy-based Leakage Estimation`, and `Simulation-based Leakage Estimation`.
-
-#### Data Preparation
-The first step in using the `SCREEN` method is to gather all the necessary data to build a plugged and abandoned well sketch, along with any relevant subsurface data surrounding the well. This data should be prepared in a CSV file with multiple tables, each separated by a blank line.
-
-To collect the data these are some steps that can be followed:
-
-•	**Identify the required data**: Review the list of required tables and columns in the input data file to determine what information you need to gather. This includes well header information, drilling intervals, casing and cementing intervals, barriers, geological units, and assumptions.
-
-•	**Collect the data**: Gather the necessary data from various sources. The information in the first tables should be available from the final well reports. Retrieving the data may involve manually scouting numbers in the reports that could be presented in different places and different formats. Other databases can be referred to retrieve temperature data or updated geological well tops.
-
-•	**Verify the data**: Check the accuracy and completeness of the data by cross-referencing it with multiple sources and verifying it with domain experts. Ensure that all required tables and columns are included in the input data file and that the data is entered correctly.
-
-•	**Organize the data**: Organize the data into tables according to the structure of the input data file. Use a spreadsheet program or a text editor to create a CSV file with multiple tables, each separated by a blank line.
-
-•	**Include assumptions**: The assumptions depend on the stage of knowledge of the area. If there is a reservoir model in place, this should be used to fill in the information for these tables. Otherwise these should discussed with the subsurface personnel involved in the project.
-
-The CSV file shall include the following tables:
-
-•	**well_header**: This table contains general information about the well, such as its name (well_name), RKB elevation (well_rkb), depth of the sea floor (sf_depth_msl), total depth (well_td_rkb), sea floor temperature (sf_temp), and geothermal gradient (geo_tgrad).
-
-•	**drilling**: This table contains information about the drilling intervals of the well, including the top and bottom depths in RKB (top_rkb, bottom_rkb) and the diameter of the borehole in inches (diameter_in).
-
-•	**casing_cement**: This table contains information about the casing and cementing intervals of the well, including the top and bottom depths in RKB (top_rkb, bottom_rkb), diameter of the casing in inches (diameter_in), top  and bottom of cement-bond in RKB (toc_rkb, boc_rkb), and whether or not it has a shoe (shoe).
-
-•	**barriers**: This table lists the barriers in the well along with their name (barrier_name), type (barrier_type), and top and bottom depths in RKB (top_rkb, bottom_rkb).
-
-•	**geology**: This table lists the geological units encountered in the well along with their top depth in RKB (top_rkb), name (geol_unit), and whether or not they are considered a reservoir (reservoir_flag).
-
-•	**assumptions**: This section includes several tables with information about assumptions used in the analysis, such as reservoir pressure scenarios (reservoir_pressure), CO2 datum depth (co2_datum), main barrier name (main_barrier), and barrier permeability values for different quality levels (barrier_permeability).
-
-Here is an example of how the CSV file could be structured, along with explanations for each table:
-
-input_data
-
+## Clone the repository
+Locate a folder at your local machine that you intend to investigate the codes, and then clone the repository
 ```
-well_header
-well_name,wellA
-well_rkb,30
-sf_depth_msl,105
-well_td_rkb,3997
-sf_temp,4
-geo_tgrad,40
-
-drilling
-top_rkb,bottom_rkb,diameter_in
-132,190,36
-190,444,26
-444,1812,17 1/2
-1812,3942,12 1/4
-3942,3997,8 1/2
-
-casing_cement
-top_rkb,bottom_rkb,diameter_in,toc_rkb,boc_rkb,shoe
-132,158,30,132,158,TRUE
-132,439,20,132,439,TRUE
-182,1803,13 3/8,450,1803,TRUE
-
-barriers
-barrier_name,barrier_type,top_rkb,bottom_rkb
-cement plug #3,cplug,132,150
-cement plug #2,cplug,1690,1850
-cement plug #1,cplug,2050,2300
-
-geology
-top_rkb,geol_unit,reservoir_flag
-132,OVERBURDEN,FALSE
-2122,CAP ROCK,FALSE
-2265,RESERVOIR,TRUE
-
-assumptions
-
-reservoir_pressure
-depth_msl,RP1,RP2
-2238,90 110
-
-co2_datum
-co2_msl,2370
-
-main_barrier
-barrier_name,cplug2
-
-barrier_permeability
-quality,kv
-good,0.01
-mid,10
-poor,1.00E+03
+$ git clone https://github.com/equinor/SCREEN
+```
+Note here `$` is a linux command prompt and therefore there is no need to type it. By this time you should have a folder named `SCREEN` at your local machine. Now change the directory with linux command:
+```
+$ cd SCREEN
 ```
 
-#### Data Visualization and Proxy-based Leakage Estimation
+It's normal for us to make a new branch if we indend to make some changes of the codes. This can be done with the `-b` option, for example:
+```
+$ git checkout -b hzh/cleanup
+```
+This would generate a new branch, named `hzh/cleanup`. Here the branch name is created by concatenating a short name, such as `hzh`,  of `equinor` account with a feature description `cleanup`. There is no need to follow this convention. You could simply pick any branch name as long as it makes sense. However, please note branch names have limitations.
 
-Once all the information is tabulated, it can be processed with a python script. The processing will store the data in memory and use it to produce a hybrid geological well-sketch and a pressure-depth plot displaying the fluid pressures of each phase and the minimum horizontal stress.
+## Virtual environment
 
-The well sketch combines both subsurface data and well engineering information. It serves as a starting point to identify the main leakage pathways and illustrate the main risks associated with the well.
+It's a common practice to work on a project within a python virtual environment. I have been using python's builtin module `venv` for a long while. So I am going to stick to it here as an example to set up the virtual environment. But you are free to use any other virtual environment setups that you feel comfortable with, such as *poetry*, *conda*, etc. 
+```
+$ python -m venv venv_screen
+```
+This will build a virtual environment `venv_screen`. You only need to creat it once.
 
-The pressure plot, besides visualizing the provided pressure scenarios, has the necessary input to run a preliminary leakage estimation based on a Darcy-based proxy. This proxy gives an estimate of leakage rates through the main barrier (deepest cement plug). The magnitude will be a function of both the transport properties assigned to the barrier and the resulting phase pressures of each scenario.
+To activate this `venv_screen`, run the following command: 
+```
+$ source venv_screen/bin/activate.csh
+```
+when your linux Shell is `csh`. 
 
-![well sketch](docs/imgs/well-sketch.png)
+If you are using `bash` or plain `sh`, you can activate it with the following command:
+```
+$ source venv_screen/bin/activate
+```
 
-![well sketch](imgs/well-sketch.png)
+We pack needed python packages into a file, such as `requirements.txt`. And install those python packages to this virtual environment by running the following command:
+```
+$ pip install -r requirements.txt
+```
+You should now be ready to play with the source codes.
 
-#### Simulation-based Leakage Estimation
 
-For wells with larger uncertainties and more complex leakage pathways, a simulation-based approach can assist in generating a more accurate estimate of leakage.
+## The code structures
 
-By fulfilling the first two modules, the data is ready to be processed through a second script that generates and initializes a simple reservoir model with a finite-volume representation of the legacy well.
+The following represents the current code structures:
 
-The generated mesh is a coarse mesh with `local grid refinement (LGR)` in the middle. The higher resolution of the LGR is used to represent well construction details.
+```
+├── experiments
+│   ├── gap_pflotran.py
+│   ├── gap_wellclass.py
+│   ├── __init__.py
+│   └── LEG_HIRES.grdecl
+├── INSTALLATION.md
+├── mkdocs.yml
+├── notebooks
+│   ├── GaP-WellClass.ipynb
+│   ├── LEG_HIRES.grdecl.smeaheia
+│   ├── pflotran_gap.ipynb
+│   ├── Pressure-WellClass.ipynb
+│   ├── Pressure-WellClass_test.ipynb
+│   └── WellClass_csv_yaml.ipynb
+├── README.md
+├── requirements.txt
+├── src
+│   ├── GaP
+│   │   ├── data
+│   │   ├── experiments
+│   │   ├── __init__.py
+│   │   ├── libs
+│   │   ├── notebooks
+│   │   └── README.md
+│   ├── __init__.py
+│   ├── PressCalc
+│   │   ├── 1D_PresCalc.ipynb
+│   │   ├── __init__.py
+│   │   ├── phase_envelope.png
+│   │   ├── Pressure_plot.png
+│   │   ├── PT_01012996
+│   │   ├── PT_010153
+│   │   └── Readme.md
+│   ├── WellClass
+│   │   ├── __init__.py
+│   │   ├── libs
+│   │   ├── notebooks
+│   │   └── README.md
+│   └── WellViz
+│       ├── __init__.py
+│       ├── Readme.md
+│       └── WellViz_Jan23_Dash_v4.py
+└── test_data
+    ├── examples
+    │   ├── cosmo
+    │   ├── cosmo-pflotran
+    │   ├── cosmo-pflotran-2
+    │   ├── frigg
+    │   ├── simple_well
+    │   ├── smeaheia_v1
+    │   └── smeaheia_v2
+    └── pvt_constants
+        ├── pressure.txt
+        ├── rho_co2.txt
+        ├── rho_h2o.txt
+        └── temperature.txt
+```
+It was generated with the linux command `tree`:
+```
+$ tree -I 'docs|site|venv_screen|*pycache*|Equinor*|originals' -L 3
+```
+## Experiments
+There are at least two ways to make experimenal runs of the codes. One is to run the experiments with Jupyter lab, and the other is commandline option. While Jupyter notebooks are mainly for QC tests and research purposes, the commandline option is aiming for production run.
 
-Due to the cartesian nature of the mesh, the cylindrical shape of the well is turned into a prism. A horizontal cross-section of the well in the LGR is square, with sides meant to preserve the area of the original circle. However, discrepancies between volumes may occur due to mesh resolution.
+### Jupyter notebooks
+Jupyter notebooks are located in directory `notebooks`. To test its functionaries, change current directory to `notebooks` and launch jupyter notebooks at the commandline:
+```
+$ jupyter-lab
+```
+Or if you prefer, you can run these Jupyter notebooks from Microsoft's VS code.
 
-The transport properties of geological units are inherited from coarse grid and updated to represent well. Open borehole is represented by high permeability grid cells. Cement plugs and cement-bond are represented by low permeability cells. Casing is represented by reduction of transmissibility of cell interfaces.
+There exist several Jupyter notebooks in the directory:
 
-#### SCREEN Workflow
+- Notebook **GaP-WellClass.ipynb** is a test example for the integration of `GaP` and `WellClass`. It hides many details. It require eclipse `.EGRID` and `.INIT` as input files. This notebook also serves the role of generating `pytest` data for unit testing.
+- Notebook **pflotran-gap.ipynb** integrates `GaP` and `WellClass` too. But instead of the user-provided `.EGRID` and `.INIT` files, both files are generates by calling pflotran scripts.
+- Notebook **Pressure-WellClass_test.ipynb** is Alejandro's tests on deviated wells.
+- Notebook **Pressure-WellClass.ipynb** is used to test pressure. 
+- Notebook **WellClass_csv_yaml.ipynb** is used to test pressure and loading `.csv` and `.yaml` input files.
 
-![Work flow](docs/imgs/screen_workflow.png)
-![Work flow](imgs/screen_workflow.png)
+### Commandline option
+Two python scripts for commandline option are available in directory `experiments`. One script, **gap_plotran.py**, can be used not only for generating Eclipse `.EGRID` and `.INIT` on the fly but also can be used for quick `pflotran` test, while the other script, **gap_wellclass.py**, requires the user to provide these two grid files.  
+
+The followings are some of  the sample runs. In either way, you should run the python script inside the ```SCREEN``` directory. 
+
+1. To test **gap_wellclass.py**, run either of the followings:
+```python
+# 1. for smeaheia_v1
+
+$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v1 --well smeaheia.yaml --sim-case GEN_NOLGR_PH2 --plot 
+
+# 2. for smeaheia_v2
+
+$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v2 --well smeaheia.yaml --sim-case TEMP-0 --plot
+
+# 3. for cosmo
+
+$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/cosmo --well cosmo.yaml --sim-case TEMP-0 --plot
+
+```
+This will generate an output file `LEG_HIRES.grdecl` in `experiments` directory.
+
+2. To test **gap_plotran.py**, run the following commnad at the directory ``SCREEN``:
+```python
+$ python -m experiments.gap_pflotran \
+    --sim-path ./test_data/examples/cosmo-pflotran \
+    --well cosmo.yaml \
+    --sim-case1 TEMP-0_NOSIM \
+    --sim-case2 TEMP-0 \
+    --plot
+```
+## Test data
+In order for quick test of the codes, we include some test data in the folder `test_data/examples`. The input data structure is organized  similiar to the `pflotran`. For example, for test data
+`test_data/examples/cosmo-pflotran-2`, the input file structure should be like this:
+```
+├── cosmo.yaml
+├── include
+│   ├── co2_db_new.dat
+│   ├── temperature_gradient.inc
+│   ├── TEMP_GRD.grdecl
+│   ├── TEMP_GRD_NOSIM.grdecl
+│   └── tops_dz.inc
+└── model
+    ├── TEMP-0.in
+    └── TEMP-0_NOSIM.in
+```
+Sub-directories, such as `cosmo`, `smeaheia_v1` and `smeaheia_v2`, contain the necessary data, e.g., Eclipse  `.EGRID` and `.INIT` files, for testing **gap_wellclass.py**. 
+
+One sub-directory, `cosmo-plotran`, contains configuration parameters for testing **gap_pflotran.py**, i.e., use pfloatran to generate `.EGRID` and `.INIT`. 
+
+Another sub-directory `frigg` contains information for testing deviated wells.
+
+In addition, the **PVT** values are included in the directory `pvt_contants` for self-consistent testing of pressure-related computes.
+
+## Unit testing and code coverage
+We are using `pytest` for unit testing and code coverage. The unit testing utilizes `cosmo` as the testing example. So please make sure the saved .pkl files in ```test_data/examples/cosmo/pytest``` exists and is updated. Here is a commandline example:
+```pyton
+$ python -m pytest tests
+```
+This will report the unit testing results. And the following will report not only unit testing but also code coverage:
+```python
+$ python -m pytest --cov tests
+```
+or a litle bit more complex command:
+```python
+$ python -m pytest --cov --cov-branch --cov-report term-missing tests
+```
+
+## Documentation
+
+The document can be automatically generated and deployed to github pages. To do that, type the following at the command line:
+```
+$ mkdocs gh-deploy
+```
+It may take some minutes until the documentation goes live. And the generated documentation page can be found at [SCREEN docs](https://redesigned-dollop-m5l6pme.pages.github.io/).
