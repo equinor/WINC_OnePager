@@ -18,14 +18,16 @@ if not os.path.isfile(ip_path):
         print('ERROR:\nFile does not exist.\nEnter a valid path')
         sys.exit(1)
 
-print(f'file: {os.path.basename(ip_path)}')
-print(f'path: {os.path.dirname(ip_path)}')
-
+# input file
 pr_path = os.path.dirname(ip_path)
-simname = os.path.basename(ip_path)
-simname = simname.split('.')[0]
-simcase = os.path.join(pr_path,simname)
+simfile = os.path.basename(ip_path)
 
+print(f'file: {simfile}')
+print(f'path: {pr_path}')
+
+# case
+simname = simfile.split('.')[0]
+simcase = os.path.join(pr_path, simname)
 
 #parquet_files
 file_rst_df  = os.path.join(f'{pr_path}',f'DF_rst_{simname}.parquet.gzip')
@@ -41,8 +43,8 @@ if os.path.isfile(file_rst_df) and os.path.isfile(file_init_df):
 #Start processing
 #Get grid dimensions and coordinates
 grid = EclGrid(simcase + ".EGRID")
-init = EclInitFile(grid ,simcase + ".INIT")
-rst = EclRestartFile(grid ,simcase + ".UNRST")
+init = EclInitFile(grid, simcase + ".INIT")
+rst = EclRestartFile(grid, simcase + ".UNRST")
 
 #Process init file
 lgr_name = grid.get_lgr(0).get_name()
@@ -50,14 +52,14 @@ lgr_grid = grid.get_lgr(lgr_name)
 lgr_init = lgr_grid.export_index()
 
 
-# Static properties Dataframe
+# Static properties Dataframe (LGR)
 for key in init.keys():
         try:
                 lgr_init[key] = init[key][1].numpy_view()
         except Exception:
                 continue
 
-#Create coordinate X, Y, Z
+# Create cell coordinate X, Y, Z (LGR)
 xcoord = (lgr_init.query("j==0&k==0").DX.cumsum()).values
 ycoord = (lgr_init.query("i==0&k==0").DY.cumsum()).values
 zcoord = (lgr_init.query("i==0&j==0").DZ.cumsum()).values
@@ -66,15 +68,22 @@ map_X = dict(zip(lgr_init.query("j==0&k==0")['i'], xcoord))
 map_Y = dict(zip(lgr_init.query("i==0&k==0")['j'], ycoord))
 map_Z = dict(zip(lgr_init.query("i==0&j==0")['k'], zcoord))
 
+#
 lgr_init['X'] = lgr_init['i'].map(map_X)
 lgr_init['Y'] = lgr_init['j'].map(map_Y)
 lgr_init['Z'] = lgr_init['k'].map(map_Z)
 
+# amount to shift to middle of X and Y
 X_radius = lgr_init['X'].max()/2
+Y_radius = lgr_init['Y'].max()/2
 
+# cell coordinates and shift them to the x-y center
+# X-Y
 lgr_init['X'] = lgr_init['X'] - lgr_init['DX']/2
 lgr_init['X'] = lgr_init['X'] - X_radius
 lgr_init['Y'] = lgr_init['Y'] - lgr_init['DY']/2
+lgr_init['Y'] = lgr_init['Y'] - Y_radius
+# Z
 lgr_init['Z'] = lgr_init['Z'] - lgr_init['DZ']/2
 
 #Retrieve time steps from restart file
@@ -114,14 +123,20 @@ lgr_init.loc[lgr_init['MULTZ'] == 0, 'PERMX'] = np.float32(1e-3)
 
 #Correct coordinates to sit at center of cell. PFT coordinates sit at end.
 lgr_rst     = lgr_rst.reset_index()
-mid_j_index = lgr_init.j.max()//2
 
-# generate x-z corner coordinates
+# indices for central x-y 
+mid_j_index = lgr_init.j.max()//2
+mid_i_index = lgr_init.i.max()//2
+
+# extract x-z corner coordinates
+
+# X corner coordinates and shifted to the middle
 Xcoord = lgr_init.query("j=={:d}&k==k.min()".format(mid_j_index)).DX.cumsum().tolist()
 Xcoord = [0] + Xcoord
 Xcoord = np.array(Xcoord)
 Xcoord = Xcoord - Xcoord.max()/2
 
+# Z corner coordinates
 Ycoord = lgr_init.query("j=={:d}&i==i.min()".format(mid_j_index)).DZ.cumsum().tolist()
 Ycoord = [0] + Ycoord
 
@@ -130,7 +145,7 @@ app = Dash(__name__)
 
 #Names in pull down lists
 var_names    = lgr_init.columns.tolist() + lgr_rst.columns.tolist()
-var_names2   = ["SGAS", "None"]
+var_names2   = ["SGAS", "TRANX", "TRANY", "PERMX", "MULTX", "PORO", "None"]
 
 #Names for freeze button
 #freeze_names = ["Freeze from next zoom", "Reset"]
@@ -211,31 +226,36 @@ def update_figure(select_background_name, select_foreground_name, selected_tstep
         if not stop:
                 step = (step + 1)%len(tsteps[:])
 
-        # background
+        # 1. background
         if select_background_name in lgr_init.columns:
+
                 Zvalues = lgr_init.query("j=={:d}".format(mid_j_index))[select_background_name].values
                 Zvalues = Zvalues.reshape(len(Ycoord)-1, len(Xcoord)-1)
                 Zmin = Zvalues.min()
                 Zmax = Zvalues.max()
-        else:
+
+        else:    # dynamic (restart) vector
+                
                 Zvalues = lgr_rst.query("j=={:d} & tstep=={:}".format(mid_j_index, selected_tstep))[select_background_name].values
                 Zvalues = Zvalues.reshape(len(Ycoord)-1, len(Xcoord)-1)
                 Zmin = lgr_rst.query("j=={:d}".format(mid_j_index))[select_background_name].min()
                 Zmax = lgr_rst.query("j=={:d}".format(mid_j_index))[select_background_name].max()
 
-        # foreground
-        if select_foreground_name in lgr_init.columns: #Opens up for having more than SGAS as foregound
-                Zvalues_fg = lgr_init.query("j=={:d}".format(mid_j_index))[select_foreground_name].values
-                Zvalues_fg = Zvalues_fg.reshape(len(Ycoord)-1, len(Xcoord)-1)
-                Zmin_fg = Zvalues_fg.min()
-                Zmax_fg = Zvalues_fg.max()
-        elif select_foreground_name == "None":
-                pass
-        else: #Foreground value is a dynamic (restart) vector
-                Zvalues_fg = lgr_rst.query("j=={:d} & tstep=={:}".format(mid_j_index, selected_tstep))[select_foreground_name].values         
-                Zvalues_fg = Zvalues_fg.reshape(len(Ycoord)-1, len(Xcoord)-1)
-                Zmin_fg = lgr_rst.query("j=={:d}".format(mid_j_index))[select_foreground_name].min()
-                Zmax_fg = lgr_rst.query("j=={:d}".format(mid_j_index))[select_foreground_name].max()
+        # 2. foreground
+        if select_foreground_name != "None":
+
+                if select_foreground_name in lgr_init.columns: #Opens up for having more than SGAS as foregound
+
+                        Zvalues_fg = lgr_init.query("j=={:d}".format(mid_j_index))[select_foreground_name].values
+                        Zvalues_fg = Zvalues_fg.reshape(len(Ycoord)-1, len(Xcoord)-1)
+                        Zmin_fg = Zvalues_fg.min()
+                        Zmax_fg = Zvalues_fg.max()
+
+                else: #Foreground value is a dynamic (restart) vector
+                        Zvalues_fg = lgr_rst.query("j=={:d} & tstep=={:}".format(mid_j_index, selected_tstep))[select_foreground_name].values         
+                        Zvalues_fg = Zvalues_fg.reshape(len(Ycoord)-1, len(Xcoord)-1)
+                        Zmin_fg = lgr_rst.query("j=={:d}".format(mid_j_index))[select_foreground_name].min()
+                        Zmax_fg = lgr_rst.query("j=={:d}".format(mid_j_index))[select_foreground_name].max()
 
 
         # context info
@@ -243,8 +263,24 @@ def update_figure(select_background_name, select_foreground_name, selected_tstep
         j_values = lgr_init.query("j=={:d}".format(mid_j_index)).j.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
         k_values = lgr_init.query("j=={:d}".format(mid_j_index)).k.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
 
+        MULTX_v =  lgr_init.query("j=={:d}".format(mid_j_index)).MULTX.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
+        MULTY_v =  lgr_init.query("j=={:d}".format(mid_j_index)).MULTY.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
+        MULTZ_v =  lgr_init.query("j=={:d}".format(mid_j_index)).MULTZ.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
+
+        PERMX_v =  lgr_init.query("j=={:d}".format(mid_j_index)).PERMX.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
+        PERMY_v =  lgr_init.query("j=={:d}".format(mid_j_index)).PERMY.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
+        PERMZ_v =  lgr_init.query("j=={:d}".format(mid_j_index)).PERMZ.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
+
+        TRANX_v =  lgr_init.query("j=={:d}".format(mid_j_index)).TRANX.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
+        TRANY_v =  lgr_init.query("j=={:d}".format(mid_j_index)).TRANY.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
+        TRANZ_v =  lgr_init.query("j=={:d}".format(mid_j_index)).TRANZ.values.reshape(len(Ycoord)-1, len(Xcoord)-1)
+
         #These data will be available for hovering
-        custom_data = np.dstack((Zvalues, i_values + 1, j_values + 1, k_values + 1))
+        custom_data = np.dstack((Zvalues, 
+                                 i_values + 1, j_values + 1, k_values+ 1, 
+                                 MULTX_v, MULTY_v, MULTZ_v,
+                                 PERMX_v, PERMY_v, PERMZ_v,
+                                 TRANX_v, TRANY_v, TRANZ_v,))
 
         #For legend title
         title    = select_background_name
@@ -261,48 +297,66 @@ def update_figure(select_background_name, select_foreground_name, selected_tstep
                 Zmax = Zvalues.max()
 
 
+        ############# building
+
         fig = go.Figure()
         fig.layout.height = 800
 
         #Background color
         base_heatmap = go.Heatmap()
+
         base_heatmap.x = Xcoord
         base_heatmap.y = Ycoord
         base_heatmap.z = Zvalues
-        base_heatmap.colorscale = 'Viridis'
-        base_heatmap.colorbar.title = title
         base_heatmap.zmin = Zmin
         base_heatmap.zmax = Zmax
+        base_heatmap.colorscale = 'Viridis'
+        base_heatmap.colorbar.title = title
 
         if  select_foreground_name == "None":
                 base_heatmap.customdata = custom_data
-                base_heatmap.hovertemplate = select_background_name+':%{customdata[0]:.3f}<br>ijk:%{customdata[1]:.0f} %{customdata[2]:.0f} %{customdata[3]:.0f}'
+                base_heatmap.hovertemplate = select_background_name+':%{customdata[0]:.3f}<br>ijk:%{customdata[1]:.0f} %{customdata[2]:.0f} %{customdata[3]:.0f}\
+                                                                     <br>MULT_XYZ:%{customdata[4]:.2f}, %{customdata[5]:.2f}, %{customdata[6]:.2f}\
+                                                                     <br>PERM_XYZ:%{customdata[7]:.2e}, %{customdata[8]:.2e}, %{customdata[9]:.2e}\
+                                                                     <br>TRAN_XYZ:%{customdata[10]:.2e}, %{customdata[11]:.2e}, %{customdata[12]:.2e}'
 
         fig.add_trace(base_heatmap)
 
         #Foreground color
         if select_foreground_name != "None":
+
                 top_heatmap = go.Heatmap()
+
                 top_heatmap.x = Xcoord
                 top_heatmap.y = Ycoord
+                top_heatmap.z = Zvalues_fg
+                top_heatmap.zmin = Zmin_fg
+                top_heatmap.zmax = Zmax_fg
+
                 top_heatmap.name = None
                 top_heatmap.customdata = custom_data
-                top_heatmap.z = Zvalues_fg
+
                 top_heatmap.colorscale = [[0, 'rgba(178, 34, 34, 0.)'], [1, 'rgba(178, 34, 34, 1.)']] #Red scale from white to red
                 top_heatmap.colorbar.x = 1.1
                 top_heatmap.colorbar.title = title_fg
-                top_heatmap.zmin = Zmin_fg
-                top_heatmap.zmax = Zmax_fg        
+
                 
-                top_heatmap.hovertemplate = select_foreground_name+': %{z:.7f}<br>'+select_background_name+':%{customdata[0]:.3f}<br>ijk:%{customdata[1]:.0f} %{customdata[2]:.0f} %{customdata[3]:.0f}'
+                top_heatmap.hovertemplate = select_foreground_name+': %{z:.7f}<br>'+select_background_name+':%{customdata[0]:.3f}<br>ijk:%{customdata[1]:.0f} %{customdata[2]:.0f} %{customdata[3]:.0f} \
+                                                                     <br>MULT_XYZ:%{customdata[4]:.2f}, %{customdata[5]:.2f}, %{customdata[6]:.2f}\
+                                                                     <br>PERM_XYZ:%{customdata[7]:.2e}, %{customdata[8]:.2e}, %{customdata[9]:.2e}\
+                                                                     <br>TRAN_XYZ:%{customdata[10]:.2e}, %{customdata[11]:.2e}, %{customdata[12]:.2e}'
+                
                 fig.add_trace(top_heatmap)
                 title_plot += f" overlayed by    {select_foreground_name} "
                 
         # title and axes
         title_plot += f' @{tsteps[selected_tstep][1].strftime("%Y")}'
+
         fig.update_yaxes(title_text = 'Depth [m]', autorange='reversed')
         fig.update_xaxes(title_text = 'X dist [m]', range=[-4,4])
+
         fig.update_layout(title=title_plot, title_x=0.5, uirevision=reset)
+
         time_slider_text = 'Time step {}: {:s}'.format(selected_tstep, tsteps[selected_tstep][1].strftime("%d-%b-%Y")),
 
         print(freeze_names[reset%2])
@@ -316,11 +370,12 @@ def update_figure(select_background_name, select_foreground_name, selected_tstep
         Input("play","n_clicks"),
         State("animate","disabled"),
 )
-def toggle(n,playing):
+def toggle(n, playing):
         print(f" -> {n}")
         style = button_style[n%2]
         if n>0:
                 return not playing, style
+        
         return playing, style
 
 def open_browser(url):
@@ -341,4 +396,3 @@ if __name__ == '__main__':
 
         # launch server
         app.run_server(debug=True, port=port)
-
