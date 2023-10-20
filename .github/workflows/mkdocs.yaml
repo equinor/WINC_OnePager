@@ -1,0 +1,25 @@
+name: SCREEN-docs
+on:
+
+  pull_request:
+    branches:
+    - main
+
+  push:
+    branches:
+      - hzh/unittest
+
+  # workflow_dispatch:
+  #   branches:
+  #   - hzh/unittest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - run: pip install -r requirements.txt
+      - run: mkdocs gh-deploy --force

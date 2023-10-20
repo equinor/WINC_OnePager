@@ -8,7 +8,7 @@ def CARFIN_oph(ID: float,
                 k_min_hole: int, k_max_hole: int,
                 perm: float,
                 LGR_NAME: str,
-                O: TextIO):
+                O: TextIO):  # noqa: E741
     """ CARFIN for open hole sections
 
         The open hole sections can be modelled the same as pipe, but without zero transmissibility around the high perm. area 

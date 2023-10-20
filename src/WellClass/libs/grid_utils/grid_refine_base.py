@@ -1,24 +1,37 @@
 
-from typing import Tuple
+from typing import List
 
 import numpy as np
 import pandas as pd
 
 from .grid_coarse import GridCoarse
 
-from .LGR_bbox import (
-    get_ij_indices,
-    get_k_indices,
-)
+from .LGR_bbox import compute_bbox
+
+from .LGR_grid_utils import compute_ngrd
+
+from ..well_computed.casings_cement import trim_casings_cement
 
 class GridRefineBase:
 
     def __init__(self, 
                  grid_coarse: GridCoarse,
-                 LGR_sizes_x, LGR_sizes_y, LGR_sizes_z,
-                 ):
-        """ dataframe for LGR mesh for the center coarse grid
+                 LGR_sizes_x: List[float], 
+                 LGR_sizes_y: List[float], 
+                 LGR_sizes_z: np.ndarray,
+                 min_grd_size: float):
+        """ dataframe for LGR mesh for the center coarse cell
+
+            Args:
+
+                grid_coarse (GridCoarse): information on coarse grid
+                LGR_sizes_x (list[float]): LGR x grid intervals
+                LGR_sizes_y (list[float]): LGR y grid intervals
+                LGR_sizes_z (np.ndarray): LGR DZ inernals
+                min_grd_size (float): minimize grid size
         """
+
+        self.min_grd_size = min_grd_size
 
         # dx/dy of coarse grid
         self.main_grd_dx = grid_coarse.main_grd_dx
@@ -29,7 +42,7 @@ class GridRefineBase:
         ny = len(LGR_sizes_y)
         nz = len(LGR_sizes_z)
 
-        print(f'nx={nx}, ny={ny}, nz={nz}')
+        print(f'LGR dimension: nx={nx}, ny={ny}, nz={nz}')
 
         # set dimensions
         self.nx, self.ny, self.nz = nx, ny, nz
@@ -40,35 +53,41 @@ class GridRefineBase:
 
         #Create LGR Dataframe with indices
         mesh_df = pd.DataFrame(data = cell_ijk, columns = ['i', 'j', 'k'])
-        #
+
+        # TODO(hzh): why not in the order of ['k', 'j']?
         mesh_df.sort_values(by=['k', 'i'], inplace = True)
         mesh_df.reset_index(inplace=True, drop=True)
 
         #
         self.mesh_df = mesh_df
 
-
         # set up fields
         self._set_cell_intervals(self.mesh_df, 
                                  LGR_sizes_x, 
-                                 LGR_sizes_z, 
-                                 LGR_sizes_y)
+                                 LGR_sizes_y, 
+                                 LGR_sizes_z)
         self._set_cell_coords(self.mesh_df)
         self._set_z_corners(self.mesh_df)       
 
-        # TODO(hzh): do we suppose to use mid index of coarse grid?
-
         # indices for center finer grid
-        mid_i = grid_coarse.main_grd_i       # mesh_df.i.max()//2
-        mid_j = grid_coarse.main_grd_j       # mesh_df.j.max()//2
+        mid_i = grid_coarse.main_grd_i
+        mid_j = grid_coarse.main_grd_j
 
         self._upscale_properties(grid_coarse.grid_init, mid_i, mid_j)
         
-    def _set_cell_intervals(self, mesh_df, 
-                            LGR_sizes_x, 
-                            LGR_sizes_z, 
-                            LGR_sizes_y):
+    def _set_cell_intervals(self, 
+                            mesh_df: pd.DataFrame, 
+                            LGR_sizes_x: List[float], 
+                            LGR_sizes_y: List[float], 
+                            LGR_sizes_z: np.ndarray):
         """ Creat DX, DY, DZ for LGR mesh
+
+            Args:
+
+                mesh_df (pd.DataFrame): dataframe for LGR mesh of the center coarse cell
+                LGR_sizes_x (list[float]): LGR x grid intervals
+                LGR_sizes_y (list[float]): LGR y grid intervals
+                LGR_sizes_z (np.ndarray): LGR DZ grid inernals
         """
  
         # mesh
@@ -81,6 +100,10 @@ class GridRefineBase:
 
     def _set_cell_coords(self, mesh_df):
         """ Create cell coordinate X, Y, Z for LGR mesh
+
+            Args:
+
+                mesh_df (pd.DataFrame): dataframe for LGR mesh of the center coarse cell
         """
 
         # cell coordinates
@@ -100,14 +123,26 @@ class GridRefineBase:
         mesh_df['Z'] = mesh_df['k'].map(map_Z)
 
     def _set_z_corners(self, mesh_df):
-        """ save Corner Z points to dataframe 
+        """ save Corner Z points to dataframe
+
+            Args:
+
+                mesh_df (pd.DataFrame): dataframe for LGR mesh of the center coarse cell
         """
 
         mesh_df['Zcorn_top'] = mesh_df['Z'] - mesh_df['DZ']/2
         mesh_df['Zcorn_bottom'] = mesh_df['Z'] + mesh_df['DZ']/2
 
-    def _upscale_properties(self, grid_init, mid_i, mid_j):
+    def _upscale_properties(self, 
+                            grid_coarse: GridCoarse, 
+                            mid_i: int, 
+                            mid_j: int):
         """ Upscale coarse properties to LGR mesh
+
+            Args:
+                grid_coarse (GridCoarse): information on coarse grid
+                mid_i (int): x index of center cell on the coarse grid
+                mid_j (int): y index of center cell on the coarse grid
         """
 
         # for convenience only
@@ -126,7 +161,7 @@ class GridRefineBase:
             # mesh_df[field] = np.nan
             mesh_df[field] = 0.0                    # TODO(hzh): what should I put here?
             
-        for idx, row in grid_init.query('i==@mid_i & j==@mid_j').iterrows():
+        for idx, row in grid_coarse.query('i==@mid_i & j==@mid_j').iterrows():
 
             # switch to corner coords, coarse grid
             top  = row.Z - row.DZ/2
@@ -136,13 +171,16 @@ class GridRefineBase:
 
                 mesh_df.loc[(mesh_df['Z']>=top) & (mesh_df['Z']<base), field] = row[field]
 
-
-
-    def _set_material_type(self,
-                           drilling_df, 
-                           casings_df, 
-                           barriers_mod_df):
+    def _set_material_type(self, 
+                            drilling_df: pd.DataFrame, 
+                            casings_df: pd.DataFrame, 
+                            barriers_mod_df: pd.DataFrame) -> None:
         """ Assign material types, such as openholes, overburden, cement bond, etc.
+
+            Args:
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                barriers_mod_df (pd.DataFrame): information about barrier    
         """
 
         # only for convenience
@@ -154,7 +192,7 @@ class GridRefineBase:
         # ### 1. Drilling
         for idx, row in drilling_df.iterrows():
             
-            top, bottom = row['top_msl'], row['bottom_msl']
+            top, bottom = row['top_msl'], row['bottom_msl']  # noqa: F841
 
             if top < mesh_df['Zcorn_bottom'].max():
 
@@ -172,9 +210,9 @@ class GridRefineBase:
         for ic, (idx, row) in enumerate(casings_df.iterrows()):
 
             # extract bounding box
-            k_min, k_max = row['k_min'], row['k_max']
-            ij_min, ij_max = row['ij_min'], row['ij_max']
-            toc_k_min, toc_k_max = row['toc_k_min'], row['toc_k_max']
+            k_min, k_max = row['k_min'], row['k_max']  # noqa: F841
+            ij_min, ij_max = row['ij_min'], row['ij_max']  # noqa: F841
+            toc_k_min, toc_k_max = row['toc_k_min'], row['toc_k_max']  # noqa: F841
             
             # 2.1 set material type to annulus
             # x
@@ -201,15 +239,23 @@ class GridRefineBase:
         # ### 3. Barriers
         for ib, (idx, row) in enumerate(barriers_mod_df.iterrows()):
             
-            b_k_min, b_k_max = row['k_min'], row['k_max']
+            b_k_min, b_k_max = row['k_min'], row['k_max']  # noqa: F841
             
             criteria = '(material == "openhole") & \
                         (k >= @b_k_min) & (k <= @b_k_max)' 
             mesh_df.loc[mesh_df.eval(criteria), 'material'] = f'barrier_{ib}'
 
 
-    def _set_permeability(self, drilling_df, casings_df, barriers_mod_df):
+    def _set_permeability(self, 
+                            drilling_df: pd.DataFrame, 
+                            casings_df: pd.DataFrame, 
+                            barriers_mod_df: pd.DataFrame) -> None:
         """ Actual function to assign permeability according to material type
+
+            Args:
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                barriers_mod_df (pd.DataFrame): information about barrier    
         """
 
         # for convenience only
@@ -234,87 +280,79 @@ class GridRefineBase:
             criteria = f'material == "barrier_{ib}"'
             mesh_df.loc[mesh_df.eval(criteria), 'PERMX'] = barrier_perm
 
-    def _compute_bbox(self, drilling_df, casings_df, barriers_mod_df):
+    def _compute_num_lateral_fine_grd(self, 
+                                        drilling_df: pd.DataFrame, 
+                                        casings_df: pd.DataFrame, 
+                                        barriers_mod_df: pd.DataFrame):
+        """ compute number of fine grid in x-y directions
+
+            Args:
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                barriers_mod_df (pd.DataFrame): information about barrier            
+        """
+        # for convenience
+        min_grd_size = self.min_grd_size
+
+        # n_grd_id for well elements
+        drilling_df['n_grd_id']  = drilling_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+        casings_df[ 'n_grd_id']  = casings_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+        barriers_mod_df['n_grd_id'] = barriers_mod_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+
+        # borehole_df['n_grd_id'] = borehole_df['id_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+
+    def _compute_bbox(self, 
+                        drilling_df: pd.DataFrame, 
+                        casings_df: pd.DataFrame, 
+                        barriers_mod_df: pd.DataFrame) -> None:
         """ Compute bounding boxes for drillings, casings and barriers.
+
+            Args:
+                drilling_df (pd.DataFrame): information about drilling
+                casings_df (pd.DataFrame): information about casings and cement-bond
+                barriers_mod_df (pd.DataFrame): information about barrier       
         """
 
         # for convenience
         mesh_df = self.mesh_df
         nxy = self.nx
 
+        # depth cut off
+        maxDepth = mesh_df['Zcorn_bottom'].max()
+
         # ### 1. Drillings
-
-        drilling_df['k_min'] = np.nan
-        drilling_df['k_max'] = np.nan
-        drilling_df['ij_min'] = np.nan
-        drilling_df['ij_max'] = np.nan
-
-        for idx, row in drilling_df.iterrows():
-            
-            top, bottom = row['top_msl'], row['bottom_msl']
-
-            if top < mesh_df['Zcorn_bottom'].max():
-                
-                # k ranges
-                k_min, k_max = get_k_indices(mesh_df, top, bottom)
-
-                # x-y ranges
-                ij_min, ij_max = get_ij_indices(nxy, row['n_grd_id'])
-
-                # to dataframe
-                drilling_df.loc[idx, 'k_min'] = k_min
-                drilling_df.loc[idx, 'k_max'] = k_max
-                drilling_df.loc[idx, 'ij_min'] = ij_min
-                drilling_df.loc[idx, 'ij_max'] = ij_max# # Bounding box for well elements
+        compute_bbox(mesh_df, drilling_df, nxy=nxy, maxDepth=maxDepth)
 
         # ### 2. Casings
-
-        # casing, k
-        casings_df['k_min'] = np.nan
-        casings_df['k_max'] = np.nan
-        # cement bond, k
-        casings_df['toc_k_min'] = np.nan
-        casings_df['toc_k_max'] = np.nan
-        # casing, xy
-        casings_df['ij_min'] = np.nan
-        casings_df['ij_max'] = np.nan
-
-        for idx, row in casings_df.iterrows():
-
-            # A) casing, z ranges
-            top, bottom  = row['top_msl'], row['bottom_msl']
-            
-            # convert to indices
-            k_min, k_max = get_k_indices(mesh_df, top, bottom)
-            
-            # B) cement, z ranges
-            toc, boc = row['toc_msl'], row['boc_msl']
-
-            # convert to indices
-            toc_k_min, toc_k_max = get_k_indices(mesh_df, toc, boc)
-            
-            # C) xy ranges
-            ij_min, ij_max = get_ij_indices(nxy, row['n_grd_id'])
-            
-            # to dataframe
-            casings_df.loc[idx, 'k_min'] = k_min
-            casings_df.loc[idx, 'k_max'] = k_max
-            casings_df.loc[idx, 'toc_k_min'] = toc_k_min
-            casings_df.loc[idx, 'toc_k_max'] = toc_k_max
-            casings_df.loc[idx, 'ij_min'] = ij_min
-            casings_df.loc[idx, 'ij_max'] = ij_max
+        compute_bbox(mesh_df, casings_df, nxy=nxy, maxDepth=maxDepth, is_casing=True)
 
         # ### 3. Barriers
+        compute_bbox(mesh_df, barriers_mod_df, nxy=nxy, maxDepth=maxDepth)
 
-        barriers_mod_df['k_min'] = np.nan
-        barriers_mod_df['k_max'] = np.nan
+    def _compute_bbox_gap_casing(self, 
+                                 casings_df: pd.DataFrame) -> pd.DataFrame:
+        """ compute bbox of casing for GaP 
 
-        for idx, row in barriers_mod_df.iterrows():
-            
-            top, bottom  = row['top_msl'], row['bottom_msl']
+            Args:
+                casings_df (pd.DataFrame): information about casings and cement-bond
 
-            # convert to indices
-            k_min, k_max = get_k_indices(mesh_df, top, bottom)
-            
-            barriers_mod_df.loc[idx, 'k_min'] = k_min
-            barriers_mod_df.loc[idx, 'k_max'] = k_max
+            Returns:
+                an updated dataframe specifically for GaP code
+        """
+
+        # for convenience
+        mesh_df = self.mesh_df
+        nxy = self.nx
+        min_grd_size = self.min_grd_size
+
+        # generate new pd.DataFrame by trimming casings
+        gap_casing_df = trim_casings_cement(casings_df)
+
+        # compute number of lateral grid (refined)
+        gap_casing_df[ 'n_grd_id']  = casings_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
+
+        # Casings
+        compute_bbox(mesh_df, gap_casing_df, nxy=nxy, is_casing=True)
+
+        return gap_casing_df
+    

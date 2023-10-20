@@ -1,43 +1,97 @@
 
-import numpy as np
 import pandas as pd
 
 def compute_borehole(casings: dict, drilling: dict) -> dict:
     '''
     Routine to compute the effective open borehole. 
-    It takes the original hole and substracts the diameter taken by cement bond.
+    Borehole relies mainly on the casings. It comes to drilling only for the places where casings are not available
 
         Args:
             casings (dict): contains casing information
             drilling (dict): contains drilling information
 
         Returns:
-            borehold (dict): contains borehole information
+            borehole (dict): contains borehole information
     '''
     
     casings_df  = pd.DataFrame(casings)
     drilling_df = pd.DataFrame(drilling)
 
-    well_concat = pd.concat([casings_df, drilling_df])
-    top_z = well_concat['top_msl'].drop_duplicates().dropna().values
-    top_z.sort()
+    # drilling columns
+    drilling_columns = ['diameter_m', 'top_msl', 'bottom_msl']
+    # casing columns
+    casing_columns = ['diameter_m', 'top_msl', 'bottom_msl']
 
-    diam = 1 + well_concat['diameter_m'].max()
+    # saved for next section
+    top_msl_saved = -1.0
+    diameter_m_saved = -1.0
 
-    borehole = []
-    for z_value in top_z:
-        
-        z_query = well_concat.query('top_msl == @z_value')
-        min_q = z_query.query('diameter_m == diameter_m.min()')
-        if min_q.iloc[0]['diameter_m'] < diam:
-            borehole.append(min_q.iloc[0][['top_msl', 'bottom_msl', 'diameter_m']].values.tolist())
-            diam = min_q.iloc[0]['diameter_m']
+    # collect open holes
+    borehole_list = []
+    for ic, idx in enumerate(casings_df.index):
 
-    borehole = np.array(borehole)
-    borehole[:-1, 1] = borehole[1:, 0]
-    # borehole[1:, 0] = borehole[:-1, 1]
+        # extract casings data
+        row_casing_df = casings_df.loc[idx, casing_columns]
 
-    borehole_df = pd.DataFrame(data=borehole, columns=['top_msl', 'bottom_msl', 'id_m'])
+        # collect fields
+            
+        # casing info
+        if ic == 0:
+            top_msl = row_casing_df['top_msl']
+        else:
+            top_msl = top_msl_saved
+        bot_msl = row_casing_df['bottom_msl']
+        diameter_m = row_casing_df['diameter_m']
+
+        # save them to list
+        borehole_list.append((top_msl,
+                              bot_msl, 
+                              diameter_m
+                                ))
+
+        # for next casing
+        top_msl_saved = bot_msl
+        diameter_m_saved = diameter_m
+
+    # TODO(hzh): a trade off, extend open hole in the last casing to bottom of corresponding drilling section
+    # handle the transistion zone
+    for idx in drilling_df.index:
+
+        # extract drilling data
+        row_drilling_df = drilling_df.loc[idx, drilling_columns]
+
+        # locate the last casing
+        if row_drilling_df['bottom_msl'] >= top_msl_saved:
+
+            # the last section
+            bot_msl = row_drilling_df['bottom_msl']
+
+            # locate the last section
+            last_one = borehole_list[-1]
+            assert last_one[1] == top_msl_saved and last_one[-1] == diameter_m_saved
+
+            # replace it
+            borehole_list[-1] = (last_one[0], bot_msl, last_one[-1])
+
+            # for next one
+            top_msl_saved = bot_msl
+
+            break
+
+    # append the rest with drilling
+    for ic, idx in enumerate(drilling_df.index):
+
+        # extract drilling data
+        row_drilling_df = drilling_df.loc[idx, drilling_columns]
+
+        if row_drilling_df['bottom_msl'] > top_msl_saved:
+            # save them to list
+            borehole_list.append((row_drilling_df['top_msl'],
+                                    row_drilling_df['bottom_msl'], 
+                                    row_drilling_df['diameter_m'] 
+                                    ))
+    # build dataframe
+    borehole_df = pd.DataFrame(data=borehole_list, columns=['top_msl', 'bottom_msl', 'id_m'])
 
     return borehole_df.to_dict()
 

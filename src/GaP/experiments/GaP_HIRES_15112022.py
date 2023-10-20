@@ -129,10 +129,10 @@ barrier_perm_2 = 100
 pipe_perm = 10000
 cement_perm = 5 
 
-if exists(out_fname) == True:
-    O = open(out_fname,"r+")
+if exists(out_fname):
+    O = open(out_fname,"r+")  # noqa: E741
 else: 
-    O = open(out_fname,"x")
+    O = open(out_fname,"x")  # noqa: E741
 
 O.truncate(0)
 

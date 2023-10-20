@@ -1,0 +1,13 @@
+jsonpickle
+pyyaml
+pydantic
+numpy
+pandas
+scipy
+ecl
+CoolProp
+welly
+pytest
+pytest-cov
+ruff
+

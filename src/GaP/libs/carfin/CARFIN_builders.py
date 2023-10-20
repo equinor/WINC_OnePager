@@ -25,7 +25,7 @@ def CARFIN_pipe_and_cement_bond_builder(casing_geom: PipeCementModel,
                                         LGR_depths: np.ndarray, 
                                         min_grd_size: float,
                                         LGR_NAME: str, 
-                                        O: TextIO):
+                                        O: TextIO):  # noqa: E741
     """ pipe with cement bond
 
         Args:
@@ -68,16 +68,16 @@ def CARFIN_pipe_and_cement_bond_builder(casing_geom: PipeCementModel,
                         x_min_pipe, x_max_pipe,
                         y_min_pipe, y_max_pipe,
                         k_min_CB, k_max_CB,
-                        cement_perm,
-                        LGR_NAME, 
-                        O)
+                        perm=cement_perm,
+                        LGR_NAME=LGR_NAME, 
+                        O=O)
 
 def CARFIN_oph_builder(casing_geom: ElemModel, 
                         LGR_sizes_xy: List[float], 
                         LGR_depths: np.ndarray, 
                         min_grd_size: float,
                         LGR_NAME: str, 
-                        O: TextIO):
+                        O: TextIO):  # noqa: E741
     """ builder for open-hole section
 
         Args:
@@ -112,7 +112,7 @@ def CARFIN_barrier_builder(barrier_geom: ElemModel,
                             LGR_depths: np.ndarray,
                             min_grd_size: float,
                             LGR_NAME: str, 
-                            O: TextIO):
+                            O: TextIO):  # noqa: E741
     """ pipe with cement bond
 
         Args:

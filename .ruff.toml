@@ -1,0 +1,18 @@
+select = ["E", "F"]
+ignore = ["E501"]
+exclude = [
+    "build",
+    "dist",
+    "site",
+    "venv_screen",
+    "originals",
+    "test_data",
+    "tests",
+    "GaP_HIRES.py",
+    "GaP_HIRES_15112022.py",
+    "__init__.py"
+]
+line-length = 150
+
+[per-file-ignores]
+"tools/ignore.py" = ["F401"]

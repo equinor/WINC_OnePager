@@ -16,7 +16,7 @@ def extract_xz_corn_coords(grid_df: pd.DataFrame,
 
         Returns:
 
-            Tuple[np.ndarray, np.ndarray]: The x and z coordinates
+            Tuple[np.ndarray, np.ndarray]: The x and z corner coordinates
 
     """
     xcorn  = (grid_df.query("j==0&k==0").DX.cumsum()).values
@@ -45,10 +45,10 @@ def extract_xz_prop_slice(grid_df: pd.DataFrame,
         Args:
             grid_df (pd.DataFrame): grid dataframe
             mid_j (int): given j index to extract slice
-            prop (str): the proper name, default: PERMX
+            prop (str): the property name, default: PERMX
 
         Returns:
-            np.ndarray: the property x-z slide
+            np.ndarray: x-z slice of the property
     """
 
     # the dimensions of the grid

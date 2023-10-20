@@ -19,7 +19,8 @@ def compute_barriers_diam(barriers: dict, borehole: dict) -> dict:
         barr_idx = idx
 
         barrier = row['barrier_name']   # row[0]
-        b_type = row['barrier_type']    # row[1]
+        # TODO(hzh): not used
+        # b_type = row['barrier_type']    # row[1]
         top = row['top_msl']
         bottom = row['bottom_msl']
 

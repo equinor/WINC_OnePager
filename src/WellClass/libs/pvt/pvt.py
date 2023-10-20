@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 import scipy
+import scipy.constants
 from scipy.interpolate import RectBivariateSpline
 
 '''Some global parameters'''

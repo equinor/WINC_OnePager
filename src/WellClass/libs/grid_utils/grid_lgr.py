@@ -1,8 +1,10 @@
 
-from typing import Tuple
+from typing import Tuple, Union
+
+import pathlib
 import numpy as np
 
-from ecl.eclfile import EclFile, EclRestartFile
+# from ecl.eclfile import EclFile, EclRestartFile
 from ecl.eclfile import EclInitFile
 from ecl.grid import EclGrid
 
@@ -13,7 +15,15 @@ from .extract_grid_utils import (
 
 class GridLGR:
 
-    def __init__(self, sim_case: str) -> None:
+    def __init__(self, sim_case: Union[str, pathlib.Path]) -> None:
+        """ This is used to process .EGRID file
+        
+            Args:
+                sim_case (str): name prefix for eclipse/pflotran case
+        """
+
+        # convert it to string, in case it is pathlib.Path
+        sim_case = str(sim_case)
 
         #Get grid dimensions and coordinates
         grid = EclGrid(sim_case + ".EGRID") 
@@ -35,16 +45,17 @@ class GridLGR:
         for key in init.keys():
             try:
                 lgr_index[key] = init[key][1].numpy_view()
-            except:
+            except Exception:
                 continue
 
         # 
         self.lgr_index = lgr_index
 
-        # compute DX and DY
-        mid_i = lgr_index.i.max()//2
-        mid_j = lgr_index.j.max()//2
- 
+        # compute middle index for extraction of DX and DY
+        mid_i = lgr_index.i.max()//2  # noqa: F841
+        mid_j = lgr_index.j.max()//2  # noqa: F841
+
+        # compute DX and DY on the coarse grid by summing LGR grid
         self.main_grd_dx = lgr_index.query("j==@mid_j&k==0").DX.sum()
         self.main_grd_dy = lgr_index.query("i==@mid_i&k==0").DY.sum()
 
@@ -55,22 +66,28 @@ class GridLGR:
         # for convenience
         lgr_index = self.lgr_index
 
-        # for shifting
+        # shifting half coarse grid
         sDX = self.main_grd_dx/2
         sDY = self.main_grd_dy/2
 
-        # generate grid coordinates for plotting
+        # generate corner grid coordinates for plotting
         xcorn, zcorn = extract_xz_corn_coords(lgr_index, sDX, sDY)
 
         return xcorn, zcorn 
     
-    def extract_xz_slice(self) -> np.ndarray:
+    def extract_xz_slice(self, prop='PERMX') -> np.ndarray:
         """ generate x-z PERM slice
+
+            Args:
+                prop (str): the property name, default: PERMX
+
+            Returns:
+                np.ndarray: x-z slice of the property
         """
         # for convenience
         lgr_index = self.lgr_index
 
         # extract permeability
-        Z = extract_xz_prop_slice(lgr_index)
+        Z = extract_xz_prop_slice(lgr_index, prop=prop)
 
         return Z 

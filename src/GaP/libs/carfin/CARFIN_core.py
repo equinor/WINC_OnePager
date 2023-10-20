@@ -2,7 +2,6 @@
 """
 from typing import List, Union
 
-import os
 import math
 from typing import TextIO
 
@@ -24,7 +23,7 @@ def pre_CARFIN(LGR_NAME: str,
                NX: int, NY: int,
                main_grd_i: int, main_grd_j: int, 
                no_of_layers_in_OB: int, 
-               O: TextIO):
+               O: TextIO):  # noqa: E741
     """ preCARFIN
 
         Before introducing the CARFIN, we need to make sure there is a sealing layer between the overburden and the reservoir.
@@ -70,7 +69,7 @@ def CARFIN_keywords(LGR_NAME: str,
                     LGR_sizes_xy: List[float], 
                     LGR_numb_z: np.ndarray, 
                     min_grd_size: float,
-                    O: TextIO):
+                    O: TextIO):  # noqa: E741
     """ CARFIN main parameters
 
         CARFIN is the main keyword which introduces LGR into the  grid. 
@@ -82,12 +81,12 @@ def CARFIN_keywords(LGR_NAME: str,
 
             There are 6 parameter which define where the LGR should be located in the main grid which are:
 
-                Main grid i-start , main grid i-end , main grid j-start , main grid k-start , main grid k-end. 
+                main grid i-start, main grid i-end, main grid j-start, main grid j-end, main grid k-start, main grid k-end. 
 
-            In our case, we always have a vertical well, therefore main grid i-start = main grid i-end and the same for j direction.  
+            In our case, we always have a vertical well, therefore main grid i-start = main grid i-end are the same for j direction.  
     
-            NXFIN and NYFIN: they dictate how many times per grid (in the same order) should  be chopped. In our case, t
-                             here is only one grid assigned in the X and Y directions. Therefore, the numbers will be the same as 
+            NXFIN and NYFIN: they dictate how many times per grid (in the same order) should  be chopped. In our case, 
+                             there is only one grid assigned in the X and Y directions. Therefore, the numbers will be the same as 
                              8th and 9th parameters in CARFIN. 
 
             NZFIN: unlike X,Y direcitons, there are multiple grids involved in the Z direction of the main grid. 
@@ -99,7 +98,7 @@ def CARFIN_keywords(LGR_NAME: str,
                              in the center of the grid and increasing the size of the grids toward the outermost side of the grid. 
 
                             The HXFIN and HYFIN are working not with real sizes but with “ratio”. 
-                            The lowest grid size has the ratio equal to min_grd_zie/min_grd_size = 1. 
+                            The lowest grid size has the ratio equal to min_grd_size/min_grd_size = 1. 
 
                             Then the rest of grid sizes are calculated as follows:
                                 Grid size of the refined grid /min_grd_size. 
@@ -151,7 +150,7 @@ def coreCARFIN(LGR_NAME: str,
                 LGR_sizes_xy: List[float], 
                 LGR_depths: np.ndarray, 
                 min_grd_size: float,
-                O: TextIO):
+                O: TextIO):  # noqa: E741
     """ CARFIN for the main elements
 
         Args:
@@ -202,12 +201,12 @@ def endCARFIN(LGR_NAME: str,
              main_grd_min_k: float, 
              min_grd_size: float,
              no_of_layers_in_OB: int,
-             O):
+             O: TextIO):  # noqa: E741
     """ ENDFIN
 
         Before we finish the CARFIN with ENDFIN, we will have to close the area around the well inside the LGR:
 
-            As mentioned in the slide 22, we opened the whole LGR in the topmost most layer of the reservoir (and closed the rest of topmost layer.
+            As mentioned in the slide 22, we opened the whole LGR in the topmost layer of the reservoir (and closed the rest of topmost layer.
 
             In this stage we will have to make sure there is no flow around the well inside the LGR from the reservoir to the overburden. 
 
@@ -227,7 +226,7 @@ def endCARFIN(LGR_NAME: str,
             Knowing, how many layer are allocated to overburden and given 10 chops per grid in the Z direction, we can find the k_min and k_max of 
             the pipe where we want to leave it open. 
   
-            Then, we let the MULTZ (only) eaqul to one in that domain. We don't want to allow side movement of CO2 in the caprock. 
+            Then, we let the MULTZ (only) equal to one in that domain. We don't want to allow side movement of CO2 in the caprock. 
 
         Args:
 

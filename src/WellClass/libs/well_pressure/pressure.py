@@ -81,10 +81,10 @@ class Pressure:
                     if isinstance(RP, str):
                         RP = RP.replace(" ", "")
                     RP = float(RP)
-                except:
+                except Exception:
                     pass
                 if isinstance(RP, float) or isinstance(RP, int):
-                    p = ref_p + RP                          #self.reservoir_P['RP1'] + RP
+                    # p = ref_p + RP                          #self.reservoir_P['RP1'] + RP
                     print(f'{key} is set as delta pressure, which yields P = {ref_p:.2f} {RP:+.2f} = {ref_p + RP:.2f} bar')
                     self.reservoir_P[key] = ref_p + RP
                 else:

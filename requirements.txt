@@ -7,8 +7,15 @@ scipy
 ecl
 CoolProp
 welly
+pytest
+pytest-cov
+ruff
+dash
+pyarrow
+fastparquet
 jupyter
 jupyterlab
+jupyter-dash
 ipympl
 mkdocs
 mkdocstrings[python]

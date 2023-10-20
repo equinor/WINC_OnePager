@@ -9,7 +9,7 @@ def plot_pt(my_pressure: Pressure, fig=None, ax=None):
     """ pressure vs temperature
     """
 
-    if fig == None:
+    if fig is None:
         fig, ax = plt.subplots()
 
 
@@ -29,8 +29,8 @@ def plot_pt(my_pressure: Pressure, fig=None, ax=None):
     #     my_pressure._compute_CO2_pressures()
     pt_df = my_pressure.pressure_CO2
 
-    wd = my_pressure.header['sf_depth_msl']
-    co2_datum = my_pressure.co2_datum
+    wd = my_pressure.header['sf_depth_msl']  # noqa: F841
+    co2_datum = my_pressure.co2_datum  # noqa: F841
 
     #Plot fluid pressure scenarios
     ls_list = ['solid','dashed','dashdot', 'dotted']

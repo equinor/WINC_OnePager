@@ -43,6 +43,8 @@ class GridCoarse:
         # ## The grid dimensions
         self.NX, self.NY, self.NZ, _ = grid.get_dims()
 
+        print(f'Coarse grid dimension: nx={self.NX}, ny={self.NY}, nz={self.NZ}')
+
         # # Store INIT parameters into a Pandas Dataframe: grid_init
 
         self.grid_init = grid.export_index()
@@ -51,7 +53,7 @@ class GridCoarse:
         for key in init.keys():
                 try:
                         self.grid_init[key] = init[key][0].numpy_view()
-                except:
+                except Exception:
                         continue
 
         # set up other grid-related information
@@ -205,13 +207,19 @@ class GridCoarse:
 
         return xcorn, zcorn 
  
-    def extract_xz_slice(self) -> np.ndarray:
+    def extract_xz_slice(self, prop='PERMX') -> np.ndarray:
         """ generate x-z PERM slice
+        
+            Args:
+                prop (str): the property name, default: PERMX
+
+            Returns:
+                np.ndarray: x-z slice of the property
         """
         # for convenience
         grid_init = self.grid_init
 
         # extract permeability
-        Z = extract_xz_prop_slice(grid_init)
+        Z = extract_xz_prop_slice(grid_init, prop=prop)
 
         return Z

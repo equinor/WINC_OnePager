@@ -1,1 +1,1 @@
-../INSTALLATION.md
+../README.md

@@ -1,8 +1,6 @@
 """ well sketch
 """
 
-import numpy as np
-
 from ..models import (
     PipeCementModel,
     ElemModel

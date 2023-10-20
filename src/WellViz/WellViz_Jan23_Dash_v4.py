@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-from ecl.eclfile import EclFile, EclInitFile, EclRestartFile
+from ecl.eclfile import EclInitFile, EclRestartFile
 from ecl.grid import EclGrid
 import numpy as np
 import sys
@@ -52,7 +52,7 @@ lgr_init = lgr_grid.export_index()
 for key in init.keys():
         try:
                 lgr_init[key] = init[key][1].numpy_view()
-        except:
+        except Exception:
                 continue
 
 #Create coordinate X, Y, Z
