@@ -18,9 +18,9 @@ $ cd SCREEN
 
 It's normal for us to make a new branch if we indend to make some changes of the codes. This can be done with the `-b` option, for example:
 ```
-$ git checkout -b hzh/cleanup
+$ git checkout -b xyz/cleanup
 ```
-This would generate a new branch, named `hzh/cleanup`. Here the branch name is created by concatenating a short name, such as `hzh`,  of `equinor` account with a feature description `cleanup`. There is no need to follow this convention. You could simply pick any branch name as long as it makes sense. However, please note branch names have limitations.
+This would generate a new branch, named `xyz/cleanup`. Here the branch name is created by concatenating a short name, such as `xyz`,  of `equinor` account with a feature description `cleanup`. There is no need to follow this convention. You could simply pick any branch name as long as it makes sense. However, please note branch names have limitations.
 
 ## Virtual environment
 
