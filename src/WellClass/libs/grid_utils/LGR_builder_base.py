@@ -73,6 +73,8 @@ class LGRBuilderBase:
                           LGR_NAME,
                           O)
         
+        # determine where ovb is
+        
         # find minimum IDs for casings
         reopen_ID = casings_df.diameter_m.min()
 

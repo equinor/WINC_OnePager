@@ -54,12 +54,17 @@ def pre_CARFIN(LGR_NAME: str,
 
     print ('--isolating OVB from reservoir', file=O)
     print ('EQUALS', file = O) 
-    print ('MULTX  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
-    print ('MULTY  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
-    print ('MULTZ  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
-    print ('MULTX  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
-    print ('MULTY  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
-    print ('MULTZ  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
+    # print ('MULTX  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
+    # print ('MULTY  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
+    # print ('MULTZ  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
+    # print ('MULTX  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
+    # print ('MULTY  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
+    # print ('MULTZ  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
+
+    # TODO(hzh): This should be right
+    print ('MULTZ  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB,no_of_layers_in_OB,'/',file = O)
+    print ('MULTZ  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB, no_of_layers_in_OB, '/',file =O)
+
     print ('/', file = O) 
     print (' ', file = O) 
     
@@ -244,23 +249,31 @@ def endCARFIN(LGR_NAME: str,
     #Trans. modification to isolate OVB from Reservoir inside the LGR
     print ('--isolating OVB from reservoir in the LGR',file = O)
     print ('EQUALS',file = O ) 
-    print ('MULTX  0 ','1 ',len(LGR_sizes_xy), '1 ',len(LGR_sizes_xy),(no_of_layers_in_OB-main_grd_min_k+1)*10+1,(no_of_layers_in_OB-main_grd_min_k+1)*10+1,'/',file = O )
-    print ('MULTY  0 ','1 ',len(LGR_sizes_xy), '1 ',len(LGR_sizes_xy),(no_of_layers_in_OB-main_grd_min_k+1)*10+1,(no_of_layers_in_OB-main_grd_min_k+1)*10+1,'/',file = O )
-    print ('MULTZ  0 ','1 ',len(LGR_sizes_xy), '1 ',len(LGR_sizes_xy),(no_of_layers_in_OB-main_grd_min_k+1)*10+1,(no_of_layers_in_OB-main_grd_min_k+1)*10+1,'/',file = O )
+
+    # print ('MULTX  0 ','1 ',len(LGR_sizes_xy), '1 ',len(LGR_sizes_xy),(no_of_layers_in_OB-main_grd_min_k+1)*10+1,(no_of_layers_in_OB-main_grd_min_k+1)*10+1,'/',file = O )
+    # print ('MULTY  0 ','1 ',len(LGR_sizes_xy), '1 ',len(LGR_sizes_xy),(no_of_layers_in_OB-main_grd_min_k+1)*10+1,(no_of_layers_in_OB-main_grd_min_k+1)*10+1,'/',file = O )
+    # print ('MULTZ  0 ','1 ',len(LGR_sizes_xy), '1 ',len(LGR_sizes_xy),(no_of_layers_in_OB-main_grd_min_k+1)*10+1,(no_of_layers_in_OB-main_grd_min_k+1)*10+1,'/',file = O )
+
+    # TODO(hzh): should be this one, need to take care of the default value: 10
+    print ('MULTZ  0 ','1 ',len(LGR_sizes_xy), '1 ',len(LGR_sizes_xy), no_of_layers_in_OB*10, no_of_layers_in_OB*10,'/',file = O )
 
     # re-open the area where the well paths
 
     # x
     no_grd_reopen_x = math.floor(reopen_ID/min_grd_size)
-    x_min_reopen = math.ceil((len (LGR_sizes_xy) - no_grd_reopen_x)/2)
+    x_min_reopen = len (LGR_sizes_xy) - no_grd_reopen_x//2
     x_max_reopen = x_min_reopen + no_grd_reopen_x
 
     # y
     no_grd_reopen_y = math.floor(reopen_ID/min_grd_size)  
-    y_min_reopen = math.ceil((len (LGR_sizes_xy) - no_grd_reopen_y)/2)
-    y_max_reopen = y_min_reopen + no_grd_reopen_y 
+    y_min_reopen = len (LGR_sizes_xy) - no_grd_reopen_y//2
+    y_max_reopen = y_min_reopen + no_grd_reopen_y
 
-    print ('MULTZ 1 ', x_min_reopen-1,x_max_reopen+1,y_min_reopen-1 ,y_max_reopen+1 ,(no_of_layers_in_OB-main_grd_min_k+1)*10+1 ,(no_of_layers_in_OB-main_grd_min_k+1)*10+1 ,'/',file = O)
+
+    # print ('MULTZ 1 ', x_min_reopen-1,x_max_reopen+1,y_min_reopen-1 ,y_max_reopen+1 ,(no_of_layers_in_OB-main_grd_min_k+1)*10+1 ,(no_of_layers_in_OB-main_grd_min_k+1)*10+1 ,'/',file = O)
+
+    # TODO(hzh): should be this one, need to take care of the default value: 10
+    print ('MULTZ 1 ', x_min_reopen,x_max_reopen,y_min_reopen, y_max_reopen, no_of_layers_in_OB, no_of_layers_in_OB*10, '/',file = O)
 
     print ('/', file = O) 
 
