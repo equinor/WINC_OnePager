@@ -60,11 +60,7 @@ The input sheet could be defined as aither a YAML or a CSV file. It shall includ
 **flow units declaration
 
 
-### Conversion of qualitative to quantitative parameters
 
-Default values of permeability assumed are:
-
-For 
 
 
 ### Data Visualization and Proxy-based Leakage Estimation
@@ -75,7 +71,7 @@ The well sketch combines both subsurface data and well engineering information. 
 
 The pressure plot, besides visualizing the provided pressure scenarios, has the necessary input to run a preliminary leakage estimation based on a Darcy-based proxy. This proxy gives an estimate of leakage rates through the main barrier (deepest cement plug). The magnitude will be a function of both the transport properties assigned to the barrier and the resulting phase pressures of each scenario.
 
-![well sketch](docs/imgs/well-sketch.png)
+![well sketch](imgs/well-sketch.png)
 
 
 ## Detailed simulation workflow
@@ -84,9 +80,15 @@ For wells with larger uncertainties and more complex leakage pathways, a simulat
 
 By fulfilling the first two modules, the data is ready to be processed through a second script that generates and initializes a simple reservoir model with a finite-volume representation of the legacy well.
 
+### Building the mesh
 The generated mesh is a coarse mesh with `local grid refinement (LGR)` in the middle. The higher resolution of the LGR is used to represent well construction details.
 
 Due to the cartesian nature of the mesh, the cylindrical shape of the well is turned into a prism. A horizontal cross-section of the well in the LGR is square, with sides meant to preserve the area of the original circle. However, discrepancies between volumes may occur due to mesh resolution.
 
 The transport properties of geological units are inherited from coarse grid and updated to represent well. Open borehole is represented by high permeability grid cells. Cement plugs and cement-bond are represented by low permeability cells. Casing is represented by reduction of transmissibility of cell interfaces.
+
+### Running the simulation
+
+
+### Exploring the simulation output
 
