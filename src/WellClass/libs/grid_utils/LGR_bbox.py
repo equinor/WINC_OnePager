@@ -144,8 +144,9 @@ def compute_bbox_xy(xxx_df: pd.DataFrame,
                         reopen_ID = ID_pipe
 
                         # xy
-                        x_min_reopen = ij_min_pipe
-                        x_max_reopen = ij_max_pipe
+                        # TODO(hzh): dataframe returns float, cast it back to integer
+                        x_min_reopen = int(ij_min_pipe)
+                        x_max_reopen = int(ij_max_pipe)
 
                         break
 
