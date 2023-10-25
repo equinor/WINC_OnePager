@@ -5,7 +5,9 @@ from typing import Union, Tuple
 
 import pandas as pd
 
-def get_k_indices(df: pd.DataFrame, top: Union[float, int], bottom: Union[float, int]) -> Tuple[int, int]:
+def get_k_indices(df: pd.DataFrame, 
+                  top: Union[float, int], 
+                  bottom: Union[float, int]) -> Tuple[int, int]:
         """
         Takes the mesh data frame and a value of top and bottom depth interval.
         
@@ -43,7 +45,8 @@ def get_k_indices(df: pd.DataFrame, top: Union[float, int], bottom: Union[float,
 
         return k_min, k_max
 
-def get_ij_indices(nxy: int, n_grd: int) -> Tuple[int, int]:
+def get_ij_indices(nxy: int, 
+                   n_grd: int) -> Tuple[int, int]:
     """ compute x-y min/max indices
 
         Args:
@@ -121,3 +124,58 @@ def compute_bbox(mesh_df: pd.DataFrame,
                         # to dataframe
                         section_df.loc[idx, 'toc_k_min'] = toc_k_min
                         section_df.loc[idx, 'toc_k_max'] = toc_k_max
+
+def compute_bbox_xy(xxx_df: pd.DataFrame,
+                    k_refine: int):
+        """ compute bbox in xy direction of a given k_refine index
+        """
+
+        reopen_ID = None
+        x_min_reopen = None
+        x_max_reopen = None
+        for idx in xxx_df.index:
+
+                # bbox for casings
+                pipe_columns = ['diameter_m', 'ij_min', 'ij_max', 'k_min', 'k_max']
+                ID_pipe, ij_min_pipe, ij_max_pipe, k_min_pipe, k_max_pipe  = xxx_df.loc[idx, pipe_columns]
+
+                if k_refine >= k_min_pipe and k_refine < k_max_pipe:
+
+                        reopen_ID = ID_pipe
+
+                        # xy
+                        x_min_reopen = ij_min_pipe
+                        x_max_reopen = ij_max_pipe
+
+                        break
+
+        return reopen_ID, x_min_reopen, x_max_reopen
+
+def compute_bbox_for_reopen(drilling_df: pd.DataFrame, 
+                            casings_df: pd.DataFrame,
+                            nz_ovb: int) -> Tuple[float, int, int]:
+        """ calculate bbox for the hole reopen at the bottom of the well
+
+            Args:
+                drilling_df (pd.DataFrame): dataframe for drilling
+                casings_df (pd.DataFrame): dataframe for casings
+                nz_ovb (int): number of layers in overburden (refined grid)
+
+            Returns:
+                tuple: reopen_ID, x_min_reopen, x_max_reopen
+        """
+
+        # re-open the area where the well passes
+
+        k_ovb_refine = nz_ovb - 1   # from fortran index to C index
+
+        # check casings
+        reopen_ID, x_min_reopen, x_max_reopen = compute_bbox_xy(casings_df, k_ovb_refine)
+
+        if reopen_ID is None:
+                # check drilling
+                reopen_ID, x_min_reopen, x_max_reopen = compute_bbox_xy(drilling_df, k_ovb_refine)
+                assert reopen_ID is not None
+                
+        return reopen_ID, x_min_reopen, x_max_reopen
+        
