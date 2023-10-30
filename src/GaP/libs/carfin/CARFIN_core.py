@@ -54,12 +54,17 @@ def pre_CARFIN(LGR_NAME: str,
 
     print ('--isolating OVB from reservoir', file=O)
     print ('EQUALS', file = O) 
-    print ('MULTX  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
-    print ('MULTY  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
-    print ('MULTZ  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
-    print ('MULTX  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
-    print ('MULTY  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
-    print ('MULTZ  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
+    # print ('MULTX  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
+    # print ('MULTY  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
+    # print ('MULTZ  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB+1,no_of_layers_in_OB+1,'/',file = O)
+    # print ('MULTX  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
+    # print ('MULTY  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
+    # print ('MULTZ  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB+1, no_of_layers_in_OB+1, '/',file =O)
+
+    # TODO(hzh): This should be right
+    print ('MULTZ  0 ','1 ',NX, '1 ',NY,no_of_layers_in_OB,no_of_layers_in_OB,'/',file = O)
+    print ('MULTZ  1 ',main_grd_i, main_grd_i,main_grd_j, main_grd_j, no_of_layers_in_OB, no_of_layers_in_OB, '/',file =O)
+
     print ('/', file = O) 
     print (' ', file = O) 
     
@@ -265,3 +270,67 @@ def endCARFIN(LGR_NAME: str,
     print ('/', file = O) 
 
     print ('ENDFIN', file = O)
+
+def endCARFIN2(LGR_NAME: str,
+                reopen_ID: float, 
+                x_min_reopen: int, 
+                x_max_reopen: int, 
+                nz_ovb: int,
+                LGR_sizes_xy: List[float], 
+                O: TextIO):  # noqa: E741
+    """ ENDFIN
+
+        Before we finish the CARFIN with ENDFIN, we will have to close the area around the well inside the LGR:
+
+            As mentioned in the slide 22, we opened the whole LGR in the topmost layer of the reservoir (and closed the rest of topmost layer.
+
+            In this stage we will have to make sure there is no flow around the well inside the LGR from the reservoir to the overburden. 
+
+            To do that we will first close the whole topmost layer inside the LGR:
+
+                The whole LGR grids in the x,y directions should be closed in the topmost layer but inside LGR. 
+
+                Then we will  set the MULTX, MULTY and MULTZ multipliers to 0 to make sure the area is whole closed.
+
+            Then we re-open the area where the well paths. In order to do that, we will have to (again) find that which pipe (with which ID) 
+            is pathing through the caprock (from overburden to the caprock):
+
+                The code always assumes the narrowest pipe passing through the caprock.  
+
+                We find X_min, X_max, Y_min, Y_max of the narrowest pipe.
+                
+            Knowing, how many layer are allocated to overburden and given 10 chops per grid in the Z direction, we can find the k_min and k_max of 
+            the pipe where we want to leave it open. 
+  
+            Then, we let the MULTZ (only) equal to one in that domain. We don't want to allow side movement of CO2 in the caprock. 
+
+        Args:
+
+            LGR_NAME (str): output filename, without the suffix '.grdecl'
+            reopen_ID (str): minimum ID of all casings
+            LGR_sizes_xy (list[float]): LGR xy grid intervals
+            main_grd_min_k (int): minimum z index in coarse grid
+            no_of_layers_in_OB (int): number of layers in overburden (coarse grid)
+            O (TextIO): opened file handle                 
+    """
+
+    # close the whole topmost layer inside the LGR
+    print ('...Prints isolating OVB from reservoir in the LGR in', LGR_NAME+'.grdecl file')
+
+    print (f'...reopenID = {reopen_ID*39.37:.2f} ...')
+
+    #Trans. modification to isolate OVB from Reservoir inside the LGR
+    print ('--isolating OVB from reservoir in the LGR',file = O)
+    print ('EQUALS',file = O ) 
+
+    # close the last flat ovb surface
+    print ('MULTZ  0 ','1 ',len(LGR_sizes_xy), '1 ',len(LGR_sizes_xy), nz_ovb, nz_ovb,'/',file = O )
+
+
+    # open well borehole at ovb
+    print ('MULTZ 1 ', x_min_reopen, x_max_reopen, x_min_reopen, x_max_reopen, nz_ovb, nz_ovb, '/',file = O)
+
+    print ('/', file = O) 
+
+    print ('ENDFIN', file = O)
+

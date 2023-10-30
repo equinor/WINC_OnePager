@@ -5,13 +5,15 @@ import pandas as pd
 from src.GaP.libs.carfin.CARFIN_core import (
     pre_CARFIN,
     CARFIN_keywords,
-    endCARFIN
+    endCARFIN2
 )
 
 from .LGR2GaP import (
     df_to_gap_casing,
     df_to_gap_barrier
 )
+
+from .LGR_bbox import compute_bbox_for_reopen
 
 class LGRBuilderBase:
 
@@ -73,16 +75,21 @@ class LGRBuilderBase:
                           LGR_NAME,
                           O)
         
-        # find minimum IDs for casings
-        reopen_ID = casings_df.diameter_m.min()
+        # 4. handle reopen hole
+        nz_ovb = 10 * no_of_layers_in_OB   # total number of ovb layers (refined grid)
 
-        # 4. open hole
-        endCARFIN(LGR_NAME,
-                    reopen_ID,
+        # bbox
+        reopen_ID, x_min_reopen, x_max_reopen = \
+        compute_bbox_for_reopen(drilling_df, 
+                                casings_df,
+                                nz_ovb)
+
+        endCARFIN2(LGR_NAME,
+                    reopen_ID, 
+                    x_min_reopen+1,    # fortran indexing
+                    x_max_reopen+1,    # fortran indexing
+                    nz_ovb,
                     LGR_sizes_x, 
-                    main_grd_min_k+1, 
-                    min_grd_size,
-                    no_of_layers_in_OB,
                     O)
 
         # 2. done
