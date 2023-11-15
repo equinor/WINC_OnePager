@@ -1,7 +1,7 @@
-cff-version: 1.0.0
+cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-- organization: "Equinor ASA"
+- name: "Equinor ASA"
 title: "SCREEN: A tool to build legacy well representations on reservoir simulation grids"
 url: https://github.com/equinor/SCREEN
 date-released: 2023-06-01
