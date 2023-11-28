@@ -7,12 +7,12 @@ scipy
 ecl
 CoolProp
 welly
-pytest
-pytest-cov
-ruff
 dash
 pyarrow
 fastparquet
+pytest
+pytest-cov
+ruff
 jupyter
 jupyterlab
 jupyter-dash
