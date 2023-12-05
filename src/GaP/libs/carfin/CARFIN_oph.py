@@ -41,5 +41,6 @@ def CARFIN_oph(ID: float,
     print ('PORO','','0.99','',x_min_oph,'',x_max_oph,'',y_min_oph,'',y_max_oph,'',k_min_hole,'',k_max_hole,'','/',file=O)
     
     print ('SATNUM','',2,'',x_min_oph,'',x_max_oph,'',y_min_oph,'',y_max_oph,'',k_min_hole,'',k_max_hole,'','/',file=O)
+    print ('FIPLEG','',6,'',x_min_oph,'',x_max_oph,'',y_min_oph,'',y_max_oph,'',k_min_hole,'',k_max_hole,'','/',file=O)
 
     print ('/',file=O)
