@@ -346,7 +346,8 @@ class GridRefineBase:
         min_grd_size = self.min_grd_size
 
         # generate new pd.DataFrame by trimming casings
-        gap_casing_df = trim_casings_cement(casings_df)
+        # gap_casing_df = trim_casings_cement(casings_df)
+        gap_casing_df = casings_df
 
         # compute number of lateral grid (refined)
         gap_casing_df[ 'n_grd_id']  = casings_df['diameter_m'].map(lambda x: compute_ngrd(x, min_grd_size))
