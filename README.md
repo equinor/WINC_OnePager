@@ -124,9 +124,9 @@ python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v1 
 
 python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v2 --well smeaheia.yaml --sim-case TEMP-0 --plot
 
-# 3. for cosmo
+# 3. for wildcat
 
-python -m experiments.gap_wellclass --sim-path ./test_data/examples/cosmo --well cosmo.yaml --sim-case TEMP-0 --plot
+python -m experiments.gap_wellclass --sim-path ./test_data/examples/wildcat --well wildcat.yaml --sim-case TEMP-0 --plot
 
 ```
 This will generate an output file `LEG_HIRES.grdecl` in `experiments` directory.
@@ -134,17 +134,17 @@ This will generate an output file `LEG_HIRES.grdecl` in `experiments` directory.
 2. To test **gap_plotran.py**, run the following commnad at the directory ``SCREEN``:
 ```python
 python -m experiments.gap_pflotran \
-    --sim-path ./test_data/examples/cosmo-pflotran \
-    --well cosmo.yaml \
+    --sim-path ./test_data/examples/wildcat-pflotran \
+    --well wildcat.yaml \
     --sim-case1 TEMP-0_NOSIM \
     --sim-case2 TEMP-0 \
     --plot
 ```
 ### 3. Test data
 In order for a quick test of the codes, we include some test dataset in the folder `test_data/examples`. The input data structure is organized  similiar to the `pflotran`. For example, for test data
-`test_data/examples/cosmo-pflotran-2`, the input file structure should be like this:
+`test_data/examples/wildcat-pflotran-2`, the input file structure should be like this:
 ```
-├── cosmo.yaml
+├── wildcat.yaml
 ├── include
 │   ├── co2_db_new.dat
 │   ├── temperature_gradient.inc
@@ -155,16 +155,16 @@ In order for a quick test of the codes, we include some test dataset in the fold
     ├── TEMP-0.in
     └── TEMP-0_NOSIM.in
 ```
-Sub-directories, such as `cosmo`, `smeaheia_v1` and `smeaheia_v2`, contain the necessary data, e.g., Eclipse  `.EGRID` and `.INIT` files, for testing **gap_wellclass.py**. 
+Sub-directories, such as `wildcat`, `smeaheia_v1` and `smeaheia_v2`, contain the necessary data, e.g., Eclipse  `.EGRID` and `.INIT` files, for testing **gap_wellclass.py**. 
 
-One sub-directory, `cosmo-plotran`, contains configuration parameters for testing **gap_pflotran.py**, i.e., use pfloatran to generate `.EGRID` and `.INIT`. 
+One sub-directory, `wildcat-plotran`, contains configuration parameters for testing **gap_pflotran.py**, i.e., use pfloatran to generate `.EGRID` and `.INIT`. 
 
 Another sub-directory `frigg` contains information for testing deviated wells.
 
 In addition, the **PVT** values are included in the directory `pvt_contants` for self-consistent testing of pressure-related computes.
 
 ## Unit testing and code coverage
-We are using `pytest` for unit testing and code coverage. The unit testing utilizes `cosmo` as the testing example. So please make sure the saved .pkl files in ```test_data/examples/cosmo/pytest``` exists and is updated. Here is a commandline example:
+We are using `pytest` for unit testing and code coverage. The unit testing utilizes `wildcat` as the testing example. So please make sure the saved .pkl files in ```test_data/examples/wildcat/pytest``` exists and is updated. Here is a commandline example:
 ```pyton
 python -m pytest tests
 ```
@@ -234,9 +234,9 @@ The following represents the current code structures:
 │       └── WellViz_Jan23_Dash_v4.py
 └── test_data
     ├── examples
-    │   ├── cosmo
-    │   ├── cosmo-pflotran
-    │   ├── cosmo-pflotran-2
+    │   ├── wildcat
+    │   ├── wildcat-pflotran
+    │   ├── wildcat-pflotran-2
     │   ├── frigg
     │   ├── simple_well
     │   ├── smeaheia_v1

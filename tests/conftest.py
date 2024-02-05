@@ -13,10 +13,10 @@ from src.WellClass.libs.utils import (
 
 from src.WellClass.libs.well_class import Well
 
-# a test example: cosmo
+# a test example: wildcat
 example = {
-    'sim_path': './test_data/examples/cosmo',
-    'well_config': 'cosmo.yaml',
+    'sim_path': './test_data/examples/wildcat',
+    'well_config': 'wildcat.yaml',
     'sim_case': 'TEMP-0.EGRID'
 }
 

@@ -2,8 +2,8 @@
 """ This module will generate .grdecl file for lgr grid. It uses pflotran's dry runs to generate coarse grid information and lgr grid information.
 
 $ python -m experiments.gap_pflotran \
-    --sim-path ./test_data/examples/cosmo-pflotran \
-    --well cosmo.yaml \
+    --sim-path ./test_data/examples/wildcat-pflotran \
+    --well wildcat.yaml \
     --sim-case1 TEMP-0_NOSIM \
     --sim-case2 TEMP-0 \
     --plot
@@ -43,7 +43,7 @@ def main(args):
     Ali_way = args.ali_way
 
     # where the location for the input parameters and eclipse .EGRID and .INIT files
-    # configuration path, for example './test_data/examples/cosmo-pflotran'
+    # configuration path, for example './test_data/examples/wildcat-pflotran'
     sim_path = pathlib.Path(args.sim_path)
 
     # configuration filename

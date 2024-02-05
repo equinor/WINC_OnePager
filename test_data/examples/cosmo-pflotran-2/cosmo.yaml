@@ -3,7 +3,7 @@ apiVersion: well/v0.1
 kind: Well
 metadata:
   namespace: screen
-  name: cosmo
+  name: wildcat
   author: equinor
 
 spec:

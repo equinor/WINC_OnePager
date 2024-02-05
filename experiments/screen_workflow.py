@@ -1,6 +1,6 @@
 
 """ This module will use the well class to build the coarse grid, and the LGR representation fo the well.
-It copies the the template files of the cosmo case and uses them as basis to create a new simulation case.
+It copies the the template files of the wildcat case and uses them as basis to create a new simulation case.
 The well class is used to build the tops file which is used in pflotran's dry runs to generate coarse grid information and lgr grid information.
 
 $ python -m experiments.screen_workflow \
@@ -46,8 +46,8 @@ def main(args):
     Ali_way = args.ali_way
 
     # where the location for the input parameters and eclipse .EGRID and .INIT files
-    # configuration path, for example './test_data/examples/cosmo-pflotran'
-    source_path = r'./test_data/examples/cosmo-pflotran'
+    # configuration path, for example './test_data/examples/wildcat-pflotran'
+    source_path = r'./test_data/examples/wildcat-pflotran'
     source_path = pathlib.Path(source_path)
 
 

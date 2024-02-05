@@ -15,9 +15,9 @@ $ python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v
 
 $ python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v2 --well smeaheia.yaml --sim-case TEMP-0 --plot
 
-# 3. cosmo
+# 3. wildcat
 
-$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/cosmo --well cosmo.yaml --sim-case TEMP-0 --plot
+$ python -m experiments.gap_wellclass --sim-path ./test_data/examples/wildcat --well wildcat.yaml --sim-case TEMP-0 --plot
 
 """
 

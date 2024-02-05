@@ -30,9 +30,9 @@ test_data/**/model/*.run
 # test_data/**/model/*.INIT
 test_data/**/include/*LGR.grdecl
 
-# cosmo-pflotran
-test_data/examples/cosmo-pflotran*/model/*.EGRID
-test_data/examples/cosmo-pflotran*/model/*.INIT
+# wildcat-pflotran
+test_data/examples/wildcat-pflotran*/model/*.EGRID
+test_data/examples/wildcat-pflotran*/model/*.INIT
 
 # C extensions
 *.so
