@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 import json
 
+from typing import Union
 import numpy as np
 import pandas as pd
 
@@ -12,7 +13,7 @@ from .barrier_pressure import (
     compute_barrier_leakage
 )
 from .co2_pressure import (
-    compute_CO2_pressures,
+    compute_CO2_pressures
 )
 
 @dataclass              # @dataclass(kw_only=True)
@@ -25,14 +26,16 @@ class Pressure:
             co2_datum (float): co2 datum depth
             pvt_path (str): directory where PVT files are located.            
     """
-    header        : dict = None
-    reservoir_P   : dict = None    
-    co2_datum     : dict = None
-    pvt_path      : str = None
+    header          : dict = None
+    reservoir_P     : dict = None    
+    co2_datum       : dict = None
+    pvt_path        : str  = None
+    barriers        : dict = None
+    max_pressure_pos: Union[dict, list, float, int] = None
 
     def __post_init__(self):
         self._check_init_pressure()
-        self.pressure_CO2 = compute_CO2_pressures(self.header, self.reservoir_P, self.co2_datum, pvt_path=self.pvt_path)
+        self.pressure_CO2 = compute_CO2_pressures(self.header, self.reservoir_P, self.co2_datum, pvt_path=self.pvt_path, max_pressure_pos = self.max_pressure_pos)
 
     # TODO(hzh): non-pure function!!!
     def _check_init_pressure(self):

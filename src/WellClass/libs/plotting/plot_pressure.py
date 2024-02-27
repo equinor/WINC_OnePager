@@ -2,7 +2,15 @@
 import pandas as pd
 import matplotlib.pyplot as plt 
 
+from typing import Union
 from ..well_pressure import Pressure
+
+'''Global names. Should be replaced by a global class containing these names? TODO'''
+SHMIN_NAME        = 'Shmin'
+SF_DEPTH_NAME     = 'sf_depth_msl'
+DEPTH_NAME        = 'depth_msl'
+MAX_PRESSURE_NAME = 'max_pressure'
+RHO_NAME          = 'rho'
 
 def plot_pressure(my_pressure: Pressure, geology_dict: dict, barriers: dict, ax=None):
     """ pressure vs depth
@@ -42,13 +50,25 @@ def plot_pressure(my_pressure: Pressure, geology_dict: dict, barriers: dict, ax=
     ls_list = ['solid','dashed','dashdot', 'dotted']
     counter = 0
 
+
     for key in my_pressure.reservoir_P:
             if key != 'depth_msl':
                     pt_df.query('depth_msl>=@sf_depth').plot(x=key+'_h2o', y='depth_msl', ax=ax, label = '_nolegend_', color='steelblue', legend=False, lw = 0.75, ls=ls_list[counter])
                     pt_df.query('depth_msl>=@sf_depth').plot(x=key+'_co2', y='depth_msl', ax=ax, label = key, color='firebrick', legend=True, lw = 0.75, ls=ls_list[counter])
 
                     counter+=1
-                    counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter                        
+                    counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
+
+    #Plot max pressure cases
+    counter = 0
+    for key in pt_df.columns: 
+       if key.startswith(MAX_PRESSURE_NAME) and RHO_NAME not in key:
+           colname = f"{key}"
+           pt_df.query('depth_msl>=@sf_depth').plot(x=colname, y='depth_msl', ax=ax, label = colname, color='green', legend=False, lw = 0.75, ls=ls_list[counter])
+
+           counter+=1
+           counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
+
     
     #Optimize legend
     ax.legend()
@@ -57,7 +77,7 @@ def plot_pressure(my_pressure: Pressure, geology_dict: dict, barriers: dict, ax=
     ax.legend(lgd.values(), lgd.keys())
     
     ax.set_xlim(xmin, xmax)
-    ax.set_xlabel('presure [bar]')
+    ax.set_xlabel('pressure [bar]')
     ax.set_ylim(0, ymax)
     ax.invert_yaxis()
 
