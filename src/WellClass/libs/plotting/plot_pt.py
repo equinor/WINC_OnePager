@@ -5,7 +5,15 @@ import matplotlib.pyplot as plt
 from ..pvt.pvt import get_pvt
 from ..well_pressure.pressure import Pressure
 
-def plot_pt(my_pressure: Pressure, fig=None, ax=None):
+'''Global names. Should be replaced by a global class containing these names? TODO'''
+SF_DEPTH_NAME     = 'sf_depth_msl'
+DEPTH_NAME        = 'depth_msl'
+MAX_PRESSURE_NAME = 'max_pressure'
+RHO_NAME          = 'rho'
+
+
+
+def plot_pt(my_pressure: Pressure, fig=None, ax=None, file_only=False, file_name="pt"):
     """ pressure vs temperature
     """
 
@@ -50,7 +58,24 @@ def plot_pt(my_pressure: Pressure, fig=None, ax=None):
                     counter+=1
                     counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter
 
+
+    #Plot max pressure cases
+    counter = 0
+    for key in pt_df.columns: 
+        if key.startswith(MAX_PRESSURE_NAME) and RHO_NAME not in key:
+            colname = f"{key}"
+            pt_df.query('depth_msl>=@wd').plot(y=colname, x='temp', ax=ax, label = colname, color='green', legend=True, lw = 0.75, ls=ls_list[counter])
+            base_msl = pt_df.query('depth_msl>(@co2_datum)+50')[colname].iloc[0]
+
+            if base_msl > ymax:
+                ymax = base_msl
+
+            counter+=1
+            counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
+
+
     xmax = pt_df.query('depth_msl>(@co2_datum)+50')['temp'].iloc[0]
+    #xmax = pt_df['temp'].max()
 
     ax.set_ylabel('p [bar]')
     ax.set_xlabel('T [$\degree$C]')
@@ -59,4 +84,8 @@ def plot_pt(my_pressure: Pressure, fig=None, ax=None):
     fig.colorbar(rho_pcm, label=r'$\rho_{CO_2}$ [$kg/m^3$]')
 
     fig.tight_layout()
-    plt.show()
+
+    if file_only:
+      plt.savefig(f'{file_name}.png')
+    else:
+        plt.show()

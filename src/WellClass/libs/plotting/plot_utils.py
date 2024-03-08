@@ -6,7 +6,7 @@ import matplotlib.colors as colors
 # plots
 from .plot_sketch import plot_sketch
 
-def plot_well_perm(my_well, *, x, y, Z, on_coarse=True):
+def plot_well_perm(my_well, *, x, y, Z, on_coarse=True, file_only=False, file_name="well_grid"):
     """ well sketch and permeability, x-z slice
     """
 
@@ -20,7 +20,10 @@ def plot_well_perm(my_well, *, x, y, Z, on_coarse=True):
 
     fig.tight_layout(h_pad = 0)
 
-    plt.show()
+    if file_only:
+      plt.savefig(f'{file_name}.png')
+    else:
+        plt.show()
 
 def plot_perm(x, y, Z, *, ax, on_coarse=True):
     """ plot permeability, x-z slice
