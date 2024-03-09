@@ -1,21 +1,21 @@
 
 
-"""  Well sketch examples,
+"""  Well sketch examples. In the following, assume they run from project's folder.
 
 # 1. smeaheia_v1
 
-$ python -m experiments.well_sketch --sim-path ./test_data/examples/smeaheia_v1 --well smeaheia.yaml --plot 
+$ python -m experiments.well_sketch --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml 
 
 # 2. smeaheia_v2
 
-$ python -m experiments.well_sketch --sim-path ./test_data/examples/smeaheia_v2 --well smeaheia.yaml --plot
+$ python -m experiments.well_sketch --config-file ./test_data/examples/smeaheia_v2/smeaheia.yaml
 
 # 3. wildcat
 
-$ python -m experiments.well_sketch --sim-path ./test_data/examples/wildcat --well wildcat.yaml --plot
+$ python -m experiments.well_sketch --config-file ./test_data/examples/wildcat/wildcat.yaml
 
 """
-
+import os
 import json
 
 import argparse
@@ -42,22 +42,16 @@ def main(args: Namespace):
 
     ############# 0. User options ######################
 
-    # where the location for the input parameters and eclipse .EGRID and .INIT files
-    # configuration path, for example './test_data/examples/smeaheia_v1'
-    sim_path = pathlib.Path(args.sim_path)
-
-    # input configuration file name, for example, 'smeaheia.yaml'
-    well_config = pathlib.Path(args.well)
+    # input configuration file name,
+    # for example, './test_data/examples/smeaheia_v1.yaml'
+    well_name = pathlib.Path(args.config_file)
 
     # extract suffix
-    suffix = well_config.suffix
+    suffix = well_name.suffix
     # .yaml or .csv?
     use_yaml = suffix in ['.yaml', '.yml']
 
     ############ 2. Load well configuration file ###############
-
-    # where well configuration file is located
-    well_name = sim_path/well_config
     
     if use_yaml:
         
@@ -82,10 +76,18 @@ def main(args: Namespace):
             )
     
     # well sketch
-    plot_sketch(my_well, save_file=args.file_name)
+    output = None
+    if args.out_name:
+        if not os.path.exists(args.out_path):
+            os.makedirs(args.out_path, exist_ok=True)
+        # output file
+        output = os.path.join(args.out_path, args.out_name)
+
+    # plot it
+    plot_sketch(my_well, save_file=output)
 
     # for qc
-    if args.plot:
+    if not args.nodisplay:
 
         plt.show()
 
@@ -93,17 +95,22 @@ if __name__ == '__main__':
 
     # Create the parser
     parser = argparse.ArgumentParser()
-
-    parser.add_argument('-p', "--sim-path", type=str, required=True,
-                        help='The file path to the configuration folder')
     
-    parser.add_argument('-w', "--well", type=str, required=True,
-                        help="input well configuration file name, can be .yaml or .csv format")
+    parser.add_argument('-c', "--config-file", type=str, required=True,
+                        help="well configuration file, can be .yaml or .csv format")
     
-    parser.add_argument('--plot', action='store_true', help='plot well sketch and well grids')
-
     # save figure to the disk
-    parser.add_argument('-o', '--file_name', type=str, help="output file name for the figure")
+    parser.add_argument('-p', '--out-path', type=str,
+                        default='.',
+                        help="output folder for the figure")
+    
+    parser.add_argument('-o', '--out-name', type=str,
+                        default="",
+                        help="output file name for the figure")
+
+    # display the figure
+    parser.add_argument('--nodisplay', action='store_true',
+                        help='no display of the well sketch')
 
     # Parse the argument
     args = parser.parse_args()
