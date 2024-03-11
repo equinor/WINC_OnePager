@@ -31,10 +31,10 @@ def compute_barriers_diam(barriers: dict, borehole: dict) -> dict:
             barrier_perm = 0.5    # make a fake one if doesn't exist
 
         check_top_int_top = top >= borehole_df['top_msl']
-        check_bottom_int_top = top < borehole_df['bottom_msl']
+        check_bottom_int_top = top <= borehole_df['bottom_msl']
 
-        check_top_int_bottom = bottom > borehole_df['top_msl']
-        check_bottom_int_bottom = bottom < borehole_df['bottom_msl']
+        check_top_int_bottom = bottom >= borehole_df['top_msl']
+        check_bottom_int_bottom = bottom <= borehole_df['bottom_msl']
 
         barrier_topD = borehole_df[check_top_int_top & check_bottom_int_top]['id_m'].iloc[0]
         barrier_bottomD = borehole_df[check_top_int_bottom & check_bottom_int_bottom]['id_m'].iloc[0]
