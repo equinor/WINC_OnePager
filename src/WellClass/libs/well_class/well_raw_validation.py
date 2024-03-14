@@ -33,12 +33,13 @@ def valid_casings(casings_df: pd.DataFrame):
     casing_cols = casings_df.loc[:, columns]
 
     # ensure the depth order is correct
-    assert (casing_cols['top_msl'].values < casing_cols['bottom_msl'].values).all()
-    assert (casing_cols['toc_msl'].values < casing_cols['boc_msl'].values).all()
+    assert (casing_cols['top_msl'].values < casing_cols['bottom_msl'].values).all() #casing intervals
+    assert (casing_cols.dropna()['toc_msl'].values < casing_cols.dropna()['boc_msl'].values).all() #cement bond intervals
 
-    # ensure the cement bond is within its corresponding casing
-    assert (casing_cols['top_msl'].values <= casing_cols['toc_msl'].values).all() 
-    assert (casing_cols['bottom_msl'].values >= casing_cols['boc_msl'].values).all()
+    # in intervals with cement bond, ensure the cement bond is within its corresponding casing
+    assert (casing_cols.dropna()['top_msl'].values <=    casing_cols.dropna()['toc_msl'].values).all() 
+    assert (casing_cols.dropna()['bottom_msl'].values >= casing_cols.dropna()['boc_msl'].values).all()
+
 
 def valid_barriers(barriers_df: pd.DataFrame):
     """ validate barriers input

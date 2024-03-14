@@ -116,7 +116,7 @@ def plot_sketch(mywell: Well, ax=None,
     if draw_annotation:
         for idx, row in barriers_df.iterrows():
                 ycoord = (row['top_msl'] + row['bottom_msl'])/2
-                ax.annotate(text = row['barrier_name'], xy = (xcoord_left, ycoord), fontsize = txt_fs_left, va = 'center', ha='right')
+                ax.annotate(text = row['barrier_name'], xy = (0, ycoord), fontsize = txt_fs_left, va = 'center', ha='center')
 
     #Draw open hole (borehole/pipe) for testing only
     if draw_open_hole:

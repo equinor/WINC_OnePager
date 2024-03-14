@@ -83,8 +83,9 @@ class Well(WellRaw):
         self.cement_bond = compute_cement_bond(self.casings, self.drilling)
         self.annulus= compute_annulus(self.casings, self.drilling)
         
-        self.barriers_mod = compute_barriers_diam(self.barriers, self.borehole)
-        self.barriers_names = get_barriers_names(self.barriers_mod)
+        if self.inventory['barriers']:
+            self.barriers_mod = compute_barriers_diam(self.barriers, self.borehole)
+            self.barriers_names = get_barriers_names(self.barriers_mod)
 
     def compute_barrier_props(self, barrier_name: str) -> dict:
         """ Compute barrier geometrical information
