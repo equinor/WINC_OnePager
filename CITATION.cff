@@ -5,3 +5,5 @@ authors:
 title: "SCREEN: A tool to build legacy well representations on reservoir simulation grids"
 url: https://github.com/equinor/SCREEN
 date-released: 2023-06-01
+preferred-citation:
+ type: software-code
