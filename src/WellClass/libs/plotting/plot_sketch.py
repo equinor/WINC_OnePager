@@ -6,8 +6,7 @@ from matplotlib.patches import Rectangle
 from ..well_class.well_class import Well
 from ..utils.fraction_float import float_to_fraction_inches
 
-def plot_casings(axis, df, 
-                 color_tone, txt_size, x_txt_pos,
+def plot_casings(axis, df, color_tone, txt_size, x_txt_pos,
                  annot_bool, casings_bool, c_shoe_bool, c_weld_bool):
     
     steelcolor = '#702F00'
@@ -31,9 +30,10 @@ def plot_casings(axis, df,
     x_pos_shoe = shoe_query['diameter_m']/2
     y_pos_shoe = shoe_query['bottom_msl']
 
-
-
-
+    # query dataframe for welded sections
+    weld_query = df[~df['shoe'].astype(bool)]
+    
+    # Draw casings
     if casings_bool:
         #draw right hand casing
         axis.vlines(x =  x_right, ymin = y_top, ymax = y_base,  color = color_tone, lw= 1.5, zorder = 10)
@@ -41,7 +41,7 @@ def plot_casings(axis, df,
         #draw left hand casing
         axis.vlines(x =  x_left,  ymin = y_top, ymax = y_base,  color = color_tone, lw= 1.5, zorder = 10)
 
-
+    # Draw casing shoes
     if c_shoe_bool:
         #draw left casing shoe
         axis.scatter( x_pos_shoe, y_pos_shoe, marker = right_shoe, c=color_tone, zorder=10)
@@ -49,10 +49,9 @@ def plot_casings(axis, df,
         #draw right casing shoe
         axis.scatter(-x_pos_shoe, y_pos_shoe, marker = left_shoe,  c=color_tone, zorder=10)
 
-
+    # Draw welded
     if c_weld_bool:
-        weld_query = df[~df['shoe'].astype(bool)]
-
+        
         for idx, row in weld_query.iterrows():
                 max_D = row['diameter_m']
                 max_Z = row['bottom_msl']
@@ -64,7 +63,7 @@ def plot_casings(axis, df,
                 axis.plot([-max_D/2, -min_D/2], [max_Z]*2, c=color_tone, zorder=10)
           
 
-
+    # Draw annotations
     if annot_bool:
         for idx, row in shoe_query.iterrows():
                 ycoord = row['bottom_msl']
