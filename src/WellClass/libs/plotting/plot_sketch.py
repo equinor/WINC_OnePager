@@ -6,6 +6,77 @@ from matplotlib.patches import Rectangle
 from ..well_class.well_class import Well
 from ..utils.fraction_float import float_to_fraction_inches
 
+def plot_casings(axis, df, 
+                 color_tone, txt_size, x_txt_pos,
+                 annot_bool, casings_bool, c_shoe_bool, c_weld_bool):
+    
+    steelcolor = '#702F00'
+    y_base  =  df['bottom_msl']
+    y_top   =  df['top_msl']
+    x_left  = -df['diameter_m']/2
+    x_right =  df['diameter_m']/2
+    shoe_size = 3
+
+
+
+    # Create marker for casing shoe
+    left_shoe = [[0, 0], [-shoe_size, 0], [0, shoe_size], [0, 0]]
+    right_shoe = [[0, 0], [shoe_size, 0], [0, shoe_size], [0, 0]]
+
+    
+    # query dataframe for shoe items
+    shoe_query = df[df['shoe']]
+
+    # define x and y positions
+    x_pos_shoe = shoe_query['diameter_m']/2
+    y_pos_shoe = shoe_query['bottom_msl']
+
+
+
+
+    if casings_bool:
+        #draw right hand casing
+        axis.vlines(x =  x_right, ymin = y_top, ymax = y_base,  color = color_tone, lw= 1.5, zorder = 10)
+
+        #draw left hand casing
+        axis.vlines(x =  x_left,  ymin = y_top, ymax = y_base,  color = color_tone, lw= 1.5, zorder = 10)
+
+
+    if c_shoe_bool:
+        #draw left casing shoe
+        axis.scatter( x_pos_shoe, y_pos_shoe, marker = right_shoe, c=color_tone, zorder=10)
+
+        #draw right casing shoe
+        axis.scatter(-x_pos_shoe, y_pos_shoe, marker = left_shoe,  c=color_tone, zorder=10)
+
+
+    if c_weld_bool:
+        weld_query = df[~df['shoe'].astype(bool)]
+
+        for idx, row in weld_query.iterrows():
+                max_D = row['diameter_m']
+                max_Z = row['bottom_msl']
+
+                query = casings_df.query('diameter_m<@max_D & top_msl==@max_Z')
+                min_D = query.iloc[0]['diameter_m']
+
+                axis.plot([ max_D/2,  min_D/2], [max_Z]*2, c=color_tone, zorder=10)
+                axis.plot([-max_D/2, -min_D/2], [max_Z]*2, c=color_tone, zorder=10)
+          
+
+
+    if annot_bool:
+        for idx, row in shoe_query.iterrows():
+                ycoord = row['bottom_msl']
+                d_in =   row['diameter_in']
+                shoe_label = float_to_fraction_inches(d_in)+' shoe'
+                
+                axis.annotate(shoe_label, xy = (x_txt_pos, ycoord), fontsize = txt_size, va = 'center', ha='right')
+
+
+
+
+
 def plot_sketch(mywell: Well, ax=None, 
                 *, 
                 draw_drillings=True,
@@ -37,11 +108,11 @@ def plot_sketch(mywell: Well, ax=None,
 
     #define plot spatial references
     ax_width = 2 * drilling_df['diameter_m'].max()/2 #plot width
-    xcoord_left = -drilling_df['diameter_m'].max()/2 #well construction text
-    xcoord_right = drilling_df['diameter_m'].max()/2 #geology text
-    txt_fs_left = 7
-    txt_fs_right = 6
-    steelcolor = '#702F00'
+    XCOORD_LEFT = -drilling_df['diameter_m'].max()/2 #well construction text
+    XCOORD_RIGHT = drilling_df['diameter_m'].max()/2 #geology text
+    TXT_FS_LEFT = 7
+    TXT_FS_RIGHT = 6
+    STEELCOLOR = '#702F00'
     base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
     ymax = max([base_deepest_rsrv,mywell.co2_datum])+100
 
@@ -54,43 +125,10 @@ def plot_sketch(mywell: Well, ax=None,
                 ax.add_patch(Rectangle(xy, width, height, zorder=0, facecolor=r'#CB8A58'))
 
     #Draw casings
-    if draw_casings:
-        ax.vlines(x= casings_df['diameter_m']/2, ymin=casings_df['top_msl'], ymax=casings_df['bottom_msl'],  color=steelcolor, lw=1.5, zorder=10)
-        ax.vlines(x=-casings_df['diameter_m']/2, ymin=casings_df['top_msl'], ymax=casings_df['bottom_msl'],  color=steelcolor, lw=1.5, zorder=10)
+    plot_casings(axis = ax, df = casings_df, color_tone=STEELCOLOR, txt_size=TXT_FS_LEFT,
+                 x_txt_pos=XCOORD_LEFT, annot_bool=draw_annotation, casings_bool=draw_casings,
+                 c_shoe_bool = draw_casing_shoes, c_weld_bool=draw_welded)
 
-    #Draw casing shoes
-    if draw_casing_shoes:
-        
-        shoe_size = 3
-
-        left_shoe = [[0, 0], [-shoe_size, 0], [0, shoe_size], [0, 0]]
-        right_shoe = [[0, 0], [shoe_size, 0], [0, shoe_size], [0, 0]]
-
-        shoe_query = casings_df[casings_df['shoe']]
-
-        ax.scatter( shoe_query['diameter_m']/2, shoe_query['bottom_msl'], marker = right_shoe, c=steelcolor, zorder=10)
-        ax.scatter(-shoe_query['diameter_m']/2, shoe_query['bottom_msl'], marker = left_shoe, c=steelcolor, zorder=10)
-
-    if draw_annotation:
-        for idx, row in shoe_query.iterrows():
-                ycoord = row['bottom_msl']
-                d_in = row['diameter_in']
-                shoe_label = float_to_fraction_inches(d_in)+' shoe'
-                ax.annotate(shoe_label, xy = (xcoord_left, ycoord), fontsize = txt_fs_left, va = 'center', ha='right')
-
-    #Draw welded
-    if draw_welded:
-        weld_query = casings_df[~casings_df['shoe'].astype(bool)]
-
-        for idx, row in weld_query.iterrows():
-                max_D = row['diameter_m']
-                max_Z = row['bottom_msl']
-
-                query = casings_df.query('diameter_m<@max_D & top_msl==@max_Z')
-                min_D = query.iloc[0]['diameter_m']
-
-                ax.plot([ max_D/2,  min_D/2], [max_Z]*2, c=steelcolor, zorder=10)
-                ax.plot([-max_D/2, -min_D/2], [max_Z]*2, c=steelcolor, zorder=10)
 
     #Draw cement bond
     if draw_cement_bond:
@@ -116,7 +154,7 @@ def plot_sketch(mywell: Well, ax=None,
     if draw_annotation:
         for idx, row in barriers_df.iterrows():
                 ycoord = (row['top_msl'] + row['bottom_msl'])/2
-                ax.annotate(text = row['barrier_name'], xy = (0, ycoord), fontsize = txt_fs_left, va = 'center', ha='center')
+                ax.annotate(text = row['barrier_name'], xy = (0, ycoord), fontsize = TXT_FS_LEFT, va = 'center', ha='center')
 
     #Draw open hole (borehole/pipe) for testing only
     if draw_open_hole:
@@ -139,7 +177,7 @@ def plot_sketch(mywell: Well, ax=None,
                         ax.axhspan(row['top_msl'], row['base_msl'], color='yellow', zorder=-10)
         
                 ycoord = (row['top_msl'] + row['base_msl'])/2
-                ax.annotate(text = row['geol_unit'], xy = (xcoord_right, ycoord), fontsize = txt_fs_right, va = 'center')
+                ax.annotate(text = row['geol_unit'], xy = (XCOORD_RIGHT, ycoord), fontsize = TXT_FS_RIGHT, va = 'center')
 
     ax.set_xlim(-ax_width, ax_width)
     ax.set_ylim(0, ymax)
