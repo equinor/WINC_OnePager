@@ -6,15 +6,16 @@ from matplotlib.patches import Rectangle
 from ..well_class.well_class import Well
 from ..utils.fraction_float import float_to_fraction_inches
 
-def hole_plotter(axis, df, drilling_bool):
-    if drilling_bool:
+def hole_plotter(axis, df, hole_bool, fill_bool = True, z_order = 0):
+    if hole_bool:
         for idx, row in df.iterrows():
                 xy = (-row['diameter_m']/2, row['top_msl'])
                 width = row['diameter_m']
                 height = row['bottom_msl'] - row['top_msl']
-                axis.add_patch(Rectangle(xy, width, height, zorder=0, facecolor=r'#CB8A58'))
+                axis.add_patch(Rectangle(xy, width, height, zorder=z_order, fill = fill_bool, facecolor=r'#CB8A58'))
 
 
+ 
 
 def casings_plotter(axis, df, color_tone, txt_size, x_txt_pos,
                  annot_bool, casings_bool, c_shoe_bool, c_weld_bool):
@@ -133,7 +134,7 @@ def plot_sketch(mywell: Well, ax=None,
     ymax = max([base_deepest_rsrv,mywell.co2_datum])+100
 
     # Draw drilling (Bit size)
-    hole_plotter(axis = ax, df = drilling_df, drilling_bool=draw_drillings)    
+    hole_plotter(axis = ax, df = drilling_df,  hole_bool=draw_drillings)    
    
     #Draw casings
     casings_plotter(axis = ax, df = casings_df, color_tone=STEELCOLOR, txt_size=TXT_FS_LEFT,
@@ -168,12 +169,7 @@ def plot_sketch(mywell: Well, ax=None,
                 ax.annotate(text = row['barrier_name'], xy = (0, ycoord), fontsize = TXT_FS_LEFT, va = 'center', ha='center')
 
     #Draw open hole (borehole/pipe) for testing only
-    if draw_open_hole:
-        for idx, row in borehole_df.iterrows():
-                xy = (-row['id_m']/2, row['top_msl'])
-                width = row['id_m']
-                height = row['bottom_msl'] - row['top_msl']
-                ax.add_patch(Rectangle(xy, width, height, zorder=9, fill=False, edgecolor='k', lw=2, ))
+    hole_plotter(axis = ax, df = borehole_df,  hole_bool=draw_open_hole, fill_bool=False, z_order = 100)    
 
 
     #Draw geological information
