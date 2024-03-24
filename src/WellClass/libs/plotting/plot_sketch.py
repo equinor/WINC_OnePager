@@ -7,6 +7,11 @@ from ..well_class.well_class import Well
 from ..utils.fraction_float import float_to_fraction_inches
 
 def hole_plotter(axis, df, hole_bool, fill_bool = True, z_order = 0):
+
+    """
+    Draws all open hole elements. Applies for both drilling and borehole dataframes
+    """
+
     if hole_bool:
         for idx, row in df.iterrows():
                 xy = (-row['diameter_m']/2, row['top_msl'])
