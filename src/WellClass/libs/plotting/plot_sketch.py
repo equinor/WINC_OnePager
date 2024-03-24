@@ -6,10 +6,27 @@ from matplotlib.patches import Rectangle
 from ..well_class.well_class import Well
 from ..utils.fraction_float import float_to_fraction_inches
 
-def plot_casings(axis, df, color_tone, txt_size, x_txt_pos,
+def hole_plotter(axis, df, drilling_bool):
+    if drilling_bool:
+        for idx, row in df.iterrows():
+                xy = (-row['diameter_m']/2, row['top_msl'])
+                width = row['diameter_m']
+                height = row['bottom_msl'] - row['top_msl']
+                axis.add_patch(Rectangle(xy, width, height, zorder=0, facecolor=r'#CB8A58'))
+
+
+
+def casings_plotter(axis, df, color_tone, txt_size, x_txt_pos,
                  annot_bool, casings_bool, c_shoe_bool, c_weld_bool):
     
-    steelcolor = '#702F00'
+    
+    """
+    Draws all components linked to the tubular assembly:
+    - Casings
+    - Casing shoes/welded transitions
+    - Annotations
+    """
+    
     y_base  =  df['bottom_msl']
     y_top   =  df['top_msl']
     x_left  = -df['diameter_m']/2
@@ -115,16 +132,11 @@ def plot_sketch(mywell: Well, ax=None,
     base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
     ymax = max([base_deepest_rsrv,mywell.co2_datum])+100
 
-    # Draw drilling (Bit size)    
-    if draw_drillings:
-        for idx, row in drilling_df.iterrows():
-                xy = (-row['diameter_m']/2, row['top_msl'])
-                width = row['diameter_m']
-                height = row['bottom_msl'] - row['top_msl']
-                ax.add_patch(Rectangle(xy, width, height, zorder=0, facecolor=r'#CB8A58'))
-
+    # Draw drilling (Bit size)
+    hole_plotter(axis = ax, df = drilling_df, drilling_bool=draw_drillings)    
+   
     #Draw casings
-    plot_casings(axis = ax, df = casings_df, color_tone=STEELCOLOR, txt_size=TXT_FS_LEFT,
+    casings_plotter(axis = ax, df = casings_df, color_tone=STEELCOLOR, txt_size=TXT_FS_LEFT,
                  x_txt_pos=XCOORD_LEFT, annot_bool=draw_annotation, casings_bool=draw_casings,
                  c_shoe_bool = draw_casing_shoes, c_weld_bool=draw_welded)
 
