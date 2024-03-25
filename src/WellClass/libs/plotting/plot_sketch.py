@@ -110,6 +110,44 @@ def cement_bond_plotter(axis, df, cement_bond_bool):
             
       
 
+def cement_plug_plotter(axis, df_barriers, df_barriers_mod, plug_bool, annot_bool, txt_size):
+
+    """
+    axis: Matplotlib object where items will be plotted
+    df_barriers: Dataframe listing the barriers 
+    df_barriers_mod: Dataframe that describes the visual display of barriers.
+    plug_bool: Boolean if barriers are to be displayed
+    annot_bool: Boolean if annotations are to be included
+
+    """
+
+    if plug_bool:
+        for idx, row in df_barriers_mod.iterrows():
+
+                xy = (-row['diameter_m']/2, row['top_msl'])
+                width = row['diameter_m']
+                height = row['bottom_msl'] - row['top_msl']
+                axis.add_patch(Rectangle(xy, width, height, facecolor='gray', zorder=1))
+
+    if annot_bool:
+        for idx, row in df_barriers.iterrows():
+                ycoord = (row['top_msl'] + row['bottom_msl'])/2
+                axis.annotate(text = row['barrier_name'], xy = (0, ycoord), fontsize = txt_size, va = 'center', ha='center')
+
+def geology_plotter(axis, df_geol, w_header, geol_bool, annot_bool, width, x_txt_pos, txt_size):
+    if geol_bool:
+        axis.hlines(y=df_geol['top_msl'], xmin=-width, xmax=width, zorder=-4, lw=.25, color='k')
+        axis.axhspan(0, w_header['sf_depth_msl'], color='lightblue', alpha=0.5, zorder=-20)
+        axis.axhspan(w_header['sf_depth_msl'], w_header['well_td_rkb'], color='tan', alpha=0.5, zorder=-20)
+
+    if annot_bool:
+        for index, row in df_geol.iterrows():
+                if row['reservoir_flag']:
+                        axis.axhspan(row['top_msl'], row['base_msl'], color='yellow', zorder=-10)
+        
+                ycoord = (row['top_msl'] + row['base_msl'])/2
+                axis.annotate(text = row['geol_unit'], xy = (x_txt_pos, ycoord), fontsize = txt_size, va = 'center')
+
 
 def plot_sketch(mywell: Well, ax=None, 
                 *, 
@@ -141,7 +179,7 @@ def plot_sketch(mywell: Well, ax=None,
 
 
     #define plot spatial references
-    ax_width = 2 * drilling_df['diameter_m'].max()/2 #plot width
+    AX_WIDTH = 2 * drilling_df['diameter_m'].max()/2 #plot width
     XCOORD_LEFT = -drilling_df['diameter_m'].max()/2 #well construction text
     XCOORD_RIGHT = drilling_df['diameter_m'].max()/2 #geology text
     TXT_FS_LEFT = 7
@@ -164,38 +202,19 @@ def plot_sketch(mywell: Well, ax=None,
 
 
     #draw barriers
-    if draw_barriers:
-        for idx, row in barriers_fmt_df.iterrows():
-
-                xy = (-row['diameter_m']/2, row['top_msl'])
-                width = row['diameter_m']
-                height = row['bottom_msl'] - row['top_msl']
-                ax.add_patch(Rectangle(xy, width, height, facecolor='gray', zorder=1))
-
-    if draw_annotation:
-        for idx, row in barriers_df.iterrows():
-                ycoord = (row['top_msl'] + row['bottom_msl'])/2
-                ax.annotate(text = row['barrier_name'], xy = (0, ycoord), fontsize = TXT_FS_LEFT, va = 'center', ha='center')
+    cement_plug_plotter(axis = ax, df_barriers=barriers_df, df_barriers_mod=barriers_fmt_df, plug_bool = draw_barriers,
+                        annot_bool = draw_annotation, txt_size= TXT_FS_LEFT)
 
     #Draw open hole (borehole/pipe) for testing only
     hole_plotter(axis = ax, df = borehole_df,  hole_bool=draw_open_hole, fill_bool=False, z_order = 100)    
 
 
     #Draw geological information
-    if draw_geology:
-        ax.hlines(y=geology_df['top_msl'], xmin=-ax_width, xmax=ax_width, zorder=-4, lw=.25, color='k')
-        ax.axhspan(0, well_header['sf_depth_msl'], color='lightblue', alpha=0.5, zorder=-20)
-        ax.axhspan(well_header['sf_depth_msl'], well_header['well_td_rkb'], color='tan', alpha=0.5, zorder=-20)
+    geology_plotter(axis = ax, df_geol = geology_df, w_header = well_header, geol_bool=draw_geology, 
+                    annot_bool=draw_annotation, width = AX_WIDTH, x_txt_pos=XCOORD_RIGHT, txt_size=TXT_FS_RIGHT)
 
-    if draw_annotation:
-        for index, row in geology_df.iterrows():
-                if row['reservoir_flag']:
-                        ax.axhspan(row['top_msl'], row['base_msl'], color='yellow', zorder=-10)
-        
-                ycoord = (row['top_msl'] + row['base_msl'])/2
-                ax.annotate(text = row['geol_unit'], xy = (XCOORD_RIGHT, ycoord), fontsize = TXT_FS_RIGHT, va = 'center')
 
-    ax.set_xlim(-ax_width, ax_width)
+    ax.set_xlim(-AX_WIDTH, AX_WIDTH)
     ax.set_ylim(0, ymax)
     ax.invert_yaxis()
     ax.set_ylabel('depth [mMSL]')
