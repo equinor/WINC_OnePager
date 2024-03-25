@@ -160,7 +160,9 @@ def plot_sketch(mywell: Well, ax=None,
                 draw_barriers=True,
                 draw_geology=True,
                 draw_annotation=True):
-    """ plot well sketch
+    """ 
+    plot well sketch
+    
     """
 
     if ax is None:
