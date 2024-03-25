@@ -96,7 +96,19 @@ def casings_plotter(axis, df, color_tone, txt_size, x_txt_pos,
                 axis.annotate(shoe_label, xy = (x_txt_pos, ycoord), fontsize = txt_size, va = 'center', ha='right')
 
 
+def cement_bond_plotter(axis, df, cement_bond_bool):
+    if cement_bond_bool:
+        for idx, row in df.iterrows():
+            width = (row['od_m'] - row['id_m'])/2
+            height = row['bottom_msl'] - row['top_msl']
 
+            right_xy = (row['id_m']/2, row['top_msl'])
+            left_xy = (-row['od_m']/2, row['top_msl'])
+
+            axis.add_patch(Rectangle(right_xy, width, height, facecolor='lightgray', zorder=5, hatch='\\\\\\'))
+            axis.add_patch(Rectangle(left_xy, width, height, facecolor='lightgray', zorder=5 , hatch='///'))
+            
+      
 
 
 def plot_sketch(mywell: Well, ax=None, 
@@ -148,16 +160,8 @@ def plot_sketch(mywell: Well, ax=None,
 
 
     #Draw cement bond
-    if draw_cement_bond:
-        for idx, row in cb_df.iterrows():
-                width = (row['od_m'] - row['id_m'])/2
-                height = row['bottom_msl'] - row['top_msl']
+    cement_bond_plotter(axis = ax, df = cb_df, cement_bond_bool=draw_cement_bond)
 
-                right_xy = (row['id_m']/2, row['top_msl'])
-                left_xy = (-row['od_m']/2, row['top_msl'])
-
-                ax.add_patch(Rectangle(right_xy, width, height, facecolor='lightgray', zorder=5, hatch='\\\\\\'))
-                ax.add_patch(Rectangle(left_xy, width, height, facecolor='lightgray', zorder=5 , hatch='///'))
 
     #draw barriers
     if draw_barriers:
