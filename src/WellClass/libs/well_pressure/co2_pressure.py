@@ -69,7 +69,7 @@ def _get_max_pressure(pt_df_in: pd.DataFrame, max_pressure_pos: Union[dict, list
             pt_df = _integrate_pressure(pt_df, get_rho, barr_depth, p0, 'down', colname_p)
     elif isinstance(max_pressure_pos, (list, float, int)):
         if isinstance(max_pressure_pos, (float, int)): #Make it a list with one element
-            barriers = [max_pressure_pos]
+            max_pressure_pos = [max_pressure_pos]
         for depth in max_pressure_pos:
             colname_p = f"{MAX_PRESSURE_NAME}_at_{int(depth)}" 
             print(f"Calculating max pressure from depth {depth}")            
@@ -138,7 +138,9 @@ def _integrate_pressure(pt_df_in: pd.DataFrame, get_rho: callable, reference_dep
 
 
 
-def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, pvt_path: str, max_pressure_pos: Union[dict, list, float, int] = None) -> pd.DataFrame:
+def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, 
+                          pvt_path: str, 
+                          max_pressure_pos: Union[dict, list, float, int] = None) -> pd.DataFrame:
     '''The pressure and density for H2O and CO2  along the columns are calculated using an approximate integration
         Hydrostatic pressure - caculatong downwards from msl
         Pressure and density assuming a water column - starting at top reservoir and the given overpressure RP
@@ -159,6 +161,7 @@ def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, p
 
         ---> The RP are all RP-input + hydrostatic_pressure. Hence if e.g. RP1 is hydrostatic pressure RP1-columns and hydrostatic_pressure-columns are identical.
     '''
+
 
     #Get PVT-input
     t_vec, p_vec, rho_co2_vec, rho_h2o_vec = get_pvt(pvt_path)
