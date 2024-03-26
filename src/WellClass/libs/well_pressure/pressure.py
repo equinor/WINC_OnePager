@@ -13,7 +13,8 @@ from .barrier_pressure import (
     compute_barrier_leakage
 )
 from .co2_pressure import (
-    compute_CO2_pressures
+    compute_CO2_pressures,
+    compute_MSAD
 )
 
 @dataclass              # @dataclass(kw_only=True)
@@ -36,6 +37,7 @@ class Pressure:
     def __post_init__(self):
         self._check_init_pressure()
         self.pressure_CO2 = compute_CO2_pressures(self.header, self.reservoir_P, self.co2_datum, pvt_path=self.pvt_path, max_pressure_pos = self.max_pressure_pos)
+        self.MSAD = compute_MSAD(p_init = self.reservoir_P, pt_df = self.pressure_CO2)
 
     # TODO(hzh): non-pure function!!!
     def _check_init_pressure(self):
@@ -93,7 +95,9 @@ class Pressure:
                 else:
                     P_init.pop(key)
                     print(RP, 'ignored')
-                    continue    
+                    continue 
+
+
 
     def compute_barrier_leakage(self, well: Well, barrier_name: str) -> pd.DataFrame:
         """ Compute leakage rate from the given barrier
