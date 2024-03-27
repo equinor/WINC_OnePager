@@ -2,6 +2,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import matplotlib.ticker as plticker
 
 from ..well_class.well_class import Well
 from ..utils.fraction_float import float_to_fraction_inches
@@ -167,6 +168,10 @@ def plot_sketch(mywell: Well, ax=None,
 
     if ax is None:
         fig, ax = plt.subplots()
+
+    #Automatically define the y scale in 250 m intervals
+    loc = plticker.MultipleLocator(base=250) # this locator puts ticks at regular intervals
+    ax.yaxis.set_major_locator(loc)
             
 
     drilling_df =     pd.DataFrame(mywell.drilling)
