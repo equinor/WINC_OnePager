@@ -62,8 +62,8 @@ def compute_intersection(x: np.ndarray, y1:np.ndarray, y2: np.ndarray):
                 b2 = y2_subset[0]-x_subset[0]*m2
 
                 #find intersection
-                intersect_x = -(b1-b2)/(m1-m2)
-                intersect_y = m1*intersect_x+b1
+                intersect_x = (-(b1-b2)/(m1-m2))[0]
+                intersect_y = (m1*intersect_x+b1)[0]
 
         else:
                 print('Lines do not intersect')
