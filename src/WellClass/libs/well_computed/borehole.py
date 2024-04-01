@@ -51,7 +51,7 @@ def compute_borehole(casings: dict, drilling: dict) -> dict:
 
 
     #create dataframe
-    borehole_df = pd.DataFrame(data=borehole_list, columns=['top_msl', 'id_m'])
+    borehole_df = pd.DataFrame(data=borehole_list, columns=['top_msl', 'diameter_m'])
 
     #shit top_msl to create bottom_msl column
     borehole_df['bottom_msl'] = borehole_df['top_msl'].shift(-1)

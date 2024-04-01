@@ -7,6 +7,7 @@ import scipy.constants
 from typing import Union
 
 from ..pvt.pvt import get_hydrostatic_P, get_pvt
+from ..utils.compute_intersection import compute_intersection
 
 '''Some global parameters'''
 G       = scipy.constants.g   #9.81 m/s2 gravity acceleration
@@ -69,7 +70,7 @@ def _get_max_pressure(pt_df_in: pd.DataFrame, max_pressure_pos: Union[dict, list
             pt_df = _integrate_pressure(pt_df, get_rho, barr_depth, p0, 'down', colname_p)
     elif isinstance(max_pressure_pos, (list, float, int)):
         if isinstance(max_pressure_pos, (float, int)): #Make it a list with one element
-            barriers = [max_pressure_pos]
+            max_pressure_pos = [max_pressure_pos]
         for depth in max_pressure_pos:
             colname_p = f"{MAX_PRESSURE_NAME}_at_{int(depth)}" 
             print(f"Calculating max pressure from depth {depth}")            
@@ -135,10 +136,46 @@ def _integrate_pressure(pt_df_in: pd.DataFrame, get_rho: callable, reference_dep
     return pt_df
 ##################################################################################   
 
+def compute_MSAD(p_init: dict, pt_df: pd.DataFrame):
+
+    """
+    Calculates MSAD: Minimum Safety Abandonement Depth
+    MSAD is the intersection point between the CO2 pressure and Shmin.
+    It computes a pressure and depth value for every pressure scenario.
+    """
+
+    MSAD = dict()
+
+    shmin = pt_df.Shmin.values
+    depth = pt_df.depth_msl.values
+
+
+    for key, value in p_init.items():
+        if key == 'depth_msl':
+            print(f"Reference depth: {value}")
+
+        else:
+
+            MSAD[key] = dict()
+
+            co2_p = pt_df[f'{key}_co2'].values
+            z_MSAD, p_MSAD = compute_intersection(x = depth, y1 = shmin, y2 = co2_p)
+
+            MSAD[key]['z_MSAD'] = z_MSAD
+            MSAD[key]['p_MSAD'] = p_MSAD
+
+
+    return MSAD
+
+
+    
 
 
 
-def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, pvt_path: str, max_pressure_pos: Union[dict, list, float, int] = None) -> pd.DataFrame:
+
+def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, 
+                          pvt_path: str, 
+                          max_pressure_pos: Union[dict, list, float, int] = None) -> pd.DataFrame:
     '''The pressure and density for H2O and CO2  along the columns are calculated using an approximate integration
         Hydrostatic pressure - caculatong downwards from msl
         Pressure and density assuming a water column - starting at top reservoir and the given overpressure RP
@@ -159,6 +196,7 @@ def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, p
 
         ---> The RP are all RP-input + hydrostatic_pressure. Hence if e.g. RP1 is hydrostatic pressure RP1-columns and hydrostatic_pressure-columns are identical.
     '''
+
 
     #Get PVT-input
     t_vec, p_vec, rho_co2_vec, rho_h2o_vec = get_pvt(pvt_path)
@@ -186,7 +224,6 @@ def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, p
     #This is the same depth the over-pressure cases are set to
     ref_z = p_init['depth_msl']
     
-    print(f"Reference depth and pressure scenarios to be calculated there: \n     p_init {p_init}")
     print(f"Top reservoir {ref_z}")
     print(f"From where there is CO2 - hence affecting pressure upwards: base co2: {base_co2}")
     print(f"Hence CO2 column in the reservoir is then {base_co2 - ref_z} m")
@@ -198,20 +235,24 @@ def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, p
         else:
             rp = key                                  #pressure name: RP1, RP2 etc
             p0 = value                                #Initial pressure value set for RP1, RP2 etc
+            print(f'Pressure scenario {rp}: {value:.2f} bar')
 
             #Water
             water_p_colname = rp+'_h2o'
             pt_df = _integrate_pressure(pt_df, get_rho_h2o, ref_z, p0, 'up', water_p_colname)
             pt_df = _integrate_pressure(pt_df, get_rho_h2o, ref_z, p0, 'down', water_p_colname)
-
             #CO2
             #Find water pressure at base_co2
             p0 = np.interp(base_co2, pt_df['depth_msl'], pt_df[water_p_colname])
             co2_p_colname  = rp+'_co2'
             pt_df = _integrate_pressure(pt_df, get_rho_co2, base_co2, p0, 'up', co2_p_colname)
 
+
+
+
             #We need the density for water given the CO2-pressures, too
             pt_df = _get_rho_in_pressure_column(pt_df, co2_p_colname, f"{rp}_h2o_rho_in_co2_column", get_rho_h2o)
+
 
 
     return pt_df
