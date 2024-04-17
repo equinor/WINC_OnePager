@@ -1,6 +1,8 @@
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from ..pvt.pvt import get_pvt
 from ..well_pressure.pressure import Pressure
@@ -13,8 +15,31 @@ RHO_NAME          = 'rho'
 
 
 
-def plot_pt(my_pressure: Pressure, fig=None, ax=None, file_only=False, file_name="pt"):
-    """ pressure vs temperature
+def plot_pt(my_pressure: Pressure, 
+            fig : mpl.figure.Figure = None, 
+            ax : plt.Axes =None, 
+            file_only=False, 
+            file_name="pt",
+            plot_HSP:bool = False, 
+            plot_Shmin:bool = False, 
+            plot_RP:bool = True, 
+            plot_MSAD:bool = False, 
+            plot_maxP:bool = False):    
+     
+    """ 
+    pressure vs temperature
+    Takes the presssure class and plots pressure vs temperature.
+    Background of the image is colored by the fluid density
+
+    my_pressure: pressure class
+    fig: matplotlib fig object
+    ax: matploltib ax object
+    file_only: boolean to print the image to file instead of screen
+    file_name: preffix of file name
+    plot_HSP to plot brine hydrostatci pressure
+    plot_RP to plot reservoir pressure scenarios
+    plot_MSAD top plot Minimum Safatey Abandonement pressure for each reservoir scenario
+    plot_maxP to plot max pressurization at a given deth
     """
 
     if fig is None:
@@ -44,37 +69,87 @@ def plot_pt(my_pressure: Pressure, fig=None, ax=None, file_only=False, file_name
     ls_list = ['solid','dashed','dashdot', 'dotted']
     counter = 0
 
+    if plot_HSP:
+        pt_df['init'].plot(y='hs_p', x='temp', ax=ax, label='$p_{hs}$', color='steelblue', lw = 0.75)
+
+    if plot_Shmin:
+        pt_df['init'].plot(x='temp', y='Shmin', ax=ax, label='$p_{hs}$', color='k', lw = 0.75)
+
     ymax = 0
-    for key in my_pressure.reservoir_P:
-            if key != 'depth_msl':
-                    pt_df.query('depth_msl>=@wd').plot(y=key+'_h2o', x='temp', ax=ax, label = '_nolegend_', color='steelblue', legend=False, lw = 0.75, ls=ls_list[counter])
-                    pt_df.query('depth_msl>=@wd').plot(y=key+'_co2', x='temp', ax=ax, label = f'$CO_2$ {key}', color='firebrick', legend=True, lw = 0.75, ls=ls_list[counter])
+    # for key in my_pressure.reservoir_P:
+    #         if key != 'depth_msl':
+    #                 pt_df.query('depth_msl>=@wd').plot(y=key+'_h2o', x='temp', ax=ax, label = '_nolegend_', color='steelblue', legend=False, lw = 0.75, ls=ls_list[counter])
+    #                 pt_df.query('depth_msl>=@wd').plot(y=key+'_co2', x='temp', ax=ax, label = f'$CO_2$ {key}', color='firebrick', legend=True, lw = 0.75, ls=ls_list[counter])
                     
-                    base_msl = pt_df.query('depth_msl>(@co2_datum)+50')[key+'_h2o'].iloc[0]
+    #                 base_msl = pt_df.query('depth_msl>(@co2_datum)+50')[key+'_h2o'].iloc[0]
 
-                    if base_msl > ymax:
-                            ymax = base_msl
+    #                 if base_msl > ymax:
+    #                         ymax = base_msl
 
-                    counter+=1
-                    counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter
+    #                 counter+=1
+    #                 counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter
 
 
-    #Plot max pressure cases
+    # #Plot max pressure cases
+    # counter = 0
+    # for key in pt_df.columns: 
+    #     if key.startswith(MAX_PRESSURE_NAME) and RHO_NAME not in key:
+    #         colname = f"{key}"
+    #         pt_df.query('depth_msl>=@wd').plot(y=colname, x='temp', ax=ax, label = colname, color='green', legend=True, lw = 0.75, ls=ls_list[counter])
+    #         base_msl = pt_df.query('depth_msl>(@co2_datum)+50')[colname].iloc[0]
+
+    #         if base_msl > ymax:
+    #             ymax = base_msl
+
+    #         counter+=1
+    #         counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
+
+
+    #Read pressure scenarios
+    scenarios = pd.DataFrame(my_pressure.pressure_scenarios).T
+
+    #Filter scenarios based on boolean type
+    if plot_RP and not plot_maxP:
+        scenarios = scenarios.query('type == "reservoir"')
+    elif plot_maxP and not plot_RP:
+        scenarios = scenarios.query('type == "max_p"')
+
+    #iterate over scenarios
     counter = 0
-    for key in pt_df.columns: 
-        if key.startswith(MAX_PRESSURE_NAME) and RHO_NAME not in key:
-            colname = f"{key}"
-            pt_df.query('depth_msl>=@wd').plot(y=colname, x='temp', ax=ax, label = colname, color='green', legend=True, lw = 0.75, ls=ls_list[counter])
-            base_msl = pt_df.query('depth_msl>(@co2_datum)+50')[colname].iloc[0]
+    for idx, p_sc in scenarios.iterrows():
+        sc_type    = p_sc['type']
+        sc_name    = p_sc['name']
+        sc_msad_p  = p_sc['p_MSAD']
+        sc_msad_z  = p_sc['z_MSAD']
+        sc_delta_p = p_sc['p_delta']
 
-            if base_msl > ymax:
-                ymax = base_msl
-
-            counter+=1
-            counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
+        sc_msad_temp = np.interp(float(sc_msad_z), pt_df[('init','depth_msl')], pt_df[('init','temp')])
 
 
-    xmax = pt_df.query('depth_msl>(@co2_datum)+50')['temp'].iloc[0]
+        #plot co2 gradient
+        pt_df[pt_df[('init', 'depth_msl')]>=wd].plot(y=(sc_name, 'co2'), x=('init', 'temp'), ax=ax, label = f'$CO_2$ {sc_name}', color='firebrick', legend=True, lw = 0.75, ls=ls_list[counter])
+
+        #plot water gradient
+        pt_df[pt_df[('init', 'depth_msl')]>=wd].plot(y=(sc_name, 'h2o'), x=('init', 'temp'), ax=ax, label = '_nolegend_', color='steelblue', legend=False, lw = 0.75, ls=ls_list[counter])
+
+
+        if plot_MSAD:
+            ax.scatter(sc_msad_temp, sc_msad_p, color='firebrick')
+
+        #Find deepest point to display
+        base_msl = pt_df[pt_df[('init', 'depth_msl')]>co2_datum+50][(sc_name, 'h2o')].iloc[0]
+
+        if base_msl > ymax:
+            ymax = base_msl
+
+
+        counter+=1
+        counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
+        
+  
+
+
+    xmax = pt_df['init'].query('depth_msl>(@co2_datum)+50')['temp'].iloc[0]
     #xmax = pt_df['temp'].max()
 
     ax.set_ylabel('p [bar]')
