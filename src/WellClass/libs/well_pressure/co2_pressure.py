@@ -62,16 +62,20 @@ def _get_max_pressure(pt_df_in: pd.DataFrame, max_pressure_pos: Union[dict, list
 
     pt_df = pt_df_in.copy()
     if isinstance(max_pressure_pos, dict):   #Then max_pressure_pos is the same as barriers - and max pressure is calcualted for each barrier
+        print(f'max_pressure_pos is a dictionary of barrriers')
         for idx, key in max_pressure_pos['barrier_name'].items():
             barr_depth = max_pressure_pos['bottom_msl'][idx]
             colname_p = f"{MAX_PRESSURE_NAME}_{key}"
-            print(f"Calculating max pressure below barrier {key} from depth {barr_depth}")            
+            print(f"Calculating max pressure below barrier {key} from depth {barr_depth}")
             p0 = np.interp(barr_depth, pt_df['depth_msl'], pt_df[SHMIN_NAME])
+            
             pt_df = _integrate_pressure(pt_df, get_rho, barr_depth, p0, 'down', colname_p)
     elif isinstance(max_pressure_pos, (list, float, int)):
+        print(f'max_pressure_pos is a value')
         if isinstance(max_pressure_pos, (float, int)): #Make it a list with one element
             max_pressure_pos = [max_pressure_pos]
         for depth in max_pressure_pos:
+
             colname_p = f"{MAX_PRESSURE_NAME}_at_{int(depth)}" 
             print(f"Calculating max pressure from depth {depth}")            
             p0 = np.interp(float(depth), pt_df['depth_msl'], pt_df[SHMIN_NAME])
@@ -172,88 +176,4 @@ def compute_MSAD(p_init: dict, pt_df: pd.DataFrame):
 
 
 
-
-def compute_CO2_pressures(well_header: dict, p_init: dict, base_co2: float, *, 
-                          pvt_path: str, 
-                          max_pressure_pos: Union[dict, list, float, int] = None) -> pd.DataFrame:
-    '''The pressure and density for H2O and CO2  along the columns are calculated using an approximate integration
-        Hydrostatic pressure - caculatong downwards from msl
-        Pressure and density assuming a water column - starting at top reservoir and the given overpressure RP
-        Pressure and density assuming a CO2   column - starting at CO2-reference level (CO2-column could start below top reservoir) and the given overpressure RP
-        Shmin
-
-        Input:
-        max_pressure_pos is a depth from where max pressure (wrt Shmin) is calculated. It can be a dict (my_well.barriers) a list of numbers or scalars.
-                If my_well.barriers is given then it is calculated from the base of each barrier
-
-        Columns are
-            depth_msl        temp          hs_p         RHOH20            Shmin   RPx_h20        RPx_h20_rho     RPx_co2                            RPx_co2_rho     RPx_h2o_rho_in_co2_column
-            depth below msl   temperature   hydrostatic  water density             hs_p+          densities at    Pressure given a CO2 column        Corresponding   water densitites if we are
-            depth ref for                   pressure     at hydrostatic            overpressure   RPx_h20         and overpressure RP                CO2 densities   in a CO2-column.
-            all other values                column       pressure                  RPx
-        
-        
-
-        ---> The RP are all RP-input + hydrostatic_pressure. Hence if e.g. RP1 is hydrostatic pressure RP1-columns and hydrostatic_pressure-columns are identical.
-    '''
-
-
-    #Get PVT-input
-    t_vec, p_vec, rho_co2_vec, rho_h2o_vec = get_pvt(pvt_path)
-    p_msl = scipy.constants.atm/BAR2PA  #1.01325 bar Pressure at MSL
-
-    #An interpolator. Used later to look-up densities given pressure p and temperature t
-    get_rho_h2o = RectBivariateSpline(p_vec, t_vec, rho_h2o_vec)
-    get_rho_co2 = RectBivariateSpline(p_vec, t_vec, rho_co2_vec)
-
-
-    #Get hydrostatic pressure from msl and downwards
-    #A DataFame with the columns depth, temp(depth) hydrostatic_pressure(depth), RHOH2O
-    #Going all the way to (well_td_rkb - well_rkb) + 200 m
-    pt_df = get_hydrostatic_P(well_header, pvt_path=pvt_path)
-
-    #Get the shmin -values
-    pt_df = _get_shmin(well_header, pt_df)
-
-    #Get max pressure - to not get pressures above Shmin below barriers or at a given depth.
-    if max_pressure_pos is not None:
-        pt_df =  _get_max_pressure(pt_df, max_pressure_pos, get_rho_co2)
-           
-
-    #Find hydrostatic pressure and temperature at reference depth - typically at top reservoir
-    #This is the same depth the over-pressure cases are set to
-    ref_z = p_init['depth_msl']
-    
-    print(f"Top reservoir {ref_z}")
-    print(f"From where there is CO2 - hence affecting pressure upwards: base co2: {base_co2}")
-    print(f"Hence CO2 column in the reservoir is then {base_co2 - ref_z} m")
-
-    #Integrate from reference depth and upwards given different starting pressures
-    for key, value in p_init.items():                 #depth_msl, RP1, RP2, hydrostatic_pressure
-        if key == 'depth_msl':                        #No calculations - just report
-            print(f"Reference depth: {value}")
-        else:
-            rp = key                                  #pressure name: RP1, RP2 etc
-            p0 = value                                #Initial pressure value set for RP1, RP2 etc
-            print(f'Pressure scenario {rp}: {value:.2f} bar')
-
-            #Water
-            water_p_colname = rp+'_h2o'
-            pt_df = _integrate_pressure(pt_df, get_rho_h2o, ref_z, p0, 'up', water_p_colname)
-            pt_df = _integrate_pressure(pt_df, get_rho_h2o, ref_z, p0, 'down', water_p_colname)
-            #CO2
-            #Find water pressure at base_co2
-            p0 = np.interp(base_co2, pt_df['depth_msl'], pt_df[water_p_colname])
-            co2_p_colname  = rp+'_co2'
-            pt_df = _integrate_pressure(pt_df, get_rho_co2, base_co2, p0, 'up', co2_p_colname)
-
-
-
-
-            #We need the density for water given the CO2-pressures, too
-            pt_df = _get_rho_in_pressure_column(pt_df, co2_p_colname, f"{rp}_h2o_rho_in_co2_column", get_rho_h2o)
-
-
-
-    return pt_df
 
