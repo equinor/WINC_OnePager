@@ -10,19 +10,19 @@ BAR2PA  = scipy.constants.bar #10**5 Going from bars to Pascal: 1 bar = 10**5 Pa
 REGR_A  = -0.000116           #Intercept term in regression equation for the proxy. Consider as a input
 REGR_B  = 0.000002725         #Inclination-term in regression equation for the proxy
 
-def compute_barrier_leakage(barrier_perm: dict, reservoir_P: dict, pressure_CO2: dict, barrier_props: dict) -> pd.DataFrame:
+def compute_barrier_leakage(barrier_perm: dict, pressure_scenarios: dict, pressure_CO2: dict, barrier_props: dict) -> pd.DataFrame:
     """ compute leakage from the given barrier
     """
 
     # Calculates pressure above and below the barrier and densities below the barrier
-    barrier_p_rho = _get_barrier_p_and_rho(reservoir_P, pressure_CO2, barrier_props)
+    barrier_p_rho = _get_barrier_p_and_rho(pressure_scenarios, pressure_CO2, barrier_props)
 
     # Estimate CO2 leakage in [tons/day] after a trancient period
     barrier_leakage = _get_barrier_leakage(barrier_perm, barrier_p_rho, barrier_props)
 
     return barrier_leakage
 
-def _get_barrier_p_and_rho(reservoir_P: dict, pressure_CO2: dict, barrier_props: dict) -> pd.DataFrame:
+def _get_barrier_p_and_rho(pressure_scenarios: dict, pressure_CO2: dict, barrier_props: dict) -> pd.DataFrame:
     ''' Calculates pressure above and below the barrier 
         and densities below the barrier using the assumption 
         that the borehole is filled with water above the barrier 
@@ -31,22 +31,28 @@ def _get_barrier_p_and_rho(reservoir_P: dict, pressure_CO2: dict, barrier_props:
 
     #Get the pressure cases to include
     rp_names = []
-    for key in reservoir_P:
-        if key.startswith("RP"):
-            rp_names.append(key)
+    # for key in reservoir_P:
+    #     if key.startswith("RP"):
+    #         rp_names.append(key)
+
+    for index, p_sc in pressure_scenarios.items():
+        if p_sc['type'] == 'reservoir':
+            rp_names.append(p_sc['name'])
+
 
     df = pd.DataFrame(columns=["p_h2o_above_barrier", "p_co2_below_barrier", "rho_h2o_below_barrier", "rho_co2_below_barrier"], index=rp_names)
 
     #
-    depth = pressure_CO2["depth_msl"]           #Depth look up table used in the interpolation of pressure and densities in the pressure_CO2 dataframe.
+    depth = pressure_CO2[("init","depth_msl")]           #Depth look up table used in the interpolation of pressure and densities in the pressure_CO2 dataframe.
     top   = barrier_props['top']
     bottom= barrier_props['bottom']
 
-    df["p_h2o_above_barrier"] = [np.interp(top,    depth, pressure_CO2["hydrostatic_pressure_h2o"])]*len(rp_names)
-    df["p_co2_below_barrier"] = [np.interp(bottom, depth, pressure_CO2[f"{key}_co2"]) for key in rp_names]
 
-    df["rho_h2o_below_barrier"]  = [np.interp(bottom, depth, pressure_CO2[f"{key}_h2o_rho_in_co2_column"]) for key in rp_names]
-    df["rho_co2_below_barrier"]  = [np.interp(bottom, depth, pressure_CO2[f"{key}_co2_rho"]) for key in rp_names]
+    df["p_h2o_above_barrier"] = [np.interp(top,    depth, pressure_CO2[('init', 'hs_p')])]*len(rp_names)
+    df["p_co2_below_barrier"] = [np.interp(bottom, depth, pressure_CO2[(key,"co2")]) for key in rp_names]
+
+    df["rho_h2o_below_barrier"]  = [np.interp(bottom, depth, pressure_CO2[(key, "h2o_rho_in_co2_column")]) for key in rp_names]
+    df["rho_co2_below_barrier"]  = [np.interp(bottom, depth, pressure_CO2[(key, "co2_rho")]) for key in rp_names]
 
     # barrier_props[barrier_name]['p_and_rho'] = df.copy()
     return df.copy()

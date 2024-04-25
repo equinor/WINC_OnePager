@@ -13,7 +13,8 @@ DEPTH_NAME        = 'depth_msl'
 MAX_PRESSURE_NAME = 'max_pressure'
 RHO_NAME          = 'rho'
 
-def plot_pressure(my_pressure: Pressure, geology_dict: dict, barriers: dict, ax=None, 
+def plot_pressure(my_pressure: Pressure, 
+                  geology_dict: dict, barriers: dict, ax=None, 
                   plot_HSP:bool = True, 
                   plot_RP:bool = True, 
                   plot_MSAD:bool = True, 
@@ -44,7 +45,7 @@ def plot_pressure(my_pressure: Pressure, geology_dict: dict, barriers: dict, ax=
     #define plot spatial references
     base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
     ymax = max([base_deepest_rsrv,my_pressure.co2_datum])+100
-    xmax = pt_df.query('depth_msl>@ymax')['Shmin'].iloc[0]
+    xmax = pt_df['init'].query('depth_msl>@ymax')['Shmin'].iloc[0]
     xmin = 0
     
     # Draw cement plugs
@@ -53,60 +54,56 @@ def plot_pressure(my_pressure: Pressure, geology_dict: dict, barriers: dict, ax=
 
     #Plot hydrostatic pressure gradient
     if plot_HSP:
-        pt_df.plot(x='hs_p', y='depth_msl', ax=ax, label='$p_{hs}$', color='steelblue', lw = 0.75)
+        pt_df['init'].plot(x='hs_p', y='depth_msl', ax=ax, label='$p_{hs}$', color='steelblue', lw = 0.75)
 
     #Plot minimum horizontal stress
-    pt_df.plot(x='Shmin', y='depth_msl', ax=ax, label='$\sigma_{h min}$', color='k', lw = 0.75)
+    pt_df['init'].plot(x='Shmin', y='depth_msl', ax=ax, label='$\sigma_{h min}$', color='k', lw = 0.75)
 
     #Plot fluid pressure scenarios
     ls_list = ['solid','dashed','dashdot', 'dotted']
 
+    #Read pressure scenarios
+    scenarios = pd.DataFrame(my_pressure.pressure_scenarios).T
 
-    if plot_RP:
-        counter = 0
+    #Filter scenarios based on boolean type
+    if plot_RP and not plot_maxP:
+        scenarios = scenarios.query('type == "reservoir"')
+    elif plot_maxP and not plot_RP:
+        scenarios = scenarios.query('type == "max_p"')
 
+    #iterate over scenarios
+    counter = 0
+    for idx, p_sc in scenarios.iterrows():
+        sc_type    = p_sc['type']
+        sc_name    = p_sc['name']
+        sc_msad_p  = p_sc['p_MSAD']
+        sc_msad_z  = p_sc['z_MSAD']
+        sc_delta_p = p_sc['p_delta']
 
-        for key in my_pressure.reservoir_P:
-                if key != 'depth_msl':
-                        RP_label = f'$CO_2$ at ({key})'
+        #define legend if it is a reservoir pressure scenario
+        if sc_type == 'reservoir':
+            sc_label = f'$CO_2$ P ($\Delta$P = {sc_delta_p:.0f} bar)'
 
-                        if plot_MSAD:
-                            msad = my_pressure.MSAD[key]
-                            z_MSAD = msad['z_MSAD']
-                            p_MSAD = msad['p_MSAD']
-
-                            if ~np.isnan(z_MSAD):
-                                RP_label = f'{RP_label}\nMSAD = {z_MSAD:.2f} mTVDMSL'
-
-                            ax.scatter(p_MSAD, z_MSAD, color='firebrick')
-
-                             
-                        pt_df.query('depth_msl>=@sf_depth').plot(x=key+'_h2o', y='depth_msl', ax=ax, label = '_nolegend_', color='steelblue', legend=False, lw = 0.75, ls=ls_list[counter])
-                        pt_df.query('depth_msl>=@sf_depth').plot(x=key+'_co2', y='depth_msl', ax=ax, label = RP_label, color='firebrick', legend=True, lw = 0.75, ls=ls_list[counter])
-
-                        counter+=1
-                        counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
-
-
-        #Plot MSAD
-        if plot_MSAD:
-            for key, value in my_pressure.MSAD.items():
-                z_MSAD = value['z_MSAD']
-                p_MSAD = value['p_MSAD']
+        #define legend if it is a maximum pressure scenario
+        elif sc_type == 'max_p':
+            sc_label = f'max $CO_2$ P to ($\Delta$P = {sc_delta_p:.0f} bar)'
         
+        #include MSAD
+        if plot_MSAD:
+            if ~np.isnan(sc_msad_z):
+                sc_label = f'{sc_label}\nMSAD = {sc_msad_z:.0f} mTVDMSL'
+            
+            ax.scatter(sc_msad_p, sc_msad_z, color='firebrick')
 
-    #Plot max pressure cases
-    if plot_maxP:
-        counter = 0
-        for key in pt_df.columns: 
-           if key.startswith(MAX_PRESSURE_NAME) and RHO_NAME not in key:
-               colname = f"{key}"
-               pt_df.query('depth_msl>=@sf_depth').plot(x=colname, y='depth_msl', ax=ax, label = colname, color='firebrick', legend=False, lw = 0.75, ls=ls_list[counter])
-    
-               counter+=1
-               counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
+        #plot water gradient
+        pt_df[pt_df[('init', 'depth_msl')]>=sf_depth].plot(x=(sc_name, 'h2o'), y=('init', 'depth_msl'), ax=ax, label = '_nolegend_', color='steelblue', legend=False, lw = 0.75, ls=ls_list[counter])
 
-
+        #plot CO2 gradient
+        pt_df[pt_df[('init', 'depth_msl')]>=sf_depth].plot(x=(sc_name, 'co2'), y=('init', 'depth_msl'), ax=ax, label = sc_label, color='firebrick', legend=False, lw = 0.75, ls=ls_list[counter])
+        counter+=1
+        counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
+        
+            
 
     #Optimize legend
     ax.legend()
