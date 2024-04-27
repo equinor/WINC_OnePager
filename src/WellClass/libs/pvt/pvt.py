@@ -9,15 +9,18 @@ from scipy.interpolate import RectBivariateSpline
 
 '''Some global parameters'''
 G       = scipy.constants.g   #9.81 m/s2 gravity acceleration
-BAR2PA  = scipy.constants.bar #10**5 Going from bars to Pascal: 1 bar = 10**5 Pascal
-REGR_A  = -0.000116           #Intercept term in regression equation for the proxy. Consider as a input
-REGR_B  = 0.000002725         #Inclination-term in regression equation for the proxy
 
 def get_pvt(pvt_path: str) -> tuple:
     '''Reads the vectors for pressure and temperature and the matrix for rho
        Note that the values for temperature and rho must be aligned with values in rho
        Note also for rho: One temperature for each column
                           One pressure for each row
+       It applies a salinity correction for a concentration of 3.5 gNaCl in 100 g H2O
+       based on the work done by 
+       LALIBERTÉ, M. & COOPER, W. E. 2004. Model for Calculating the Density of 
+       Aqueous Electrolyte Solutions. Journal of Chemical & Engineering Data, 49, 
+       1141-1151.
+       https://www.calsep.com/13-density-of-brine/
     '''
     fn_temp    = os.path.join(pvt_path, "temperature.txt")
     fn_pres    = os.path.join(pvt_path, "pressure.txt")
@@ -29,7 +32,27 @@ def get_pvt(pvt_path: str) -> tuple:
     rho_co2 = np.loadtxt(fn_rho_co2,delimiter=',')
     rho_h2o = np.loadtxt(fn_rho_h2o,delimiter=',')
 
-    return t, p, rho_co2, rho_h2o
+    #compute 2d matrices for pressure and temperature
+    t_grid, p_grid = np.meshgrid(t, p)
+
+    # Laliberté and Cooper model for NaCl solutions
+    # Laliberté and Cooper model: constants for NaCl
+    c0 = -0.00433
+    c1 =  0.06471
+    c2 = 1.0166
+    c3 = 0.014624
+    c4 = 3315.6
+
+    # NaCl concentration
+    w = 3.5 / 100
+
+    # Laliberté and Cooper model: Apparent density 
+    rho_app = (c0*w + c1)*np.exp(0.000001 * (t_grid + c4)**2) / (w + c2 + c3 * t_grid)
+
+    # Laliberté and Cooper model: Brine density
+    rho_brine =  1 / (((1-w)/rho_h2o) + (w/rho_app))
+
+    return t, p, rho_co2, rho_brine
 
 def get_hydrostatic_P(well_header: dict, *, dz=1, pvt_path: str) -> pd.DataFrame:
     '''Simple integration to get the hydrostatic pressure at a given depth
@@ -42,9 +65,9 @@ def get_hydrostatic_P(well_header: dict, *, dz=1, pvt_path: str) -> pd.DataFrame
 
     #Make the depth-vector from msl and downwards
     td_msl = well_header['well_td_rkb']-well_header['well_rkb']
-    z_vec  = np.arange(0, int(td_msl)+200, dz)
+    z_vec  = np.arange(0, int(td_msl)+500, dz)
 
-    #Create dataframe for storing pressures and temperatures. hs_p_df -> HydroStatic_Pressure_DataFrane
+    #Create dataframe for storing pressures and temperatures. hs_p_df -> HydroStatic_Pressure_DataFrame
     hs_p_df = pd.DataFrame(data=z_vec, columns = ['depth_msl'])
 
     #Compute temperature. Constant in water column and as a function of input geothermal gradient

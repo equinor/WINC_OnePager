@@ -73,16 +73,60 @@ class WellRaw:
     barrier_perm  : dict = None
     geology       : dict = None
     co2_datum     : Union[float, int] = None
+    inventory     : dict = None
 
     def __post_init__(self):
         """ compute basic well information
         """
+        self._check_inventory()
         self._process_drilling()
         self._process_casings()
         self._process_barriers()
         self._process_geology()
 
+    def _check_inventory(self):
+
+        """
+        process to keep track of what has been declared as input.
+        """
+        self.inventory = dict()
+
+        self.inventory['drilling'] = True
+        self.inventory['casings']  = True
+        self.inventory['barriers'] = True
+
+        if self.drilling == None:
+            print('No drilling table declared.')
+            """
+            If no drilling table is declared, ignore the casings table as well
+            """
+            self.inventory['drilling'] = False
+            self.inventory['casings'] = False
+
+        if self.casings == None:
+            print('No casings table declared.')
+            self.inventory['casings'] = False
+        
+        if self.barriers == None:
+            print('No barriers table declared.')
+            self.inventory['barriers'] = False
+
+
+
+
+
+
     def _process_drilling(self):
+
+        if not self.inventory['drilling']:
+            """
+            If no drilling table is declared, create a dummy well with info from the header
+            """
+            _well_rkb = self.header['well_rkb']
+            _well_td_rkb = self.header['well_td_rkb']
+            _sf_depth_msl = self.header['sf_depth_msl']
+
+            self.drilling = [{'top_rkb': _sf_depth_msl + _well_rkb, 'bottom_rkb': _well_td_rkb, 'diameter_in': 17.5, 'oh_perm': 10000}] 
 
         drilling_df = pd.DataFrame(self.drilling)
 
@@ -96,6 +140,24 @@ class WellRaw:
         self.drilling = drilling_df.to_dict()
 
     def _process_casings(self):
+
+        if not self.inventory['casings']:
+            """
+            If no casings table is declared, create a dummy well with info from the header
+            """
+            _well_rkb = self.header['well_rkb']
+            _well_td_rkb = self.header['well_td_rkb']
+            _sf_depth_msl = self.header['sf_depth_msl']
+            _diameter_in = pd.DataFrame(self.drilling)['diameter_in'].min() - 2
+            
+            self.casings = [{'top_rkb': _sf_depth_msl + _well_rkb,
+                             'bottom_rkb': _well_td_rkb,
+                             'diameter_in': _diameter_in,
+                             'toc_rkb': _sf_depth_msl + _well_rkb,
+                             'boc_rkb': _well_td_rkb,
+                             'shoe': True,
+                             'cb_perm': 0.05}]
+
 
         casings_df = pd.DataFrame(self.casings)
 
@@ -112,13 +174,15 @@ class WellRaw:
 
     def _process_barriers(self):
 
-        barriers_df = pd.DataFrame(self.barriers)
+        if self.inventory['barriers']:
 
-        barriers_df['top_msl']    = barriers_df['top_rkb']    - self.header['well_rkb']
-        barriers_df['bottom_msl'] = barriers_df['bottom_rkb'] - self.header['well_rkb']
+            barriers_df = pd.DataFrame(self.barriers)
 
-        # barriers_df.set_index('barrier_name', inplace=True)
-        self.barriers = barriers_df.to_dict()
+            barriers_df['top_msl']    = barriers_df['top_rkb']    - self.header['well_rkb']
+            barriers_df['bottom_msl'] = barriers_df['bottom_rkb'] - self.header['well_rkb']
+
+            # barriers_df.set_index('barrier_name', inplace=True)
+            self.barriers = barriers_df.to_dict()
     
     def _process_geology(self):
 
