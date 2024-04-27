@@ -160,7 +160,9 @@ def plot_sketch(mywell: Well, ax=None,
                 draw_cement_bond=True,
                 draw_barriers=True,
                 draw_geology=True,
-                draw_annotation=True):
+                draw_annotation=True,
+                save_file=None):
+
     """ 
     plot well sketch
     
@@ -227,6 +229,10 @@ def plot_sketch(mywell: Well, ax=None,
     ax.set_ylabel('depth [mMSL]')
     ax.set_xlabel('radius [m]')
     
+    # save figure to the disk
+    if save_file:
+          plt.savefig(save_file)
+
     if 'fig' in locals():
             return fig, ax
     else:

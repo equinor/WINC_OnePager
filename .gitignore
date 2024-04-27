@@ -8,6 +8,11 @@ notebooks/*.grdecl
 experiments/*.grdecl
 src/**/data/**/*.grdecl
 
+# ignore pictures
+*.png 
+*.gif
+*.jpeg
+
 # venv
 venv_*/
 .venv_*/
