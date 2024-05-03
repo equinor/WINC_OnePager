@@ -49,6 +49,7 @@ def get_pvt(pvt_path: str) -> tuple:
     c4 = 3315.6
 
     # NaCl concentration
+    #TODO(gpb): Include salinity as input
     w = 3.5 / 100
 
     # Laliberté and Cooper model: Apparent density 
@@ -101,7 +102,7 @@ def get_hydrostatic_P(well_header: dict, *, dz=1, pvt_path: str) -> pd.DataFrame
 
     #Make interpolators for the imported tables
     get_rho_h2o = RectBivariateSpline(p_vec, t_vec, rho_h2o_vec)
-    
+
     # Solve ODEs from z = 0 to the final depth (well depth)
     solution = solve_ivp(odesys, [z_0, z_final], [P_0], args=(well_header,get_rho_h2o), t_eval=hs_p_df['depth_msl'].values)
 
