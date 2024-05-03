@@ -3,12 +3,17 @@ import os
 import numpy as np
 import pandas as pd
 
+from typing import Union, Tuple, Callable
+
+
 import scipy
-import scipy.constants
+import scipy.constants as const
 from scipy.interpolate import RectBivariateSpline
+from scipy.integrate import solve_ivp
+
 
 '''Some global parameters'''
-G       = scipy.constants.g   #9.81 m/s2 gravity acceleration
+G       = const.g   #9.81 m/s2 gravity acceleration
 
 def get_pvt(pvt_path: str) -> tuple:
     '''Reads the vectors for pressure and temperature and the matrix for rho
@@ -35,7 +40,7 @@ def get_pvt(pvt_path: str) -> tuple:
     #compute 2d matrices for pressure and temperature
     t_grid, p_grid = np.meshgrid(t, p)
 
-    # Laliberté and Cooper model for NaCl solutions
+    ## Laliberté and Cooper model for NaCl solutions
     # Laliberté and Cooper model: constants for NaCl
     c0 = -0.00433
     c1 =  0.06471
@@ -54,44 +59,54 @@ def get_pvt(pvt_path: str) -> tuple:
 
     return t, p, rho_co2, rho_brine
 
+# Compute the temperature given the input gradient
+def compute_T(z : Union[float, int] , well_header: dict) -> float:
+    T = well_header['sf_temp'] + max(0, z - well_header['sf_depth_msl']) * (well_header['geo_tgrad'] / 1000)
+    return T
+
+
+# Ordinary Differential Equation (ODE) system for the pressure and density
+def odesys(z: float, y: np.ndarray, well_header: dict, rho_getter: Callable)  -> Tuple[float]:
+    P = y[0]
+    T = compute_T(z, well_header)
+    rho = rho_getter(P, T)[0, 0]
+    dPdz = rho * const.g / const.bar
+    return dPdz,
+
+
 def get_hydrostatic_P(well_header: dict, *, dz=1, pvt_path: str) -> pd.DataFrame:
     '''Simple integration to get the hydrostatic pressure at a given depth
        Does also calculates the depth column, temperatur vs depth and water density (RHOH2O) vs depth (hydrostatic)
     '''
     t_vec, p_vec, rho_co2_vec, rho_h2o_vec = get_pvt(pvt_path)
 
-    #Make interpolators for the imported tables
-    get_rho_h2o = RectBivariateSpline(p_vec, t_vec, rho_h2o_vec)
 
     #Make the depth-vector from msl and downwards
     td_msl = well_header['well_td_rkb']-well_header['well_rkb']
-    z_vec  = np.arange(0, int(td_msl)+500, dz)
+    z_final = int(td_msl)+500
+    z_vec  = np.arange(0, z_final, dz)
+
 
     #Create dataframe for storing pressures and temperatures. hs_p_df -> HydroStatic_Pressure_DataFrame
     hs_p_df = pd.DataFrame(data=z_vec, columns = ['depth_msl'])
 
     #Compute temperature. Constant in water column and as a function of input geothermal gradient
-    hs_p_df['temp'] = well_header['sf_temp'] + (hs_p_df['depth_msl']-well_header['sf_depth_msl'])*(well_header['geo_tgrad']/1000)
-    hs_p_df.loc[hs_p_df['depth_msl']<well_header['sf_depth_msl'], 'temp'] = well_header['sf_temp']
-
+    hs_p_df['temp'] = hs_p_df['depth_msl'].map(lambda z: compute_T(z, well_header))
 
     ##Integrate hydrostatic pressure
-    #Pressure (atm), depth and temperature at msl
-    p0 = scipy.constants.atm/scipy.constants.bar  #1.01325 bar Pressure at MSL
-    z0 = 0
-    t0 = np.interp(z0, hs_p_df['depth_msl'], hs_p_df['temp'])
 
-    #Start to integrate downwards from msl. Assign first entry at zero depth (msl).
-    rho_vec = [get_rho_h2o(p0, t0)[0,0]]
-    hs_p_df['hs_p'] = p0 
+    #Initial conditions: Pressure (atm), depth and temperature at msl
+    z_0 = 0
+    P_0 = const.atm / const.bar
 
-    p = p0
-    for idx, t in hs_p_df['temp'][1:].items():
-        rho = get_rho_h2o(p,t)[0,0]
-        p += (rho*G*dz)/scipy.constants.bar    #dp = rho*g*h/1e-5  the latter to go from Pascal to atm
-        rho_vec.append(rho)
-        hs_p_df.loc[idx, 'hs_p'] = p
-    hs_p_df['RHOH2O'] = rho_vec
+    #Make interpolators for the imported tables
+    get_rho_h2o = RectBivariateSpline(p_vec, t_vec, rho_h2o_vec)
+    
+    # Solve ODEs from z = 0 to the final depth (well depth)
+    solution = solve_ivp(odesys, [z_0, z_final], [P_0], args=(well_header,get_rho_h2o), t_eval=hs_p_df['depth_msl'].values)
+
+    #Store the solution in Dataframe
+    hs_p_df['hs_p'] = solution.y[0]
 
     return hs_p_df
 
