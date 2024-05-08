@@ -108,7 +108,7 @@ class Pressure:
                     magnitude = ref_p
 
                 else:
-                    print(f'RP1 is set as delta pressure, which yields P = {ref_p:.2f} {RP1:+.2f} = {ref_p + RP1:.2f} bar')
+                    print(f'RP1 is set as delta pressure, which yields P = {ref_p:.2f} {sc_pressure:+.2f} = {ref_p + sc_pressure:.2f} bar')
                     magnitude = ref_p + sc_pressure
 
                 
