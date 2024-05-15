@@ -180,7 +180,9 @@ class FluidP_scenario:
                                            direction = 'down', 
                                            colname_p = water_p_colname)
 
-
+        #We need the density for water given the CO2-pressures, too
+        self.P_table = _get_rho_in_pressure_column(self.P_table,
+                                                   co2_p_colname, f"h2o_rho_in_co2_column", self.rho_H2O)
 
         #Compute reservoir pressure at CO2_datum
         hs_p = self.P_table['h2o'].values
