@@ -108,7 +108,7 @@ class Pressure:
                     magnitude = ref_p
 
                 else:
-                    print(f'RP1 is set as delta pressure, which yields P = {ref_p:.2f} {RP1:+.2f} = {ref_p + RP1:.2f} bar')
+                    print(f'RP1 is set as delta pressure, which yields P = {ref_p:.2f} {sc_pressure:+.2f} = {ref_p + sc_pressure:.2f} bar')
                     magnitude = ref_p + sc_pressure
 
                 
@@ -210,7 +210,8 @@ class Pressure:
 
             if sc_type == 'reservoir':
                 p_resrv = self.pressure_scenarios[press_sc]['p_resrv']
-                sc_pressure = FluidP_scenario(ref_P = self.pressure_CO2['init'],
+                sc_pressure = FluidP_scenario( header = self.header,
+                                               ref_P = self.pressure_CO2['init'],
                                                rho_H2O = get_rho_h2o,
                                                rho_CO2 = get_rho_co2,
                                                p_name = sc_name,
@@ -228,7 +229,8 @@ class Pressure:
             elif sc_type == 'max_p':
                 msad = self.pressure_scenarios[press_sc]['z_MSAD']
 
-                sc_pressure = FluidP_scenario(ref_P = self.pressure_CO2['init'],
+                sc_pressure = FluidP_scenario( header = self.header,
+                                               ref_P = self.pressure_CO2['init'],
                                                rho_H2O = get_rho_h2o,
                                                rho_CO2 = get_rho_co2,
                                                p_name = sc_name,

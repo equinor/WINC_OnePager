@@ -10,9 +10,14 @@ from ..pvt.pvt import ( get_hydrostatic_P,
                        get_pvt)
 from ..well_class.well_class import Well
 
+
 from .barrier_pressure import (
     compute_barrier_leakage
 )
+
+
+
+
 from .co2_pressure import (
     _get_shmin,
     _integrate_pressure,
@@ -29,7 +34,9 @@ from scipy.interpolate import RectBivariateSpline
 @dataclass
 class FluidP_scenario:
 
-    ref_P     :  pd.DataFrame
+    header    : dict
+
+    ref_P     :  pd.DataFrame  #Init table with hydrostatic pressure, temperature and Shmin profile
     rho_CO2   :  RectBivariateSpline
     rho_H2O   :  RectBivariateSpline
 
@@ -42,8 +49,8 @@ class FluidP_scenario:
     p_CO2_datum : float = np.nan
     z_CO2_datum : float = np.nan
 
-    p_MSAD    :  float = np.nan
-    z_MSAD    :  float = np.nan
+    p_MSAD    :  float = np.nan #Pressure at Minimum Safety Abandonement depth
+    z_MSAD    :  float = np.nan #Depth at Minimum Safety Abandonement depth
 
     P_table   :  pd.DataFrame = None
 
@@ -81,15 +88,37 @@ class FluidP_scenario:
         #Water
         p0 = self.p_resrv
         water_p_colname = 'h2o'
-        self.P_table = _integrate_pressure(self.ref_P, self.rho_H2O, self.z_resrv, p0, 'up', water_p_colname)
-        self.P_table = _integrate_pressure(self.P_table, self.rho_H2O, self.z_resrv, p0, 'down', water_p_colname)
+
+        self.P_table = _integrate_pressure(well_header=self.header,
+                                           pt_df_in = self.ref_P, 
+                                           get_rho = self.rho_H2O, 
+                                           reference_depth = self.z_resrv, 
+                                           reference_pressure = p0, 
+                                           direction = 'up', 
+                                           colname_p = water_p_colname)
+        
+        self.P_table = _integrate_pressure(well_header=self.header,
+                                           pt_df_in = self.P_table, 
+                                           get_rho = self.rho_H2O, 
+                                           reference_depth = self.z_resrv, 
+                                           reference_pressure = p0, 
+                                           direction = 'down', 
+                                           colname_p = water_p_colname)
+
 
         
         #CO2
         p0 = np.interp(self.z_CO2_datum, self.P_table['depth_msl'], self.P_table[water_p_colname])
         self.p_CO2_datum = p0
         co2_p_colname  = 'co2'
-        self.P_table = _integrate_pressure(self.P_table, self.rho_CO2, self.z_CO2_datum, p0, 'up', co2_p_colname)
+
+        self.P_table = _integrate_pressure(well_header=self.header,
+                                           pt_df_in = self.P_table, 
+                                           get_rho = self.rho_CO2, 
+                                           reference_depth = self.z_CO2_datum, 
+                                           reference_pressure = p0, 
+                                           direction = 'up', 
+                                           colname_p = co2_p_colname)
 
         #We need the density for water given the CO2-pressures, too
         self.P_table = _get_rho_in_pressure_column(self.P_table,
@@ -116,15 +145,44 @@ class FluidP_scenario:
         #CO2
         co2_p_colname = 'co2'
         self.p_MSAD = np.interp(float(self.z_MSAD), self.ref_P['depth_msl'], self.ref_P['Shmin'])
-        self.P_table = _integrate_pressure(self.ref_P, self.rho_CO2, float(self.z_MSAD), self.p_MSAD, 'down', co2_p_colname)
-        # self.P_table = _integrate_pressure(self.P_table, self.rho_CO2, float(self.z_MSAD), self.p_MSAD, 'up', co2_p_colname)
+
+        self.P_table = _integrate_pressure(well_header=self.header,
+                                           pt_df_in = self.ref_P, 
+                                           get_rho = self.rho_CO2, 
+                                           reference_depth = float(self.z_MSAD), 
+                                           reference_pressure = self.p_MSAD, 
+                                           direction = 'down', 
+                                           colname_p = co2_p_colname)
+        
+        #Clean up pressure values below Gas_Water_contact
+        self.P_table.loc[self.P_table['depth_msl'] > self.z_CO2_datum, co2_p_colname] = np.nan
+
+
 
         #Water
         p0 = np.interp(float(self.z_CO2_datum), self.P_table['depth_msl'], self.P_table[co2_p_colname])
         self.p_CO2_datum = p0
         water_p_colname = 'h2o'
-        self.P_table = _integrate_pressure(self.P_table, self.rho_H2O, self.z_CO2_datum, p0, 'up', water_p_colname)
-        self.P_table = _integrate_pressure(self.P_table, self.rho_H2O, self.z_CO2_datum, p0, 'down', water_p_colname)
+
+        self.P_table = _integrate_pressure(well_header=self.header,
+                                           pt_df_in = self.P_table, 
+                                           get_rho = self.rho_H2O, 
+                                           reference_depth = self.z_CO2_datum, 
+                                           reference_pressure = p0, 
+                                           direction = 'up', 
+                                           colname_p = water_p_colname)
+        
+        self.P_table = _integrate_pressure(well_header=self.header,
+                                           pt_df_in = self.P_table, 
+                                           get_rho = self.rho_H2O, 
+                                           reference_depth = self.z_CO2_datum, 
+                                           reference_pressure = p0, 
+                                           direction = 'down', 
+                                           colname_p = water_p_colname)
+
+        #We need the density for water given the CO2-pressures, too
+        self.P_table = _get_rho_in_pressure_column(self.P_table,
+                                                   co2_p_colname, f"h2o_rho_in_co2_column", self.rho_H2O)
 
         #Compute reservoir pressure at CO2_datum
         hs_p = self.P_table['h2o'].values
