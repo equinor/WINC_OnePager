@@ -31,13 +31,10 @@ def _get_barrier_p_and_rho(pressure_scenarios: dict, pressure_CO2: dict, barrier
 
     #Get the pressure cases to include
     rp_names = []
-    # for key in reservoir_P:
-    #     if key.startswith("RP"):
-    #         rp_names.append(key)
 
     for index, p_sc in pressure_scenarios.items():
-        if p_sc['type'] == 'reservoir':
-            rp_names.append(p_sc['name'])
+        rp_names.append(p_sc['name'])
+
 
 
     df = pd.DataFrame(columns=["p_h2o_above_barrier", "p_co2_below_barrier", "rho_h2o_below_barrier", "rho_co2_below_barrier"], index=rp_names)
