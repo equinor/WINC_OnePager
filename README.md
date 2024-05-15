@@ -1,6 +1,6 @@
 # SCREEN
 
-This repository contains source codes and documentation for SCREEN project.
+This repository contains source codes and documentation for SCREEN_WellView project.
 
 [![SCREEN-unittest](https://github.com/equinor/SCREEN/actions/workflows/pytest.yaml/badge.svg)](https://github.com/equinor/SCREEN/actions/workflows/pytest.yaml)
 [![SCREEN-docs](https://github.com/equinor/SCREEN/actions/workflows/mkdocs.yaml/badge.svg)](https://github.com/equinor/SCREEN/actions/workflows/mkdocs.yaml)
@@ -9,9 +9,9 @@ This repository contains source codes and documentation for SCREEN project.
 ## Clone the repository
 Locate a folder at your local machine that you intend to investigate the codes, and then clone the repository
 ```
-git clone https://github.com/equinor/SCREEN
+git clone https://github.com/equinor/SCREEN_WellView
 ```
-By this time you should have a folder named `SCREEN` at your local machine. Now change the directory with linux command:
+By this time you should have a folder named `SCREEN_WellView` at your local machine. Now change the directory with linux command:
 ```
 cd SCREEN
 ```
@@ -103,9 +103,6 @@ Or if you prefer, you can run these Jupyter notebooks from Microsoft's VS code.
 
 There exist several Jupyter notebooks in the directory:
 
-- Notebook **GaP-WellClass.ipynb** is a test example for the integration of `GaP` and `WellClass`. It hides many details. It require eclipse `.EGRID` and `.INIT` as input files. This notebook also serves the role of generating `pytest` data for unit testing.
-- Notebook **pflotran-gap.ipynb** integrates `GaP` and `WellClass` too. But instead of the user-provided `.EGRID` and `.INIT` files, both files are generates by calling pflotran scripts.
-- Notebook **Pressure-WellClass_test.ipynb** is Alejandro's tests on deviated wells.
 - Notebook **Pressure-WellClass.ipynb** is used to test pressure. 
 - Notebook **WellClass_csv_yaml.ipynb** is used to test pressure and loading `.csv` and `.yaml` input files.
 
