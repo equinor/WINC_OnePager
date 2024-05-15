@@ -144,6 +144,28 @@ def _integrate_pressure(pt_df_in: pd.DataFrame, get_rho: callable, reference_dep
 
 
 def _Pdz_odesys(z: float, y: np.ndarray, well_header: dict, temp_getter: callable, rho_getter: callable)  -> Tuple[float]:
+    """
+    Calculate the pressure gradient over a depth interval in a well.
+
+    This function computes the derivative of pressure with respect to depth (dPdz) in a fluid column 
+    given the depth and current state of pressure. It can be used within numerical methods to solve 
+    ordinary differential equations representing the pressure profile along the well.
+
+    Parameters:
+    - z (float): The current depth in the well at which we are calculating the pressure gradient.
+    - y (np.ndarray): A numpy array containing current state variables, in this context only pressure P.
+    - well_header (dict): A dictionary containing metadata or parameters of the well, used by the
+                          temperature getter function to compute the current temperature.
+    - temp_getter (callable): A function which returns the temperature T at a given depth z 
+                              and using well parameters from well_header.
+    - rho_getter (callable): A function which returns the density rho of the fluid as a 2D numpy array 
+                             at the provided pressure P and temperature T.
+    
+    Returns:
+    - Tuple[float]: A tuple containing a single element, the pressure gradient dPdz (in bar/meter) at depth z.
+
+    """
+
     P = y[0]
     T = temp_getter(z, well_header)
     rho = rho_getter(P, T)[0, 0]
@@ -153,6 +175,27 @@ def _Pdz_odesys(z: float, y: np.ndarray, well_header: dict, temp_getter: callabl
 
 # Compute the temperature given the input gradient
 def compute_T(z : Union[float, int] , well_header: dict) -> float:
+    """
+    Compute the temperature at a given depth in a well using a linear geothermal gradient.
+    
+    This function calculates the temperature at a specified depth based on the surface
+    temperature and the geothermal gradient provided in the well header data. It assumes
+    a linear relationship between temperature and depth beyond a reference depth measure.
+
+    Parameters:
+    - z (Union[float, int]): The depth at which to compute the temperature, which can be
+                             either a float or an integer value.
+    - well_header (dict): A dictionary containing specific parameters of the well that
+                          are used to calculate the temperature. The expected keys of
+                          the dictionary are:
+                          'sf_temp' - Surface temperature at seafloor (in degrees Celsius).
+                          'sf_depth_msl' - Seafloor depth (mean sea level) in meters where 'sf_temp' is measured.
+                          'geo_tgrad' - Geothermal temperature gradient (in degrees Celsius per kilometer).
+
+    Returns:
+    - float: The computed temperature in degrees Celsius at the given depth z.
+    """
+
     T = well_header['sf_temp'] + max(0, z - well_header['sf_depth_msl']) * (well_header['geo_tgrad'] / 1000)
     return T
 
@@ -168,9 +211,6 @@ def _integrate_pressure(well_header: dict, pt_df_in: pd.DataFrame, get_rho: call
     pt_df = pt_df_in.copy()
 
     ## Initialization
-    #Presure at MSL
-    p_msl = const.atm/BAR2PA  #1.01325 bar Pressure at MSL
-
     #New columns needed in DataFrame
     if colname_p not in pt_df.columns:
         pt_df[colname_p] = np.nan
@@ -197,16 +237,26 @@ def _integrate_pressure(well_header: dict, pt_df_in: pd.DataFrame, get_rho: call
     p0  = reference_pressure
     z0 = reference_depth
 
-
-    solution = solve_ivp(_Pdz_odesys, [z0, z_final], [p0], args=(well_header, compute_T,get_rho), 
+    #Integrate pressure
+    solution = solve_ivp(_Pdz_odesys, [z0, z_final], [p0], args=(well_header, compute_T, get_rho), 
                          t_eval=query['depth_msl'].values, dense_output=True,
                          method = 'Radau')
     
 
-    
+    # Stored solution in dataframe
+    pt_df.loc[query.index, colname_p] = solution.y[0]
+
+
+    # Vectorized retrieval of densities
+    P_array = pt_df.loc[query.index, colname_p].values
+    T_array = pt_df.loc[query.index, 'temp'].values
+
+    densities = np.array([get_rho(P, T) for P, T in zip(P_array, T_array)])
+
+    # After integration, access the stored densities in dataframe
+    pt_df.loc[query.index, colname_rho] = densities.flatten()
 
     
-    pt_df.loc[query.index, colname_p] = solution.y[0]
 
     return pt_df
 
