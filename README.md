@@ -92,7 +92,7 @@ This generated shell will be used to run standalone python scripts.
 > ```
 
 ## Experiments
-There are at least two ways to make experimenal runs of the codes. One is to run the experiments with Jupyter lab, and the other is commandline option. While Jupyter notebooks are mainly for QC tests and research purposes, the commandline option is aiming for production run.
+There are at least two ways to make experimenal runs of the codes. One is to run the experiments with Jupyter lab (notbeooks folder), and the other is commandline option. While Jupyter notebooks are mainly for QC tests and research purposes, the commandline option is aiming for production run.
 
 ### 1. Jupyter notebooks
 Jupyter notebooks are located in directory `notebooks`. To test its functionaries, change current directory to `notebooks` and launch jupyter notebooks at the commandline:
@@ -107,62 +107,45 @@ There exist several Jupyter notebooks in the directory:
 - Notebook **WellClass_csv_yaml.ipynb** is used to test pressure and loading `.csv` and `.yaml` input files.
 
 ### 2. Commandline option
-Two python scripts for commandline option are available in directory `experiments`. One script, **gap_plotran.py**, can be used not only for generating Eclipse `.EGRID` and `.INIT` on the fly but also can be used for quick `pflotran` test, while the other script, **gap_wellclass.py**, requires the user to provide these two grid files.  
+Two python scripts for commandline option are available in directory `experiments`. One script, **well_sketch.py**, can be used for generating a well sketch, **well_sketch_pressure.py** can be used for generating both a well sketch and a pressure plot. 
 
 The followings are some of  the sample runs. In either way, you should run the python script inside the ```SCREEN``` directory. 
 
-1. To test **gap_wellclass.py**, run either of the followings:
+1. To test **well_sketch.py**, run either of the followings:
 ```
 # 1. for smeaheia_v1
 
-python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v1 --well smeaheia.yaml --sim-case GEN_NOLGR_PH2 --plot 
-
-# 2. for smeaheia_v2
-
-python -m experiments.gap_wellclass --sim-path ./test_data/examples/smeaheia_v2 --well smeaheia.yaml --sim-case TEMP-0 --plot
+python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml -pvt ./test_data/pvt_constants 
 
 # 3. for wildcat
 
-python -m experiments.gap_wellclass --sim-path ./test_data/examples/wildcat --well wildcat.yaml --sim-case TEMP-0 --plot
+python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml -pvt ./test_data/pvt_constants 
 
-```
-This will generate an output file `LEG_HIRES.grdecl` in `experiments` directory.
 
-2. To test **gap_plotran.py**, run the following commnad at the directory ``SCREEN``:
-```python
-python -m experiments.gap_pflotran \
-    --sim-path ./test_data/examples/wildcat-pflotran \
-    --well wildcat.yaml \
-    --sim-case1 TEMP-0_NOSIM \
-    --sim-case2 TEMP-0 \
-    --plot
-```
 ### 3. Test data
-In order for a quick test of the codes, we include some test dataset in the folder `test_data/examples`. The input data structure is organized  similiar to the `pflotran`. For example, for test data
-`test_data/examples/wildcat-pflotran-2`, the input file structure should be like this:
+In order for a quick test of the codes, we include some test dataset in the folder `test_data/examples`. 
 ```
-├── wildcat.yaml
-├── include
-│   ├── co2_db_new.dat
-│   ├── temperature_gradient.inc
-│   ├── TEMP_GRD.grdecl
-│   ├── TEMP_GRD_NOSIM.grdecl
-│   └── tops_dz.inc
-└── model
-    ├── TEMP-0.in
-    └── TEMP-0_NOSIM.in
+├── frigg
+│   ├── GaP_input_Frigg_v3.csv
+│   └── X_5687dev.txt
+├── simple_well
+│   ├── Simple_well.csv
+│   └── Simple_well.yaml
+├── smeaheia_v1
+│   ├── GaP_input_Smeaheia_v3.csv
+│   └── smeaheia.yaml
+├── wildcat
+│   ├── GaP_input_Wildcat_v3.csv
+│   └── wildcat.yaml
+├── wildcat-pflotran
+│   └── wildcat.yaml
+└── wildcat-pflotran-2
+    └── wildcat.yaml
 ```
-Sub-directories, such as `wildcat`, `smeaheia_v1` and `smeaheia_v2`, contain the necessary data, e.g., Eclipse  `.EGRID` and `.INIT` files, for testing **gap_wellclass.py**. 
-
-One sub-directory, `wildcat-plotran`, contains configuration parameters for testing **gap_pflotran.py**, i.e., use pfloatran to generate `.EGRID` and `.INIT`. 
-
-Another sub-directory `frigg` contains information for testing deviated wells.
-
-In addition, the **PVT** values are included in the directory `pvt_contants` for self-consistent testing of pressure-related computes.
 
 ## Unit testing and code coverage
 We are using `pytest` for unit testing and code coverage. The unit testing utilizes `wildcat` as the testing example. So please make sure the saved .pkl files in ```test_data/examples/wildcat/pytest``` exists and is updated. Here is a commandline example:
-```pyton
+```python
 python -m pytest tests
 ```
 This will report the unit testing results. And the following will report not only unit testing but also code coverage:
@@ -187,62 +170,45 @@ It may take some minutes until the documentation goes live. And the generated do
 The following represents the current code structures:
 
 ```
+├── CITATION.cff
+├── LICENSE
+├── README.md
 ├── experiments
-│   ├── gap_pflotran.py
-│   ├── gap_wellclass.py
-│   ├── __init__.py
-│   └── LEG_HIRES.grdecl
-├── INSTALLATION.md
+│   ├── __init__.py
+│   ├── well_sketch.py
+│   └── well_sketch_pressure.py
 ├── mkdocs.yml
 ├── notebooks
-│   ├── GaP-WellClass.ipynb
-│   ├── LEG_HIRES.grdecl.smeaheia
-│   ├── pflotran_gap.ipynb
-│   ├── Pressure-WellClass.ipynb
-│   ├── Pressure-WellClass_test.ipynb
-│   └── WellClass_csv_yaml.ipynb
-├── README.md
+│   ├── Pressure-WellClass.ipynb
+│   └── WellClass_csv_yaml.ipynb
+├── poetry.lock
+├── pyproject.toml
 ├── requirements.txt
 ├── src
-│   ├── GaP
-│   │   ├── data
-│   │   ├── experiments
-│   │   ├── __init__.py
-│   │   ├── libs
-│   │   ├── notebooks
-│   │   └── README.md
-│   ├── __init__.py
-│   ├── PressCalc
-│   │   ├── 1D_PresCalc.ipynb
-│   │   ├── __init__.py
-│   │   ├── phase_envelope.png
-│   │   ├── Pressure_plot.png
-│   │   ├── PT_01012996
-│   │   ├── PT_010153
-│   │   └── Readme.md
-│   ├── WellClass
-│   │   ├── __init__.py
-│   │   ├── libs
-│   │   ├── notebooks
-│   │   └── README.md
-│   └── WellViz
-│       ├── __init__.py
-│       ├── Readme.md
-│       └── WellViz_Jan23_Dash_v4.py
-└── test_data
-    ├── examples
-    │   ├── wildcat
-    │   ├── wildcat-pflotran
-    │   ├── wildcat-pflotran-2
-    │   ├── frigg
-    │   ├── simple_well
-    │   ├── smeaheia_v1
-    │   └── smeaheia_v2
-    └── pvt_constants
-        ├── pressure.txt
-        ├── rho_co2.txt
-        ├── rho_h2o.txt
-        └── temperature.txt
+│   ├── WellClass
+│   │   ├── README.md
+│   │   ├── __init__.py
+│   │   ├── libs
+│   │   └── notebooks
+│   └── __init__.py
+├── test_data
+│   ├── examples
+│   │   ├── frigg
+│   │   ├── simple_well
+│   │   ├── smeaheia_v1
+│   │   ├── wildcat
+│   │   ├── wildcat-pflotran
+│   │   └── wildcat-pflotran-2
+│   └── pvt_constants
+│       ├── pressure.txt
+│       ├── rho_co2.txt
+│       ├── rho_h2o.txt
+│       └── temperature.txt
+└── tests
+    ├── conftest.py
+    └── well_class
+        ├── conftest.py
+        └── test_well_class.py
 ```
 It was generated with the linux command `tree`:
 ```shell

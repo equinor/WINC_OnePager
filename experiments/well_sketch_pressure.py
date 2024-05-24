@@ -4,15 +4,15 @@
 
 # 1. smeaheia_v1
 
-$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml 
+$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml -pvt ./test_data/pvt_constants
 
 # 2. smeaheia_v2
 
-$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v2/smeaheia.yaml
+$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v2/smeaheia.yaml -pvt ./test_data/pvt_constants
 
 # 3. wildcat
 
-$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml
+$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml -pvt ./test_data/pvt_constants
 
 """
 import os
@@ -33,15 +33,14 @@ from src.WellClass.libs.utils import (
 # WellClass
 from src.WellClass.libs.well_class import Well
 
-# WellClass
+# Pressure Class
 from src.WellClass.libs.well_pressure import Pressure
 
 
-# plot
+# plotting libraries
 from src.WellClass.libs.plotting import (
-    plot_sketch,
-    plot_pressure
-)
+    plot_sketch_pressure
+    )
 
 def main(args: Namespace):
 
@@ -98,12 +97,8 @@ def main(args: Namespace):
         output = os.path.join(args.out_path, args.out_name)
 
     #Plot sketch, pressures
-    fig, (ax1, ax2) = plt.subplots(1,2, sharey=True, figsize=(10, 8))
-    plot_sketch(my_well, ax=ax1)
-    plot_pressure(my_pressure, my_well.geology, my_well.barriers, ax=ax2)
+    plot_sketch_pressure(my_well, my_pressure, save_file=output)
 
-    fig.tight_layout()
-    fig.savefig(output)
 
     # for qc
     if not args.nodisplay:
