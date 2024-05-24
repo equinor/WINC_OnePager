@@ -4,15 +4,15 @@
 
 # 1. smeaheia_v1
 
-$ python -m experiments.well_sketch --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml 
+$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml 
 
 # 2. smeaheia_v2
 
-$ python -m experiments.well_sketch --config-file ./test_data/examples/smeaheia_v2/smeaheia.yaml
+$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v2/smeaheia.yaml
 
 # 3. wildcat
 
-$ python -m experiments.well_sketch --config-file ./test_data/examples/wildcat/wildcat.yaml
+$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml
 
 """
 import os
