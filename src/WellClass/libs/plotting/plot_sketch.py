@@ -86,6 +86,13 @@ def plot_sketch(mywell: Well, ax=None,
     ax.set_ylabel('depth [mMSL]')
     ax.set_xlabel('radius [m]')
     
+    # Hide x-axis ticks and labels for the left subplot (ax1)
+    ax.set_xticks([])  # Remove x-axis ticks
+    ax.set_xticklabels([])  # Remove x-axis tick labels
+    ax.set_xlabel("")  # Remove x-axis label
+
+
+
     # save figure to the disk
     if save_file:
           plt.savefig(save_file)
