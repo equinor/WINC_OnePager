@@ -115,6 +115,7 @@ def plot_pressure(my_pressure: Pressure,
     ax.set_xlabel('pressure [bar]')
     ax.set_ylim(0, ymax)
     ax.invert_yaxis()
+    ax.grid(visible=True, linewidth = 0.5)
 
     if 'fig' in locals():
             return fig, ax
