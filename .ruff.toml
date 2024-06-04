@@ -1,5 +1,5 @@
-select = ["E", "F"]
-ignore = ["E501"]
+lint.select = ["E", "F"]
+lint.ignore = ["E501", "F401"]
 exclude = [
     "build",
     "dist",
@@ -14,5 +14,5 @@ exclude = [
 ]
 line-length = 150
 
-[per-file-ignores]
+[lint.per-file-ignores]
 "tools/ignore.py" = ["F401"]
