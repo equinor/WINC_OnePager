@@ -2,17 +2,13 @@ name: SCREEN-lint
 
 on:
 
+  push:
+   branches:
+   - hzh/test
+
   pull_request:
     branches:
     - main
-
-  push:
-    branches: 
-    - hzh/unittest
-
-  # workflow_dispatch:
-  #   branches:
-  #   - hzh/unittest
 
 permissions:
   contents: read
