@@ -46,14 +46,25 @@ class Pressure:
     barriers        : dict = None
     max_pressure_pos: Union[dict, list, float, int] = None
     pressure_scenarios : dict = None
+    mixture_name   :  str = None
+    mixture_composition   :  str = None
 
     def __post_init__(self):
+        self._get_mixture_info()
         self._check_init_pressure()
         self._check_scenarios()
         self._compute_CO2_pressures()
 
 
     # TODO(hzh): non-pure function!!!
+    def _get_mixture_info(self):
+        with open(f"{self.pvt_path}/metadata.json", "r") as file:
+            mixture_info = json.load(file)
+        
+        self.mixture_name = mixture_info['name']
+        self.mixture_composition = mixture_info['composition']
+        
+
     def _check_init_pressure(self):
         '''
         Calculates hydrostatic pressure at 
