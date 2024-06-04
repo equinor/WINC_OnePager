@@ -2,6 +2,8 @@
 import os
 import numpy as np
 import pandas as pd
+import json
+
 
 from typing import Union, Tuple, Callable
 
@@ -15,6 +17,12 @@ from scipy.integrate import solve_ivp
 '''Some global parameters'''
 G       = const.g   #9.81 m/s2 gravity acceleration
 
+def get_mixture_info(pvt_path: str):
+    with open(f"{pvt_path}/metadata.json", "r") as file:
+        mixture_info = json.load(file)
+    return mixture_info
+
+
 def get_pvt(pvt_path: str) -> tuple:
     '''Reads the vectors for pressure and temperature and the matrix for rho
        Note that the values for temperature and rho must be aligned with values in rho
@@ -27,10 +35,13 @@ def get_pvt(pvt_path: str) -> tuple:
        1141-1151.
        https://www.calsep.com/13-density-of-brine/
     '''
-    fn_temp    = os.path.join(pvt_path, "temperature.txt")
-    fn_pres    = os.path.join(pvt_path, "pressure.txt")
+    #get folder name that stores pressure, temperature vectors and water density
+    pvt_root_path = os.path.dirname(pvt_path)
+
+    fn_temp    = os.path.join(pvt_root_path, "temperature.txt")
+    fn_pres    = os.path.join(pvt_root_path, "pressure.txt")
+    fn_rho_h2o = os.path.join(pvt_root_path, "rho_h2o.txt")
     fn_rho_co2 = os.path.join(pvt_path, "rho_co2.txt")
-    fn_rho_h2o = os.path.join(pvt_path, "rho_h2o.txt")
 
     t   = np.loadtxt(fn_temp)
     p   = np.loadtxt(fn_pres)
