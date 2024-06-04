@@ -1,19 +1,19 @@
-# SCREEN
+# WINC_OnePager
 
-This repository contains source codes and documentation for SCREEN_WellView project.
+This repository contains source codes and documentation for WINC_OnePager project.
 
-[![SCREEN-unittest](https://github.com/equinor/SCREEN/actions/workflows/pytest.yaml/badge.svg)](https://github.com/equinor/SCREEN/actions/workflows/pytest.yaml)
-[![SCREEN-docs](https://github.com/equinor/SCREEN/actions/workflows/mkdocs.yaml/badge.svg)](https://github.com/equinor/SCREEN/actions/workflows/mkdocs.yaml)
-[![SCREEN-lint](https://github.com/equinor/SCREEN/actions/workflows/ruff.yaml/badge.svg)](https://github.com/equinor/SCREEN/actions/workflows/ruff.yaml)
+[![WINC_OnePager-unittest](https://github.com/equinor/WINC_OnePager/actions/workflows/pytest.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/pytest.yaml)
+[![WINC_OnePager-docs](https://github.com/equinor/WINC_OnePager/actions/workflows/mkdocs.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/mkdocs.yaml)
+[![WINC_OnePager-lint](https://github.com/equinor/WINC_OnePager/actions/workflows/ruff.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/ruff.yaml)
 
 ## Clone the repository
 Locate a folder at your local machine that you intend to investigate the codes, and then clone the repository
 ```
-git clone https://github.com/equinor/SCREEN_WellView
+git clone https://github.com/equinor/WINC_OnePager
 ```
-By this time you should have a folder named `SCREEN_WellView` at your local machine. Now change the directory with linux command:
+By this time you should have a folder named `WINC_OnePager` at your local machine. Now change the directory with linux command:
 ```
-cd SCREEN
+cd WINC_OnePager
 ```
 
 It's normal for us to make a new branch if we indend to make some changes of the codes. This can be done with the `-b` option, for example:
@@ -109,7 +109,7 @@ There exist several Jupyter notebooks in the directory:
 ### 2. Commandline option
 Two python scripts for commandline option are available in directory `experiments`. One script, **well_sketch.py**, can be used for generating a well sketch, **well_sketch_pressure.py** can be used for generating both a well sketch and a pressure plot. 
 
-The followings are some of  the sample runs. In either way, you should run the python script inside the ```SCREEN``` directory. 
+The followings are some of  the sample runs. In either way, you should run the python script inside the ```WINC_OnePager``` directory. 
 
 1. To test **well_sketch.py**, run either of the followings:
 ```
@@ -164,7 +164,7 @@ The document can be automatically generated and deployed to github pages. To do 
 ```
 mkdocs gh-deploy
 ```
-It may take some minutes until the documentation goes live. And the generated documentation page can be found at [SCREEN docs](https://redesigned-dollop-m5l6pme.pages.github.io/).
+It may take some minutes until the documentation goes live. And the generated documentation page can be found at [WINC_OnePager docs](https://redesigned-dollop-m5l6pme.pages.github.io/).
 
 ## The code structures
 
