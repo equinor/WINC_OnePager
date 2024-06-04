@@ -15,7 +15,9 @@ def plot_sketch_pressure(my_well:Well, my_pressure:Pressure, *, save_file= None)
 
     plot_pressure(my_pressure, my_well.geology, my_well.barriers, ax=ax2)
     
-    fig.suptitle(f'{my_well.header["well_name"]}', fontsize=10)
+    title = f'{my_well.header["well_name"]}\n{my_pressure.mixture_name}: {my_pressure.mixture_composition}'
+
+    fig.suptitle(title, fontsize=10)
 
 
     fig.tight_layout()
