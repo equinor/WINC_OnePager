@@ -4,8 +4,6 @@ pydantic
 numpy
 pandas
 scipy
-ecl
-CoolProp
 welly
 dash
 pyarrow

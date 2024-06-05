@@ -2,17 +2,13 @@ name: SCREEN-lint
 
 on:
 
+  push:
+   branches:
+   - hzh/test
+
   pull_request:
     branches:
     - main
-
-  push:
-    branches: 
-    - hzh/unittest
-
-  # workflow_dispatch:
-  #   branches:
-  #   - hzh/unittest
 
 permissions:
   contents: read
@@ -25,7 +21,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - name: Install dependencies
@@ -35,5 +31,5 @@ jobs:
     - name: Lint with Ruff
       run: |
         pip install ruff
-        ruff --output-format=github .
+        ruff check --output-format=github .
       continue-on-error: true
