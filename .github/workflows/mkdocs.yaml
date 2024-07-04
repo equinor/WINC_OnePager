@@ -1,4 +1,4 @@
-name: SCREEN-docs
+name: WINC_OnePager-docs
 on:
 
   pull_request:
