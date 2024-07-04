@@ -55,10 +55,7 @@ plugins:
 nav:
   - Home: index.md
   - 'User Guides':
-    - GaP: gap.md
     - WellClass: well_class.md
-    - PressCalc: press_calc.md
-    - WellViz: well_viz.md
   - Developer Guides:
     - MkDocs: mkdocs.md
     - Installation: INSTALLATION.md
