@@ -94,6 +94,7 @@ class WellRaw:
         self.inventory['drilling'] = True
         self.inventory['casings']  = True
         self.inventory['barriers'] = True
+        self.inventory['geology'] = True
 
         if self.drilling == None:
             print('No drilling table declared.')
@@ -111,6 +112,9 @@ class WellRaw:
             print('No barriers table declared.')
             self.inventory['barriers'] = False
 
+        if self.geology == None:
+            print('No geology table declared.')
+            self.inventory['geology'] = False
 
 
 
@@ -186,16 +190,18 @@ class WellRaw:
     
     def _process_geology(self):
 
-        geology_df = pd.DataFrame(self.geology)
+        if self.inventory['barriers']:
 
-        geology_df = geology_df.dropna(how='all')
-        geology_df = geology_df.reset_index(drop=True)
+            geology_df = pd.DataFrame(self.geology)
 
-        geology_df['top_msl']  = geology_df['top_rkb'] - self.header['well_rkb']
-        geology_df['base_msl'] = geology_df['top_msl'] - geology_df['top_msl'].diff(periods=-1)
-        geology_df.loc[geology_df.index.max(), 'base_msl'] = self.header['well_td_rkb'] - self.header['well_rkb']
+            geology_df = geology_df.dropna(how='all')
+            geology_df = geology_df.reset_index(drop=True)
 
-        self.geology = geology_df.to_dict()
+            geology_df['top_msl']  = geology_df['top_rkb'] - self.header['well_rkb']
+            geology_df['base_msl'] = geology_df['top_msl'] - geology_df['top_msl'].diff(periods=-1)
+            geology_df.loc[geology_df.index.max(), 'base_msl'] = self.header['well_td_rkb'] - self.header['well_rkb']
+
+            self.geology = geology_df.to_dict()
 
     @property
     def to_json(self):
