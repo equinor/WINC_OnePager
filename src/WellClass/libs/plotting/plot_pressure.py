@@ -14,7 +14,9 @@ MAX_PRESSURE_NAME = 'max_pressure'
 RHO_NAME          = 'rho'
 
 def plot_pressure(my_pressure: Pressure, 
-                  geology_dict: dict, barriers: dict, ax=None, 
+                  geology_dict: dict = None,
+                  barriers: dict = None, 
+                  ax = None, 
                   plot_HSP:bool = True, 
                   plot_RP:bool = True, 
                   plot_MSAD:bool = True, 
@@ -39,18 +41,29 @@ def plot_pressure(my_pressure: Pressure,
     well_header = my_pressure.header
     sf_depth    = well_header['sf_depth_msl']
     
-    barriers_df = pd.DataFrame(barriers)
-    geology_df  = pd.DataFrame(geology_dict)
+
+
+    #List to store the reference detoth values to define the spatial references of the plot
+    depth_values = []
+    if geology_dict is not None:
+        geology_df  = pd.DataFrame(geology_dict)
+        base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
+        depth_values.append(base_deepest_rsrv)
     
     #define plot spatial references
-    base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
-    ymax = max([base_deepest_rsrv,my_pressure.co2_datum])+100
+    depth_values.append(my_pressure.co2_datum)
+    # base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
+    # ymax = max([base_deepest_rsrv,my_pressure.co2_datum])+100
+    print(depth_values)
+    ymax = max(depth_values)+100
     xmax = pt_df['init'].query('depth_msl>@ymax')['Shmin'].iloc[0]
     xmin = 0
     
     # Draw cement plugs
-    for idx, row in barriers_df.iterrows():
-        barrier = ax.axhspan(row['top_msl'], row['bottom_msl'], color='lightgray', zorder=-20, label = 'cement plug')
+    if barriers is not None:
+        barriers_df = pd.DataFrame(barriers)
+        for idx, row in barriers_df.iterrows():
+            barrier = ax.axhspan(row['top_msl'], row['bottom_msl'], color='lightgray', zorder=-20, label = 'cement plug')
 
     #Plot hydrostatic pressure gradient
     if plot_HSP:
