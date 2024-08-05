@@ -4,7 +4,13 @@ version = "0.1.0"
 description = "SCREEN: A tool to build legacy well representations on reservoir simulation grids"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-include = ["test_data/pvt_constants/*"]
+# Include additional non-Python files using glob patterns
+include = [
+    "src/WellClass/libs/pvt/pvt_constants/**/*.txt",
+    "src/WellClass/libs/pvt/pvt_constants/**/*.json"
+    "src/WellClass/libs/pvt/pvt_constants/*.txt",
+]
+
 
 [tool.poetry.dependencies]
 python = ">=3.9,<=3.12"
