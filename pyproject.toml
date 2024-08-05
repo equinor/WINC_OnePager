@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "onepager"
+name = "WINC_OnePager"
 version = "0.1.0"
 description = "SCREEN: A tool to build legacy well representations on reservoir simulation grids"
 authors = ["Your Name <you@example.com>"]
