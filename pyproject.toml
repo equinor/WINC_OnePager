@@ -7,7 +7,7 @@ readme = "README.md"
 # Include additional non-Python files using glob patterns
 include = [
     "src/WellClass/libs/pvt/pvt_constants/**/*.txt",
-    "src/WellClass/libs/pvt/pvt_constants/**/*.json"
+    "src/WellClass/libs/pvt/pvt_constants/**/*.json",
     "src/WellClass/libs/pvt/pvt_constants/*.txt",
 ]
 
