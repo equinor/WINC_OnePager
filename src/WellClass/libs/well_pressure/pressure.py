@@ -1,5 +1,6 @@
 
 from dataclasses import dataclass
+from pathlib import Path
 import json
 
 from typing import Union
@@ -42,7 +43,7 @@ class Pressure:
     header          : dict = None
     reservoir_P     : dict = None    
     co2_datum       : dict = None
-    pvt_path        : str  = None
+    pvt_path        : Union[str, Path] = None
     barriers        : dict = None
     max_pressure_pos: Union[dict, list, float, int] = None
     pressure_scenarios : dict = None
@@ -58,7 +59,13 @@ class Pressure:
 
     # TODO(hzh): non-pure function!!!
     def _get_mixture_info(self):
-        with open(f"{self.pvt_path}/metadata.json", "r") as file:
+        
+        if isinstance(self.pvt_path, str):
+            pvt_path = Path(self.pvt_path)
+        else:
+            pvt_path = self.pvt_path
+
+        with open(pvt_path / "metadata.json", "r") as file:
             mixture_info = json.load(file)
         
         self.mixture_name = mixture_info['name']
