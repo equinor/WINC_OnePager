@@ -70,6 +70,7 @@ class Pressure:
         
         self.mixture_name = mixture_info['name']
         self.mixture_composition = mixture_info['composition']
+        print(f'Computing pressures for {self.mixture_name} ({self.mixture_composition})')
         
 
     def _check_init_pressure(self):
