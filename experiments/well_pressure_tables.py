@@ -1,10 +1,59 @@
+"""  
+Recipe for generating the data necessary to make the legacy well pressure plots.
+
+Well class examples. In the following, assume they run from project's folder.
+
+--config-file or -c 
+  yaml file describing the minimum input data necessary to run the code
 
 
-"""  Well sketch examples. In the following, assume they run from project's folder.
+        apiVersion: well/v0.1
+        kind: Well
+        metadata:
+        namespace: screen
+        name: wildcat
+        author: equinor
+
+        spec:
+
+        well_header:
+
+            well_name: 'well_name'
+            well_rkb: 99
+            sf_depth_msl: 999
+            well_td_rkb: 9999
+            sf_temp: 9
+            geo_tgrad: 99
+
+        
+        reservoir_pressure:
+
+            depth_msl: 9999
+            RP2: '+ 99'
+
+        co2_datum: 9999
+
+--mixture-index or -mi
+  optional value. index to identify the predefined pvt tables, defaulted to 0 = pure CO2
+
+  
+--max-pressure-depths or -maxP
+  option for depths to eavluate at which CO2 gradient reaches Shmin. evaluation of depth values at which max P is computed.
+  it can be a single value, or a list of values.
+
+--out-path or -p
+  optional. If the figure wants to be stored, output folder name
+
+--out-name or -o
+  optional. If the figure wants to be stored, output file name
+
+--display
+  display the figure.
+
 
 # 1. smeaheia_v1
 
-$ python -m experiments.well_pressure_tables --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml
+$ python -m experiments.well_pressure_tables --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml -
 
 # 2. smeaheia_v2
 
@@ -66,9 +115,7 @@ def main(args: Namespace):
     # for example, './test_data/examples/smeaheia_v1.yaml'
     well_name = Path(args.config_file)
 
-    
-
-    # pvt_path = pathlib.Path(args.pvt_db_path)
+    # input mixture index.
     mixture_index = args.mixture_index
     print(f'{mixture_index=}')
 
@@ -104,11 +151,6 @@ def main(args: Namespace):
 
     # 3.1 build well class
     my_well = Well( header       = well_csv['well_header'], 
-                    # drilling     = well_csv['drilling'],
-                    # casings      = well_csv['casing_cement'],
-                    # geology      = well_csv['geology'],
-                    # barriers     = well_csv['barriers'], 
-                    # barrier_perm = well_csv['barrier_permeability'],
                     co2_datum    = well_csv['co2_datum'],
             )
     
@@ -140,8 +182,7 @@ def main(args: Namespace):
         json.dump(my_pressure.pressure_scenarios, f)
 
     # for qc
-    if not args.nodisplay:
-
+    if args.display:
         plt.show()
 
 if __name__ == '__main__':
@@ -174,8 +215,8 @@ if __name__ == '__main__':
                         help="output file name for the figure")
 
     # display the figure
-    parser.add_argument('--nodisplay', action='store_true',
-                        help='no display of the well sketch')
+    parser.add_argument('--display', action='store_true',
+                        help='display of the well sketch')
 
     # Parse the argument
     args = parser.parse_args()
