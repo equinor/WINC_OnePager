@@ -58,7 +58,7 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.scripts]
-get_pressure_tables = 'experiments.well_pressure_tables:main'
+get-pressure-tables = 'experiments.well_pressure_tables:main'
 
 
 [[tool.poetry.packages]]
