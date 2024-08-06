@@ -21,7 +21,15 @@ import json
 import argparse
 from argparse import Namespace
 
-import pathlib
+from pathlib import Path
+import sys
+
+# Calculate the path to the src directory
+src_path = Path(__file__).parent.parent / 'src'
+print(f'{src_path=}')
+sys.path.append(str(src_path))
+
+
 
 from matplotlib import pyplot as plt
 
@@ -46,14 +54,8 @@ from WellClass.libs.plotting import (
 from importlib.resources import files
 
 
-# def parse_numbers(num):
-#     try:
-#         return int(num)
-#     except ValueError:
-#         try:
-#             return float(num)
-#         except ValueError:
-#             return [float(item) for item in num.split(',')]
+
+
 
 
 def main(args: Namespace):
@@ -62,7 +64,7 @@ def main(args: Namespace):
 
     # input configuration file name,
     # for example, './test_data/examples/smeaheia_v1.yaml'
-    well_name = pathlib.Path(args.config_file)
+    well_name = Path(args.config_file)
 
     
 
