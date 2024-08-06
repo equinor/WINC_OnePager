@@ -41,8 +41,8 @@ class WellSpec(BaseModel):
             co2_datum (CO2DatumModel): co2 datum 
     """
     well_header: WellHeaderModel
-    drilling: List[DrillingModel, None] = None
-    casing_cement: List[CasingCementModel, None] = None
+    drilling: Union[List[DrillingModel], None] = None
+    casing_cement: Union[List[CasingCementModel], None] = None
     barriers: Union[List[BarrierModel], None] = None
     barrier_permeability: Union[BarrierPermeabilityModel, None] = None
     geology: Union[List[GeologyModel], None] = None
