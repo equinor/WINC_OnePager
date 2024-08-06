@@ -56,6 +56,11 @@ fastparquet = "^2023.10.1"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+
+[tool.poetry.scripts]
+get_pressure_tables = 'experiments.well_pressure_tables:main'
+
+
 [[tool.poetry.packages]]
 include = "WellClass"
 from = "src"
