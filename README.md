@@ -6,21 +6,123 @@ This repository contains source codes and documentation for WINC_OnePager projec
 [![WINC_OnePager-docs](https://github.com/equinor/WINC_OnePager/actions/workflows/mkdocs.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/mkdocs.yaml)
 [![WINC_OnePager-lint](https://github.com/equinor/WINC_OnePager/actions/workflows/ruff.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/ruff.yaml)
 
-## Clone the repository
-Locate a folder at your local machine that you intend to investigate the codes, and then clone the repository
+# Poetry for dependency management
+`poetry`, as an alternative tool for dependency management, is required in Equinor to be compliant with IT policy.
+
+### 1. Installation of poetry
+In case that `poetry` is not available in the system, you may have to download and install it yourself. Somehow the newer version of `poetry` doesn't work with python `3.8`. So we have to get an earlier of `poetry`, such as `1.2.0` with the following command: 
 ```
-git clone https://github.com/equinor/WINC_OnePager
+curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
 ```
-By this time you should have a folder named `WINC_OnePager` at your local machine. Now change the directory with linux command:
+This should install `poetry` in your home directory. For example, it is installed at `/private/username/.local/bin`. Make sure to set this path as an environment variable in your `.cshrc` or `.bashrc` file so that you can access `poetry` from anywhere.
+
+You can test that everything is set up by executing:
+
 ```
-cd WINC_OnePager
+poetry --version
 ```
 
-It's normal for us to make a new branch if we indend to make some changes of the codes. This can be done with the `-b` option, for example:
+Note: For whatever reason, in case you decide to uninstall `poetry` package, you can do it with
 ```
-git checkout -b xyz/cleanup
+curl -sSL https://install.python-poetry.org | python3 - --uninstall
 ```
-This would generate a new branch, named `xyz/cleanup`. Here the branch name is created by concatenating a short name, such as `xyz`,  of `equinor` account with a feature description `cleanup`. There is no need to follow this convention. You could simply pick any branch name as long as it makes sense. However, please note branch names have limitations.
+
+### 2. Installing the Project as a Package with Poetry (Without Cloning)
+This project uses Poetry for dependency management and packaging. Here’s how you can install the project as a package using Poetry without cloning the repository:
+
+1. **Create a New Directory**: Create a new directory on your local machine where you want to install the project.
+
+    ```
+    mkdir my-project
+    cd my-project
+    ```
+
+3. **Create a** `pyproject.toml` **File**: In the new directory, create a pyproject.toml file with the following content:
+
+    ```
+    [tool.poetry]
+    name = "my-project"
+    version = "0.1.0"
+    package-mode = false
+
+    [tool.poetry.dependencies]
+    python = "^3.9"
+    my-package = { git = "https://github.com/equinor/WINC_OnePager", rev = "main" }
+
+    [build-system]
+    requires = ["poetry-core"]
+    build-backend = "poetry.core.masonry.api"
+    ```
+
+    Replace "my-project" with the name you want to give to your project. The line `package-mode = false` prevents Poetry from trying to install the curren project.
+
+4. Install the Project: Use Poetry to install the project and its dependencies.
+
+    ```
+    poetry install
+    ```
+
+    To check what packages have been installed, try the following command:
+    ```
+    poetry show --tree
+    ```
+
+    To show where the virtual environment is located, run
+    ```
+    poetry env info
+    ```
+    This will display the python path for the activated virtual environment. The executable path can be used in VS Code to set up python interpreter path for builtin jupyter notebooks.
+
+    The virtual envrionment can be activated with the command<strong>*</strong>:
+    ```
+    poetry shell
+    ```
+    This generated shell will be used to run standalone python scripts.
+
+    
+### 3. Installing the Project as a Package with Poetry (Cloning the repo)
+
+
+1. **Clone the repository**
+Locate a folder at your local machine that you intend to investigate the codes, and then clone the repository
+    ```
+    git clone https://github.com/equinor/WINC_OnePager
+    ```
+    By this time you should have a folder named `WINC_OnePager` at your local machine. Now change the directory with linux command:
+    ```
+    cd WINC_OnePager
+    ```
+
+    It's normal for us to make a new branch if we indend to make some changes of the codes. This can be done with the `-b` option, for example:
+    ```
+    git checkout -b xyz/cleanup
+    ```
+    This would generate a new branch, named `xyz/cleanup`. Here the branch name is created by concatenating a short name, such as `xyz`,  of `equinor` account with a feature description `cleanup`. There is no need to follow this convention. You could simply pick any branch name as long as it makes sense. However, please note branch names have limitations.
+
+
+2. **Installation of python dependencies**
+To install python dependencies, run the following command<strong>*</strong>:
+    ```
+    poetry install
+    ```
+
+    To check what packages have been installed, try the following command:
+    ```
+    poetry show --tree
+    ```
+
+    To show where the virtual environment is located, run
+    ```
+    poetry env info
+    ```
+    This will display the python path for the activated virtual environment. The executable path can be used in VS Code to set up python interpreter path for builtin jupyter notebooks.
+
+    The virtual envrionment can be activated with the command<strong>*</strong>:
+    ```
+    poetry shell
+    ```
+    This generated shell will be used to run standalone python scripts.
+
 
 ## Virtual environment
 
@@ -47,49 +149,8 @@ pip install -r requirements.txt
 ```
 You should now be ready to play with the source codes.
 
-## Poetry for dependency management
-`poetry`, as an alternative tool for dependency management, is required in Equinor to be compliant with IT policy.
 
-### 1. Installation of poetry
-In case that `poetry` is not available in the system, you may have to download and install it yourself. Somehow the newer version of `poetry` doesn't work with python `3.8`. So we have to get an earlier of `poetry`, such as `1.2.0` with the following command: 
-```
-curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
-```
-This should install `poetry` in your home directory. For example, in my case, it is installed at `/private/hzh/.local/bin`. Make sure to set this path as an environment variable in your `.cshrc` or `.bashrc` file so that you can access `poetry` from anywhere.
 
-You can test that everything is set up by executing:
-
-```
-poetry --version
-```
-
-### 2. Installation of python dependencies
-To install python dependencies, run the following command<strong>*</strong>:
-```
-poetry install
-```
-
-To check what packages have been installed, try the following command:
-```
-poetry show --tree
-```
-
-To show where the virtual environment is located, run
-```
-poetry env info
-```
-This will display the python path for the activated virtual environment. The executable path can be used in VS Code to set up python interpreter path for builtin jupyter notebooks.
-
-The virtual envrionment can be activated with the command<strong>*</strong>:
-```
-poetry shell
-```
-This generated shell will be used to run standalone python scripts.
-
-> Note: For whatever reason, in case you decide to uninstall `poetry` package, you can do it with
-> ```
-> curl -sSL https://install.python-poetry.org | python3 - --uninstall
-> ```
 
 ## Experiments
 There are at least two ways to make experimenal runs of the codes. One is to run the experiments with Jupyter lab (notbeooks folder), and the other is commandline option. While Jupyter notebooks are mainly for QC tests and research purposes, the commandline option is aiming for production run.
