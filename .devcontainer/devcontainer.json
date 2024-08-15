@@ -16,13 +16,13 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand":"poetry install",
+	"postCreateCommand":"poetry install && poetry shell",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
-	"extensions": ["ms-python.python", "ms-toolsai.jupyter"],
+	"extensions": ["ms-python.python", "ms-toolsai.jupyter", "ms-python.vscode-pylance"],
 
 }
