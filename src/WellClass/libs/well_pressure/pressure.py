@@ -285,17 +285,20 @@ class Pressure:
                 well (Well): well information
                 barrier_name (str): barrier to check the leakage rate
         """
+        if well.inventory['barriers']:
+            # for convenience
+            barrier_perm = well.barrier_perm
 
-        # for convenience
-        barrier_perm = well.barrier_perm
+            # barrier geometries
+            barrier_props = well.compute_barrier_props(barrier_name)
 
-        # barrier geometries
-        barrier_props = well.compute_barrier_props(barrier_name)
+            # Estimate CO2 leakage in [tons/day] after a trancient period
+            barrier_leakage = compute_barrier_leakage(barrier_perm, self.pressure_scenarios, self.pressure_CO2, barrier_props)
 
-        # Estimate CO2 leakage in [tons/day] after a trancient period
-        barrier_leakage = compute_barrier_leakage(barrier_perm, self.pressure_scenarios, self.pressure_CO2, barrier_props)
-
-        return barrier_leakage
+            return barrier_leakage
+        
+        else:
+            print(f'No barriers declared in well {well.header["well_name"]}')
 
     @property
     def to_json(self):
