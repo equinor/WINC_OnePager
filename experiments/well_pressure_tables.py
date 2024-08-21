@@ -53,15 +53,11 @@ Well class examples. In the following, assume they run from project's folder.
 
 # 1. smeaheia_v1
 
-$ python -m experiments.well_pressure_tables --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml -
+$ python -m experiments.well_pressure_tables --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml
 
 # 2. smeaheia_v2
 
-$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v2/smeaheia.yaml -pvt ./test_data/pvt_constants
-
-# 3. wildcat
-
-$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml -pvt ./test_data/pvt_constants
+$ python -m experiments.well_pressure_tables --config-file ./test_data/examples/wildcat/wildcat.yaml
 
 """
 import os
@@ -73,36 +69,29 @@ from argparse import Namespace
 from pathlib import Path
 import sys
 
-# Calculate the path to the src directory
-src_path = Path(__file__).parent.parent / 'src'
-print(f'{src_path=}')
-sys.path.append(str(src_path))
+from importlib.resources import files
 
 
 
 from matplotlib import pyplot as plt
 
-from WellClass.libs.utils import (
+from src.WellClass.libs.utils import (
     csv_parser,
     yaml_parser,
 )
 
+
+
 # WellClass
-from WellClass.libs.well_class import Well
+from src.WellClass.libs.well_class import Well
 
 # Pressure Class
-from WellClass.libs.well_pressure import Pressure
-
+from src.WellClass.libs.well_pressure import Pressure
 
 # plotting libraries
-from WellClass.libs.plotting import (
-    plot_sketch_pressure,
+from src.WellClass.libs.plotting import (
     plot_pressure
     )
-
-from importlib.resources import files
-
-
 
 
 
@@ -123,7 +112,7 @@ def main(args: Namespace):
 
     mixture = mixtures_list[mixture_index]
 
-    pvt_files = files('test_data.pvt_constants')
+    pvt_files = files('src.WellClass.libs.pvt.pvt_constants')
     pvt_path = pvt_files / mixture
 
 
