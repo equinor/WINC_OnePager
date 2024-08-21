@@ -55,22 +55,6 @@ class FluidP_scenario:
     P_table   :  pd.DataFrame = None
 
 
-    def __post_init__(self):
-        """
-        Initialization. Depending on input defines which method to run.
-        """
-        if (not np.isnan(self.z_MSAD)):
-            # class will compute max pressure for given points. Integration of CO2 downwards
-            self.integrate_downwards()
-        
-        elif (not np.isnan(self.p_delta)) and (not np.isnan(self.z_resrv)):
-            # reservoir pressure given as delta value- Integration of CO2 is upwards
-            raise NotImplementedError('method not implemented yet')
-
-        elif (not np.isnan(self.p_resrv)) and (not np.isnan(self.z_resrv))  and (not np.isnan(self.z_CO2_datum)):
-            # reservoir pressure given as absolute value- Integration of CO2 is upwards
-            self.integrate_upwards()
-
     def __repr__(self):
         p_resrv_abs = f"reservoir pressure:\t{self.p_resrv:.2f} @ {self.z_resrv} mTVDMSL"
         p_resrv_d  =  f"reservoir delta P:\t{self.p_delta} @ {self.z_resrv} mTVDMSL"
@@ -193,3 +177,21 @@ class FluidP_scenario:
         #Compute delta P
         hs_p = np.interp(float(self.z_resrv), self.ref_P['depth_msl'], self.ref_P['hs_p'])
         self.p_delta = self.p_resrv - hs_p
+
+    def compute_pressure_profile(self):
+        """
+        Depending on input defines which method to run.
+        """
+
+        if (not np.isnan(self.z_MSAD)):
+            # class will compute max pressure for given points. Integration of CO2 downwards
+            self.integrate_downwards()
+        
+        elif (not np.isnan(self.p_delta)) and (not np.isnan(self.z_resrv)):
+            # reservoir pressure given as delta value- Integration of CO2 is upwards
+            raise NotImplementedError('method not implemented yet')
+
+        elif (not np.isnan(self.p_resrv)) and (not np.isnan(self.z_resrv))  and (not np.isnan(self.z_CO2_datum)):
+            # reservoir pressure given as absolute value- Integration of CO2 is upwards
+            self.integrate_upwards()
+
