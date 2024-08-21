@@ -52,6 +52,7 @@ class Pressure:
 
     def __post_init__(self):
         self._get_mixture_info()
+        self._init_pressure_CO2()
         self._check_init_pressure()
         self._check_scenarios()
         self._compute_CO2_pressures()
@@ -73,6 +74,21 @@ class Pressure:
         print(f'Computing pressures for {self.mixture_name} ({self.mixture_composition})')
         
 
+    def _init_pressure_CO2(self):
+        '''
+        Initiates Pressure table for the wellbore
+        By default creates a hydrostatic gradient curve and a Sh min curve
+        '''
+
+        #Calculate depth, temp(depth) hydrostatic_pressure(depth), H2ORHO(depth for hydrostatic pressure)
+        pressure_CO2 = get_hydrostatic_P(self.header, pvt_path=self.pvt_path) 
+
+        #Include Minimum horizontal stress
+        pressure_CO2 = _get_shmin(self.header, pressure_CO2)
+
+        #Store tables in main pressure_CO2 table 
+        self.pressure_CO2 = pressure_CO2
+
     def _check_init_pressure(self):
         '''
         Calculates hydrostatic pressure at 
@@ -86,8 +102,9 @@ class Pressure:
 
         Also delta-pressures RP1 and RP2 are read and used later for leakage calculations. (self.reservoir_P[])
 
-        Note: The interpretation of the numbers set for RP1 and RP2 is a bit unclear. RP means reservoir pressure - but for the current
-              implementation it is interpreted as delta pressure: delta wrt hydrostatic pressure. 
+        Note: The interpretation of the numbers set for RP1 and RP2 is a bit unclear. 
+              RP means reservoir pressure - but for the current implementation 
+              it is interpreted as delta pressure: delta wrt hydrostatic pressure. 
               Initial implementation had the possibility to have absolute pressure AND a delta-pressure. But the delta-pressure had to be 
               given as a string "+ 20" or "- 15". Bit the + and - tended to create problems. 
               So alternatively one could distingwuish between RP and DP  if it is important to give in absolute pressure as well.
@@ -97,17 +114,18 @@ class Pressure:
         P_init = self.reservoir_P
 
         #Get hydrostatic pressure
-        ref_z        = P_init['depth_msl']                                                  #A reference depth given in the input, e.g. top reservoir
-        hydrostaticP = get_hydrostatic_P(self.header, pvt_path=self.pvt_path)               #Calculate depth, temp(depth) hydrostatic_pressure(depth), H2ORHO(depth for hydrostatic pressure)
+        #A reference depth given in the input, e.g. top reservoir
+        ref_z        = P_init['depth_msl']                       
+
         
-        
-        ref_p        = np.interp(ref_z, hydrostaticP['depth_msl'], hydrostaticP[ 'hs_p'])    #Hydrostatic pressure at that depth
+        #Hydrostatic pressure at reference depth (ref_z)
+        ref_p        = np.interp(ref_z, self.pressure_CO2['depth_msl'], self.pressure_CO2[ 'hs_p'])
         print(f"Hydrostatic pressure at reference depth {ref_z:.0f} is {ref_p:.2f}")
 
+        #Store value in reservoir_P table
         self.reservoir_P['hydrostatic_pressure'] = ref_p
 
 
-        self.pressure_CO2 = hydrostaticP #store table as pressure_CO2
 
     def _check_scenarios(self):
         
@@ -191,8 +209,9 @@ class Pressure:
         Shmin
 
         Input:
-        max_pressure_pos is a depth from where max pressure (wrt Shmin) is calculated. It can be a dict (my_well.barriers) a list of numbers or scalars.
-                If my_well.barriers is given then it is calculated from the base of each barrier
+        max_pressure_pos is a depth from where max pressure (wrt Shmin) is calculated. 
+        It can be a dict (my_well.barriers) a list of numbers or scalars.
+        If my_well.barriers is given then it is calculated from the base of each barrier
 
         Columns are
             |--------------------init---------------------------------------------|---------------------RPx----------------------------------|
@@ -207,7 +226,7 @@ class Pressure:
         '''
 
 
-        self.pressure_CO2 = _get_shmin(self.header, self.pressure_CO2)
+        # self.pressure_CO2 = _get_shmin(self.header, self.pressure_CO2)
 
         
         #Retrieve pressure, temperature and density fields for CO2 and H2O
@@ -224,8 +243,10 @@ class Pressure:
 
         #iterate over pressure scenarios to compute tables:
         for press_sc in self.pressure_scenarios:
+
             sc_name = self.pressure_scenarios[press_sc]['name']
             sc_type = self.pressure_scenarios[press_sc]['type']
+
 
             if sc_type == 'reservoir':
                 p_resrv = self.pressure_scenarios[press_sc]['p_resrv']
@@ -237,6 +258,8 @@ class Pressure:
                                                p_resrv = p_resrv,
                                                z_resrv = self.reservoir_P['depth_msl'],
                                                z_CO2_datum = self.co2_datum)
+                
+                sc_pressure.compute_pressure_profile()
                 
                 self.pressure_scenarios[press_sc]['p_MSAD'] = sc_pressure.p_MSAD
                 self.pressure_scenarios[press_sc]['z_MSAD'] = sc_pressure.z_MSAD
@@ -256,6 +279,8 @@ class Pressure:
                                                z_MSAD = msad,
                                                z_CO2_datum = self.co2_datum)
                 
+                sc_pressure.compute_pressure_profile()
+
                 self.pressure_scenarios[press_sc]['p_MSAD'] = sc_pressure.p_MSAD
                 self.pressure_scenarios[press_sc]['p_resrv'] = sc_pressure.p_resrv
                 self.pressure_scenarios[press_sc]['z_resrv'] = sc_pressure.z_resrv
