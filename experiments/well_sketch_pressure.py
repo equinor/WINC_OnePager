@@ -42,6 +42,8 @@ from src.WellClass.libs.plotting import (
     plot_sketch_pressure
     )
 
+from src.WellClass.tools import init_well_pressure
+
 def main(args: Namespace):
 
     ############# 0. User options ######################
