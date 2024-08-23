@@ -4,12 +4,7 @@ version = "0.1.0"
 description = "SCREEN: A tool to build legacy well representations on reservoir simulation grids"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-# Include additional non-Python files using glob patterns
-include = [
-    "test_data/pvt_constants/**/*.txt",
-    "test_data/pvt_constants/**/*.json",
-    "test_data/pvt_constants/*.txt",
-]
+
 
 
 [tool.poetry.dependencies]
