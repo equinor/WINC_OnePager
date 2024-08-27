@@ -16,7 +16,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand":"poetry install && poetry shell",
+	"postCreateCommand":"pip install .",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
@@ -29,7 +29,7 @@
                 "ms-python.python",
                 "ms-toolsai.jupyter",
                 "ms-python.vscode-pylance",
-		"snyk-security.snyk-vulnerability-scanner"
+                "snyk-security.snyk-vulnerability-scanner"
             ]
         }
     }
