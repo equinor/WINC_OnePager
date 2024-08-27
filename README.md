@@ -29,7 +29,7 @@ After installation, verify that Poetry is correctly installed:
 ```shell
 poetry --version
 ```
-#### 3. Install the Project Using Poetry Without Cloning
+#### 3A. Install the Project Using Poetry Without Cloning
 
 To install the project without cloning the repository:
 
@@ -40,29 +40,46 @@ cd my-project
 poetry install
 ```
 
-### Without Poetry (Using pip and Virtual Environment)
+#### 3B. Install the Project Using Poetry With Cloning
+To install the project after cloning the repository:
 
-For scenarios where you prefer not to use Poetry, you can set up a Python virtual environment and install the project using `pip`. This method is applicable regardless of whether you have cloned the repository or are installing directly.
+```shell
+git clone https://github.com/equinor/WINC_OnePager
+cd WINC_OnePager
+# Optionally, create a new branch
+# Then execute:
+poetry install
+```
+
+#### 4. Activate the Poetry environment:
+```shell
+poetry shell
+```
+
+markdown
+Copy code
+
+### Installation Using pip and a Virtual Environment
+
+The installation of the WINC_OnePager project can be done using `pip`, which is a straightforward approach regardless of cloning. First, ensure that you are in a Python virtual environment to isolate the project dependencies.
 
 #### 1. Creating a Virtual Environment
 
-First, create a virtual environment. This helps to manage dependencies for the project without affecting your global Python setup. You may use Python's built-in `venv` module or any other virtual environment manager like `conda`:
+If you haven't already set up a virtual environment, you can create one using Python's built-in `venv`:
 
 ```shell
-python -m venv .venv_wellc
-source .venv_wellc/bin/activate
+python -m venv venv_screen
+source venv_screen/bin/activate
 ```
 
-This command will create and activate a virtual environment named `.venv_wellc`. If you're using a Windows command prompt, activate the environment with:
+For Windows users, activate the virtual environment with:
 
 ```shell
 .\venv_screen\Scripts\activate.bat
 ```
 #### 2. Installing the Project
 
-Once the virtual environment is activated, you can install the project in two ways:
-
--   **Direct Installation (Without Cloning)**: If you simply want to install the project along with its dependencies, ensure a setup.py or pyproject.toml with the necessary build-backend is present and run:
+-   **Using `pip install .`**: This method works both when the repository has been cloned and when you have a project directory set up with a pyproject.toml or setup.py file. It installs the current directory as a package along with its dependencies:
 
     ```shell
     pip install .
@@ -70,7 +87,7 @@ Once the virtual environment is activated, you can install the project in two wa
 
     This command tells pip to install the current directory (i.e., the project) as a package.
 
--   **Installation From Requirements (With Cloning)**: If you've cloned the repository and wish to install all the required dependencies as listed in the requirements.txt file, execute:
+-   **Using `pip install -r requirements.txt`**: This method is specific to situations where the repository has been cloned. It will install the dependencies specified in the requirements.txt file:
     ```shell
     pip install -r requirements.txt
     ```
@@ -156,46 +173,47 @@ It may take some minutes until the documentation goes live. And the generated do
 The following represents the current code structures:
 
 ```
+.
 ├── CITATION.cff
-├── LICENSE
-├── README.md
 ├── experiments
 │   ├── __init__.py
-│   ├── well_sketch.py
-│   └── well_sketch_pressure.py
+│   ├── well_pressure_tables.py
+│   ├── well_sketch_pressure.py
+│   └── well_sketch.py
+├── LICENSE
 ├── mkdocs.yml
 ├── notebooks
 │   ├── Pressure-WellClass.ipynb
-│   └── WellClass_csv_yaml.ipynb
+│   ├── PVT_data.ipynb
+│   ├── WellClass_csv_yaml.ipynb
+│   └── WellClass-onepager.ipynb
 ├── poetry.lock
 ├── pyproject.toml
+├── README.md
 ├── requirements.txt
+├── requirements.txt.frozen
 ├── src
-│   ├── WellClass
-│   │   ├── README.md
-│   │   ├── __init__.py
-│   │   ├── libs
-│   │   └── notebooks
-│   └── __init__.py
+│   ├── __init__.py
+│   └── WellClass
+│       ├── __init__.py
+│       ├── libs
+│       ├── notebooks
+│       ├── README.md
+│       └── tools
 ├── test_data
-│   ├── examples
-│   │   ├── frigg
-│   │   ├── simple_well
-│   │   ├── smeaheia_v1
-│   │   ├── wildcat
-│   │   ├── wildcat-pflotran
-│   │   └── wildcat-pflotran-2
-│   └── pvt_constants
-│       ├── pressure.txt
-│       ├── rho_co2.txt
-│       ├── rho_h2o.txt
-│       └── temperature.txt
+│   └── examples
+│       ├── frigg
+│       ├── simple_well
+│       ├── smeaheia_v1
+│       ├── wildcat
+│       ├── wildcat-pflotran
+│       └── wildcat-pflotran-2
 └── tests
     ├── conftest.py
     └── well_class
-        ├── conftest.py
         └── test_well_class.py
 ```
+
 It was generated with the linux command `tree`:
 ```shell
 tree -I 'docs|site|venv_screen|*pycache*|Equinor*|originals' -L 3
