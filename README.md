@@ -56,8 +56,7 @@ poetry install
 poetry shell
 ```
 
-markdown
-Copy code
+
 
 ### Installation Using pip and a Virtual Environment
 
