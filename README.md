@@ -6,150 +6,74 @@ This repository contains source codes and documentation for WINC_OnePager projec
 [![WINC_OnePager-docs](https://github.com/equinor/WINC_OnePager/actions/workflows/mkdocs.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/mkdocs.yaml)
 [![WINC_OnePager-lint](https://github.com/equinor/WINC_OnePager/actions/workflows/ruff.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/ruff.yaml)
 
-# Poetry for dependency management
-`poetry`, as an alternative tool for dependency management, is required in Equinor to be compliant with IT policy.
+## Installation Instructions
+There are two methods to install and run the project - with cloning and without cloning. You can choose depending on whether you need to work with the repository directly or just want to use the package.
 
-### 1. Installation of poetry
-In case that `poetry` is not available in the system, you may have to download and install it yourself. Somehow the newer version of `poetry` doesn't work with python `3.8`. So we have to get an earlier of `poetry`, such as `1.2.0` with the following command: 
-```
+
+### With Poetry (Recommended for Dependency Management in Equinor)
+Poetry is Equinor's recommended tool complying with IT policy for Python dependency management.
+
+#### 1. Prerequisites
+    
+Ensure you have Python `^3.9` installed and accessible in your path.
+
+#### 2. Installing Poetry
+    
+If you don't have Poetry installed, you can do so with the following command compatible with Python 3.8:
+
+```shell
 curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
 ```
-This should install `poetry` in your home directory. For example, it is installed at `/private/username/.local/bin`. Make sure to set this path as an environment variable in your `.cshrc` or `.bashrc` file so that you can access `poetry` from anywhere.
 
-You can test that everything is set up by executing:
-
-```
+After installation, verify that Poetry is correctly installed:
+```shell
 poetry --version
 ```
+#### 3. Install the Project Using Poetry Without Cloning
 
-Note: For whatever reason, in case you decide to uninstall `poetry` package, you can do it with
-```
-curl -sSL https://install.python-poetry.org | python3 - --uninstall
-```
+To install the project without cloning the repository:
 
-### 2. Installing the Project as a Package with Poetry (Without Cloning)
-This project uses Poetry for dependency management and packaging. Here’s how you can install the project as a package using Poetry without cloning the repository:
-
-1. **Create a New Directory**: Create a new directory on your local machine where you want to install the project.
-
-    ```
-    mkdir my-project
-    cd my-project
-    ```
-
-3. **Create a** `pyproject.toml` **File**: In the new directory, create a pyproject.toml file with the following content:
-
-    ```
-    [tool.poetry]
-    name = "my-project"
-    version = "0.1.0"
-    package-mode = false
-
-    [tool.poetry.dependencies]
-    python = "^3.9"
-    my-package = { git = "https://github.com/equinor/WINC_OnePager", rev = "main" }
-
-    [build-system]
-    requires = ["poetry-core"]
-    build-backend = "poetry.core.masonry.api"
-    ```
-
-    Replace "my-project" with the name you want to give to your project. The line `package-mode = false` prevents Poetry from trying to install the curren project.
-
-4. Install the Project: Use Poetry to install the project and its dependencies.
-
-    ```
-    poetry install
-    ```
-
-    To check what packages have been installed, try the following command:
-    ```
-    poetry show --tree
-    ```
-
-    To show where the virtual environment is located, run
-    ```
-    poetry env info
-    ```
-    This will display the python path for the activated virtual environment. The executable path can be used in VS Code to set up python interpreter path for builtin jupyter notebooks.
-
-    The virtual envrionment can be activated with the command<strong>*</strong>:
-    ```
-    poetry shell
-    ```
-    This generated shell will be used to run standalone python scripts.
-
-    
-### 3. Installing the Project as a Package with Poetry (Cloning the repo)
-
-
-1. **Clone the repository**
-Locate a folder at your local machine that you intend to investigate the codes, and then clone the repository
-    ```
-    git clone https://github.com/equinor/WINC_OnePager
-    ```
-    By this time you should have a folder named `WINC_OnePager` at your local machine. Now change the directory with linux command:
-    ```
-    cd WINC_OnePager
-    ```
-
-    It's normal for us to make a new branch if we indend to make some changes of the codes. This can be done with the `-b` option, for example:
-    ```
-    git checkout -b xyz/cleanup
-    ```
-    This would generate a new branch, named `xyz/cleanup`. Here the branch name is created by concatenating a short name, such as `xyz`,  of `equinor` account with a feature description `cleanup`. There is no need to follow this convention. You could simply pick any branch name as long as it makes sense. However, please note branch names have limitations.
-
-
-2. **Installation of python dependencies**
-To install python dependencies, run the following command<strong>*</strong>:
-    ```
-    poetry install
-    ```
-
-    To check what packages have been installed, try the following command:
-    ```
-    poetry show --tree
-    ```
-
-    To show where the virtual environment is located, run
-    ```
-    poetry env info
-    ```
-    This will display the python path for the activated virtual environment. The executable path can be used in VS Code to set up python interpreter path for builtin jupyter notebooks.
-
-    The virtual envrionment can be activated with the command<strong>*</strong>:
-    ```
-    poetry shell
-    ```
-    This generated shell will be used to run standalone python scripts.
-
-
-## Virtual environment
-
-It's a common practice to work on a project within a python virtual environment. I have been using python's builtin module `venv` for a long while. So I am going to stick to it here as an example to set up the virtual environment. But you are free to use any other virtual environment setups that you feel comfortable with, such as `conda`, etc. 
-```
-python -m venv venv_screen
-```
-This will build a virtual environment `venv_screen`. You only need to creat it once.
-
-To activate this `venv_screen`, run the following command: 
-```
-source venv_screen/bin/activate.csh
-```
-when your linux Shell is `csh`. 
-
-If you are using `bash` or plain `sh`, you can activate it with the following command:
-```
-source venv_screen/bin/activate
+```shell
+mkdir my-project
+cd my-project
+# Create a pyproject.toml file with the content described in the original README, then execute:
+poetry install
 ```
 
-We pack needed python packages into a file, such as `requirements.txt`. And install those python packages to this virtual environment by running the following command:
-```
-pip install -r requirements.txt
-```
-You should now be ready to play with the source codes.
+### Without Poetry (Using pip and Virtual Environment)
 
+For scenarios where you prefer not to use Poetry, you can set up a Python virtual environment and install the project using `pip`. This method is applicable regardless of whether you have cloned the repository or are installing directly.
 
+#### 1. Creating a Virtual Environment
+
+First, create a virtual environment. This helps to manage dependencies for the project without affecting your global Python setup. You may use Python's built-in `venv` module or any other virtual environment manager like `conda`:
+
+```shell
+python -m venv .venv_wellc
+source .venv_wellc/bin/activate
+```
+
+This command will create and activate a virtual environment named `.venv_wellc`. If you're using a Windows command prompt, activate the environment with:
+
+```shell
+.\venv_screen\Scripts\activate.bat
+```
+#### 2. Installing the Project
+
+Once the virtual environment is activated, you can install the project in two ways:
+
+-   **Direct Installation (Without Cloning)**: If you simply want to install the project along with its dependencies, ensure a setup.py or pyproject.toml with the necessary build-backend is present and run:
+
+    ```shell
+    pip install .
+    ```
+
+    This command tells pip to install the current directory (i.e., the project) as a package.
+
+-   **Installation From Requirements (With Cloning)**: If you've cloned the repository and wish to install all the required dependencies as listed in the requirements.txt file, execute:
+    ```shell
+    pip install -r requirements.txt
+    ```
 
 
 ## Experiments
