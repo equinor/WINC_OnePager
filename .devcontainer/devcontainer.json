@@ -29,7 +29,8 @@
                 "ms-python.python",
                 "ms-toolsai.jupyter",
                 "ms-python.vscode-pylance",
-                "snyk-security.snyk-vulnerability-scanner"
+                "snyk-security.snyk-vulnerability-scanner",
+				"GitHub.copilot"
             ]
         }
     }
