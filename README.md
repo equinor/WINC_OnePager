@@ -19,16 +19,23 @@ Ensure you have Python `^3.9` installed and accessible in your path.
 
 #### 2. Installing Poetry
     
-If you don't have Poetry installed, you can do so with the following command compatible with Python 3.8:
+If you don't have Poetry installed, you can do so with the following command:
 
 ```shell
-curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
+curl -sSL https://install.python-poetry.org | python3 - 
 ```
+by default, Poetry  will be installed in user's home directory. For example, in latest ubuntu, it is located at ```/home/xxx/.local/bin/poetry```, here `xxx` is in general user's login name. Make sure the command is availabe by setting up the Path in `.bashrc` or `.cshrc`. 
 
 After installation, verify that Poetry is correctly installed:
 ```shell
 poetry --version
 ```
+
+Note: In case your Python is `^3.8`, you may have to install a compatible `poetry` with the following command:
+```shell
+curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
+```
+
 #### 3A. Install the Project Using Poetry Without Cloning
 
 To install the project without cloning the repository:
@@ -64,7 +71,7 @@ The installation of the WINC_OnePager project can be done using `pip`, which is 
 
 #### 1. Creating a Virtual Environment
 
-If you haven't already set up a virtual environment, you can create one using Python's built-in `venv`:
+If you haven't already set up a virtual environment, you can create one using Python's built-in `venv` and activate the virtual environment as the followings:
 
 ```shell
 python -m venv venv_screen
@@ -76,6 +83,7 @@ For Windows users, activate the virtual environment with:
 ```shell
 .\venv_screen\Scripts\activate.bat
 ```
+
 #### 2. Installing the Project
 
 -   **Using `pip install .`**: This method works both when the repository has been cloned and when you have a project directory set up with a pyproject.toml or setup.py file. It installs the current directory as a package along with its dependencies:
