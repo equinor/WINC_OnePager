@@ -38,17 +38,20 @@ def _get_shmin(well_header: dict, pt_df_in: pd.DataFrame) -> pd.DataFrame:
 
 
 def _get_rho_in_pressure_column(pt_df_in: pd.DataFrame, colname_p: str, colname_rho: str, get_rho: callable) -> pd.DataFrame:
-    ''' Calculate the water density
-        in the CO2 column with its calculated pressure and temperatur:
+    '''
+    Calculate the water density in the CO2 column with its calculated pressure and temperature.
     '''
     pt_df = pt_df_in.copy()
-    temps = pt_df['temp']
-    pressures = pt_df[colname_p]
-    rhos = []
-    for t, p in zip(temps, pressures):
-        rhos.append(get_rho(p,t)[0,0])
-
-    pt_df[colname_rho] = rhos[:]
+    
+    # Ensure get_rho can handle vectorized inputs
+    pressures = pt_df[colname_p].values
+    temps = pt_df['temp'].values
+    
+    # Vectorized call to get_rho
+    rhos = get_rho(pressures, temps)
+    
+    # Assuming get_rho returns a 2D array, we need the first element
+    pt_df[colname_rho] = rhos[:, 0]
 
     return pt_df
 
@@ -84,62 +87,6 @@ def _get_max_pressure(pt_df_in: pd.DataFrame, max_pressure_pos: Union[dict, list
 
     return pt_df
 
-
-def _integrate_pressure(pt_df_in: pd.DataFrame, get_rho: callable, reference_depth: float, reference_pressure: float, direction: str, colname_p: str) -> pd.DataFrame:
-    '''
-    Simple integration to find pressure
-    Starting point: reference_depth at reference pressure.  Reference temperature is found in pt_df
-                    Then iterate upwards (up) or downwards (down) to subtract or add pressure.
-                    Recalculates rho at each step.
-    '''
-    pt_df = pt_df_in.copy()
-
-    ## Initialization
-    #Presure at MSL
-    p_msl = const.atm/BAR2PA  #1.01325 bar Pressure at MSL
-
-    #New columns needed in DataFrame
-    if colname_p not in pt_df.columns:
-        pt_df[colname_p] = np.nan
-
-    colname_rho = colname_p+'_rho'
-    if colname_rho not in pt_df.columns:
-        pt_df[colname_rho] = np.nan
-
-    #Take out the part of the dataframe that is either below or above the reference depth.
-    if direction.lower() == "up":
-        query = pt_df.query('depth_msl<=@reference_depth')
-        sign  = -1
-    elif direction.lower() == "down":
-        query = pt_df.query('depth_msl>=@reference_depth')
-        sign = 1
-    else:
-        print(f"ERROR: Not a valid direction. It should be 'up' or 'down'. You wrote {direction.lower()}")
-
-    ###Do the calculations
-    #Starting pressure and depth
-    p  = reference_pressure
-    z0 = reference_depth
-
-    #Loop through the rows in the dataframe - upwards from the bottom of downwards from the top
-    for z_idx, row in query[::sign].iterrows():
-        t = row['temp']
-        z = row['depth_msl']
-
-        rho = get_rho(p,t)[0,0]        
-        dz = z - z0
-        p += (rho*G*dz)/BAR2PA   #/1e-5
-
-        #Ensure you do not get negative pressures
-        if p<p_msl:
-            p=p_msl
-                
-        pt_df.loc[z_idx, colname_p] = p
-        pt_df.loc[z_idx, colname_rho] = rho
-        z0 = z
-
-    return pt_df
-##################################################################################   
 
 
 
