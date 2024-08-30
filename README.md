@@ -19,10 +19,10 @@ Ensure you have Python `^3.9` installed and accessible in your path.
 
 #### 2. Installing Poetry
     
-If you don't have Poetry installed, you can do so with the following command compatible with Python 3.8:
+If you don't have Poetry installed, you can do so with the following command:
 
 ```shell
-curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
+curl -sSL https://install.python-poetry.org | python3 
 ```
 
 After installation, verify that Poetry is correctly installed:
@@ -35,8 +35,37 @@ To install the project without cloning the repository:
 
 ```shell
 mkdir my-project
+
 cd my-project
+
 # Create a pyproject.toml file with the content described in the original README, then execute:
+poetry init
+```
+Open the pyproject.toml file. Open the file in your preferred text editor, copy and Paste the follwing contents:
+
+```poetry
+[tool.poetry]
+name = "my-project"
+version = "0.1.0"
+package-mode = false  # Add this line
+
+
+[tool.poetry.dependencies]
+python = ">=3.9,<=3.12"
+
+[tool.poetry.dependencies.winc-onepager]
+git = "git@github.com:equinor/WINC_OnePager.git"
+rev = "main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+```
+
+Save the changes and close the editor.
+Install dependencies.
+
+```shell
 poetry install
 ```
 
