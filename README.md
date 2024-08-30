@@ -166,13 +166,9 @@ In order for a quick test of the codes, we include some test dataset in the fold
 │   ├── GaP_input_Smeaheia_v3.csv
 │   └── smeaheia.yaml
 ├── wildcat
-│   ├── GaP_input_Wildcat_v3.csv
-│   └── wildcat.yaml
-├── wildcat-pflotran
-│   └── wildcat.yaml
-└── wildcat-pflotran-2
+    ├── GaP_input_Wildcat_v3.csv
     └── wildcat.yaml
-```
+
 
 ## Unit testing and code coverage
 We are using `pytest` for unit testing and code coverage. The unit testing utilizes `wildcat` as the testing example. So please make sure the saved .pkl files in ```test_data/examples/wildcat/pytest``` exists and is updated. Here is a commandline example:
