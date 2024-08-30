@@ -21,10 +21,6 @@ pydantic = "^2.5.2"
 numpy = "1.24.4"
 pandas = "2.0.3"
 scipy = "1.11.2"
-welly = "^0.5.2"
-ipykernel = "^6.29.5"
-jupyter = "^1.0.0"
-matplotlib = "3.9"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -33,6 +29,7 @@ jupyterlab = "^4.0.9"
 jupyter-dash = "^0.4.2"
 ipympl = "^0.9.3"
 ipykernel = "^6.29.5"
+matplotlib = "3.9"
 
 
 [tool.poetry.group.docs.dependencies]
