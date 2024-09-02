@@ -33,6 +33,7 @@ jupyterlab = "^4.0.9"
 jupyter-dash = "^0.4.2"
 ipympl = "^0.9.3"
 ipykernel = "^6.29.5"
+matplotlib = "3.9"
 
 
 [tool.poetry.group.docs.dependencies]

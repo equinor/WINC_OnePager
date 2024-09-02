@@ -1,59 +1,45 @@
-
 from dataclasses import dataclass
 import json
-
 from typing import Union
 import numpy as np
 import pandas as pd
+from scipy.interpolate import RectBivariateSpline
 
 from ..pvt.pvt import ( get_hydrostatic_P,
                        get_pvt)
 from ..well_class.well_class import Well
-
-
 from .barrier_pressure import (
     compute_barrier_leakage
 )
-
-
-
-
 from .co2_pressure import (
     _get_shmin,
     _integrate_pressure,
     _get_rho_in_pressure_column
 )
-
 from ..utils.compute_intersection import compute_intersection
 
 
 
-from scipy.interpolate import RectBivariateSpline
 
 
 @dataclass
 class FluidP_scenario:
-
+    """
+    Class to represent a fluid pressure scenario.
+    """
     header    : dict
-
     ref_P     :  pd.DataFrame  #Init table with hydrostatic pressure, temperature and Shmin profile
-    rho_CO2   :  RectBivariateSpline
-    rho_H2O   :  RectBivariateSpline
-
-    p_name    :  str = None
-
-    p_delta   :  float = np.nan
-    p_resrv   :  float = np.nan
-    z_resrv   :  float = np.nan
-
-    p_CO2_datum : float = np.nan
-    z_CO2_datum : float = np.nan
-
+    rho_CO2   :  RectBivariateSpline #getter for CO2 density
+    rho_H2O   :  RectBivariateSpline #getter for H2O density
+    p_name    :  str = None #Name of the pressure scenario
+    p_delta   :  float = np.nan #Delta reservoir pressure
+    p_resrv   :  float = np.nan #Reservoir pressure at datum (z_resrv)
+    z_resrv   :  float = np.nan #Depth of reservoir datum
+    p_CO2_datum : float = np.nan #Pressure at CO2 datum
+    z_CO2_datum : float = np.nan #Depth of CO2 datum
     p_MSAD    :  float = np.nan #Pressure at Minimum Safety Abandonement depth
     z_MSAD    :  float = np.nan #Depth at Minimum Safety Abandonement depth
-
-    P_table   :  pd.DataFrame = None
-
+    P_table   :  pd.DataFrame = None #Pressure table with CO2 and H2O pressures
 
     def __repr__(self):
         p_resrv_abs = f"reservoir pressure:\t{self.p_resrv:.2f} @ {self.z_resrv} mTVDMSL"
@@ -63,9 +49,12 @@ class FluidP_scenario:
 
         return f"Pressure scenario:\t{self.p_name}\n{p_resrv_abs}\n{p_resrv_d}\n{p_MSAD}\n{z_datum}"
 
+
     def integrate_upwards(self):
         """
         Method to compute pressure tables starting from reservoir pressure.
+        CO2 pressure is integrated upwards from CO2 datum and input reservoir pressure (p_resrv).
+        H2O pressure is integrated upwards and downwards from CO2 datum and input reservoir pressure (p_resrv).
         """
         print(f'Pressure scenario {self.p_name}: Compute pressures assuming reservoir pressure is {self.p_resrv:.2f} bar at {self.z_resrv:.2f} mTVDMSL')
 
@@ -122,6 +111,8 @@ class FluidP_scenario:
     def integrate_downwards(self):
         """
         Method to compute maximum pressure tables starting from Shmin at given depth.
+        CO2 pressure is integrated downwards from input depth (z_MSAD). 
+        H2O pressure is integrated upwards and downwards from point where CO2 pressure meets CO2 datum.
         """
         
         print(f'Pressure scenario {self.p_name}: Compute maximum pressurization needed to reach Shmin at {self.z_MSAD} mTVDMSL')
@@ -182,16 +173,14 @@ class FluidP_scenario:
         """
         Depending on input defines which method to run.
         """
-
         if (not np.isnan(self.z_MSAD)):
             # class will compute max pressure for given points. Integration of CO2 downwards
             self.integrate_downwards()
-        
         elif (not np.isnan(self.p_delta)) and (not np.isnan(self.z_resrv)):
             # reservoir pressure given as delta value- Integration of CO2 is upwards
             raise NotImplementedError('method not implemented yet')
-
         elif (not np.isnan(self.p_resrv)) and (not np.isnan(self.z_resrv))  and (not np.isnan(self.z_CO2_datum)):
             # reservoir pressure given as absolute value- Integration of CO2 is upwards
             self.integrate_upwards()
-
+        else:
+            raise ValueError("Invalid input parameters for computing pressure profile")

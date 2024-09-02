@@ -19,10 +19,10 @@ Ensure you have Python `^3.9` installed and accessible in your path.
 
 #### 2. Installing Poetry
     
-If you don't have Poetry installed, you can do so with the following command compatible with Python 3.8:
+If you don't have Poetry installed, you can do so with the following command:
 
 ```shell
-curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
+curl -sSL https://install.python-poetry.org | python3 
 ```
 
 After installation, verify that Poetry is correctly installed:
@@ -35,8 +35,37 @@ To install the project without cloning the repository:
 
 ```shell
 mkdir my-project
+
 cd my-project
+
 # Create a pyproject.toml file with the content described in the original README, then execute:
+poetry init
+```
+Open the pyproject.toml file. Open the file in your preferred text editor, copy and Paste the follwing contents:
+
+```poetry
+[tool.poetry]
+name = "my-project"
+version = "0.1.0"
+package-mode = false  # Add this line
+
+
+[tool.poetry.dependencies]
+python = ">=3.9,<=3.12"
+
+[tool.poetry.dependencies.winc-onepager]
+git = "git@github.com:equinor/WINC_OnePager.git"
+rev = "main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+```
+
+Save the changes and close the editor.
+Install dependencies.
+
+```shell
 poetry install
 ```
 
@@ -137,13 +166,9 @@ In order for a quick test of the codes, we include some test dataset in the fold
 │   ├── GaP_input_Smeaheia_v3.csv
 │   └── smeaheia.yaml
 ├── wildcat
-│   ├── GaP_input_Wildcat_v3.csv
-│   └── wildcat.yaml
-├── wildcat-pflotran
-│   └── wildcat.yaml
-└── wildcat-pflotran-2
+    ├── GaP_input_Wildcat_v3.csv
     └── wildcat.yaml
-```
+
 
 ## Unit testing and code coverage
 We are using `pytest` for unit testing and code coverage. The unit testing utilizes `wildcat` as the testing example. So please make sure the saved .pkl files in ```test_data/examples/wildcat/pytest``` exists and is updated. Here is a commandline example:
