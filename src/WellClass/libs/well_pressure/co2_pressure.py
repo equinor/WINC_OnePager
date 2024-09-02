@@ -40,19 +40,34 @@ def _get_shmin(well_header: dict, pt_df_in: pd.DataFrame) -> pd.DataFrame:
 def _get_rho_in_pressure_column(pt_df_in: pd.DataFrame, colname_p: str, colname_rho: str, get_rho: callable) -> pd.DataFrame:
     '''
     Calculate the water density in the CO2 column with its calculated pressure and temperature.
+    
+    Parameters:
+    - pt_df_in (pd.DataFrame): Input DataFrame containing temperature and pressure data.
+    - colname_p (str): Column name in the DataFrame that contains pressure values.
+    - colname_rho (str): Column name to be added to the DataFrame for storing calculated density values.
+    - get_rho (callable): Function that takes pressure and temperature as inputs and returns the density.
+    
+    Returns:
+    - pd.DataFrame: DataFrame with an additional column for the calculated densities.
     '''
+    # Create a copy of the input DataFrame to avoid modifying the original data
     pt_df = pt_df_in.copy()
     
-    # Ensure get_rho can handle vectorized inputs
-    pressures = pt_df[colname_p].values
-    temps = pt_df['temp'].values
+    # Extract temperature and pressure columns from the DataFrame
+    temps = pt_df['temp']
+    pressures = pt_df[colname_p]
     
-    # Vectorized call to get_rho
-    rhos = get_rho(pressures, temps)
+    # Initialize an empty list to store the calculated densities
+    rhos = []
     
-    # Assuming get_rho returns a 2D array, we need the first element
-    pt_df[colname_rho] = rhos[:, 0]
-
+    # Loop through each pair of temperature and pressure values
+    for t, p in zip(temps, pressures):
+        # Call the get_rho function to calculate the density and append the result to the list
+        rhos.append(get_rho(p, t)[0, 0])
+    
+    # Add the calculated densities as a new column in the DataFrame
+    pt_df[colname_rho] = rhos[:]
+    
     return pt_df
 
 def _get_max_pressure(pt_df_in: pd.DataFrame, max_pressure_pos: Union[dict, list, float, int], get_rho: callable) -> pd.DataFrame:
