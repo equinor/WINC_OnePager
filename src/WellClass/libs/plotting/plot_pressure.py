@@ -87,18 +87,19 @@ def plot_pressure(my_pressure: Pressure,
     #iterate over scenarios
     counter = 0
     for idx, p_sc in scenarios.iterrows():
-        sc_type    = p_sc['type']
+        sc_type    = p_sc['from_resrvr']
         sc_name    = p_sc['name']
         sc_msad_p  = p_sc['p_MSAD']
         sc_msad_z  = p_sc['z_MSAD']
         sc_delta_p = p_sc['p_delta']
 
+
         #define legend if it is a reservoir pressure scenario
-        if sc_type == 'reservoir':
+        if sc_type:
             sc_label = f'$CO_2$ P ($\Delta$P = {sc_delta_p:.0f} bar)'
 
         #define legend if it is a maximum pressure scenario
-        elif sc_type == 'max_p':
+        else:
             sc_label = f'max $CO_2$ P to ($\Delta$P = {sc_delta_p:.0f} bar)'
         
         #include MSAD
