@@ -112,7 +112,11 @@ class Pressure:
               But the most interesting input IS actually the change in pressure compared with hydrostatic pressure.
 
         '''
-        #Get initial pressure table
+        # If no reservoir pressure is given, then we assume the reservoir is at the CO2 datum
+        if self.reservoir_P is None:
+            self.reservoir_P = {'depth_msl': self.co2_datum}
+
+        #Get initial pressure table from reservoir_P dictionary
         P_init = self.reservoir_P
 
         # Get reference depth from reservoir_P, e.g. top reservoir
@@ -363,10 +367,50 @@ class Pressure:
             'z_resrv': z_resrv,
             'p_delta': p_delta
         }
-        sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
-        self.pressure_scenarios[scenario_counter]['p_MSAD'] = sc_pressure.p_MSAD
-        self.pressure_scenarios[scenario_counter]['z_MSAD'] = sc_pressure.p_MSAD
+
+        if name is None:
+            raise ValueError("The 'name' parameter is required.")
         
+        if from_resrvr is None:
+            raise ValueError("The 'from_resrvr' parameter is required.")
+        
+        if from_resrvr:
+            if p_delta is None and (p_resrv is None or z_resrv is None):
+                raise ValueError("If 'from_resrvr' is True, you must provide either 'p_delta' or both 'p_resrv' and 'z_resrv'.")
+            
+            if p_resrv is not None and z_resrv is not None:
+                # Interpolate hydrostatic pressure at z_resrv
+                hydrostatic_pressure = np.interp(z_resrv, self.init_curves['depth_msl'], self.init_curves['hs_p'])
+                
+                self.pressure_scenarios[scenario_counter]['p_delta'] = p_resrv - hydrostatic_pressure
+            elif p_delta is not None and z_resrv is not None:
+                # Interpolate hydrostatic pressure at z_resrv
+                hydrostatic_pressure = np.interp(z_resrv, self.init_curves['depth_msl'], self.init_curves['hs_p'])
+
+
+                self.pressure_scenarios[scenario_counter]['p_resrv'] = hydrostatic_pressure + p_delta
+
+            elif p_delta is not None:
+                # Use self.co2_datum as z_resrv
+                print('TESTING')
+                z_resrv = self.co2_datum
+                hydrostatic_pressure = np.interp(z_resrv, self.init_curves['depth_msl'], self.init_curves['hs_p'])
+                self.pressure_scenarios[scenario_counter]['p_resrv'] = hydrostatic_pressure + p_delta
+                self.pressure_scenarios[scenario_counter]['z_resrv'] = z_resrv
+            else:
+                raise ValueError("Invalid combination of parameters for 'from_resrvr' = True.")
+        else:
+            if z_MSAD is None:
+                raise ValueError("If 'from_resrvr' is False, you must provide 'z_MSAD'.")
+
+
+        sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
+
+        self.pressure_scenarios[scenario_counter]['p_MSAD'] = sc_pressure.p_MSAD
+        self.pressure_scenarios[scenario_counter]['z_MSAD'] = sc_pressure.z_MSAD
+        self.pressure_scenarios[scenario_counter]['p_delta'] = sc_pressure.p_delta
+        self.pressure_scenarios[scenario_counter]['p_resrv'] = sc_pressure.p_resrv
+        self.pressure_scenarios[scenario_counter]['z_resrv'] = sc_pressure.z_resrv
 
     @property
     def to_json(self):
