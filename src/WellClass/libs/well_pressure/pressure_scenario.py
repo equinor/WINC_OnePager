@@ -143,8 +143,6 @@ class FluidP_scenario:
                                            direction = 'down', 
                                            colname_p = co2_p_colname)
         
-        #Clean up pressure values below Gas_Water_contact
-        self.P_table.loc[self.P_table['depth_msl'] > z_co2_datum, co2_p_colname] = np.nan
 
 
 
@@ -181,6 +179,11 @@ class FluidP_scenario:
 
         #Compute delta P
         self.p_delta = self.compute_delta_p(init_table)
+
+
+        #Clean up pressure values below Gas_Water_contact
+        self.P_table.loc[self.P_table['depth_msl'] > z_co2_datum, co2_p_colname] = np.nan
+
 
     def compute_MSAD(self):
         """
