@@ -73,7 +73,7 @@ def plot_pt(my_pressure: Pressure,
         pt_df['init'].plot(y='hs_p', x='temp', ax=ax, label='$p_{hs}$', color='steelblue', lw = 0.75)
 
     if plot_Shmin:
-        pt_df['init'].plot(x='temp', y='Shmin', ax=ax, label='$p_{hs}$', color='k', lw = 0.75)
+        pt_df['init'].plot(x='temp', y='Shmin', ax=ax, label='$\sigma_{min}$', color='k', lw = 0.75)
 
     ymax = 0
   
