@@ -47,14 +47,13 @@ def plot_pressure(my_pressure: Pressure,
     depth_values = []
     if geology_dict is not None:
         geology_df  = pd.DataFrame(geology_dict)
-        base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
+        base_deepest_rsrv = float(geology_df[geology_df.reservoir_flag]['base_msl'].max())
         depth_values.append(base_deepest_rsrv)
     
     #define plot spatial references
     depth_values.append(my_pressure.co2_datum)
     # base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
     # ymax = max([base_deepest_rsrv,my_pressure.co2_datum])+100
-    print(depth_values)
     ymax = max(depth_values)+100
     xmax = pt_df['init'].query('depth_msl>@ymax')['Shmin'].iloc[0]
     xmin = 0
