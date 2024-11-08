@@ -73,51 +73,24 @@ def plot_pt(my_pressure: Pressure,
         pt_df['init'].plot(y='hs_p', x='temp', ax=ax, label='$p_{hs}$', color='steelblue', lw = 0.75)
 
     if plot_Shmin:
-        pt_df['init'].plot(x='temp', y='Shmin', ax=ax, label='$p_{hs}$', color='k', lw = 0.75)
+        pt_df['init'].plot(x='temp', y='Shmin', ax=ax, label='$\sigma_{min}$', color='k', lw = 0.75)
 
     ymax = 0
-    # for key in my_pressure.reservoir_P:
-    #         if key != 'depth_msl':
-    #                 pt_df.query('depth_msl>=@wd').plot(y=key+'_h2o', x='temp', ax=ax, label = '_nolegend_', color='steelblue', legend=False, lw = 0.75, ls=ls_list[counter])
-    #                 pt_df.query('depth_msl>=@wd').plot(y=key+'_co2', x='temp', ax=ax, label = f'$CO_2$ {key}', color='firebrick', legend=True, lw = 0.75, ls=ls_list[counter])
-                    
-    #                 base_msl = pt_df.query('depth_msl>(@co2_datum)+50')[key+'_h2o'].iloc[0]
-
-    #                 if base_msl > ymax:
-    #                         ymax = base_msl
-
-    #                 counter+=1
-    #                 counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter
-
-
-    # #Plot max pressure cases
-    # counter = 0
-    # for key in pt_df.columns: 
-    #     if key.startswith(MAX_PRESSURE_NAME) and RHO_NAME not in key:
-    #         colname = f"{key}"
-    #         pt_df.query('depth_msl>=@wd').plot(y=colname, x='temp', ax=ax, label = colname, color='green', legend=True, lw = 0.75, ls=ls_list[counter])
-    #         base_msl = pt_df.query('depth_msl>(@co2_datum)+50')[colname].iloc[0]
-
-    #         if base_msl > ymax:
-    #             ymax = base_msl
-
-    #         counter+=1
-    #         counter = counter%(len(ls_list))  #If more cases than in ls_list then restart counter  
-
+  
 
     #Read pressure scenarios
     scenarios = pd.DataFrame(my_pressure.pressure_scenarios).T
 
     #Filter scenarios based on boolean type
     if plot_RP and not plot_maxP:
-        scenarios = scenarios.query('type == "reservoir"')
+        scenarios = scenarios.query('from_resrvr == True')
     elif plot_maxP and not plot_RP:
-        scenarios = scenarios.query('type == "max_p"')
+        scenarios = scenarios.query('from_resrvr == False')
 
     #iterate over scenarios
     counter = 0
     for idx, p_sc in scenarios.iterrows():
-        sc_type    = p_sc['type']
+        sc_type    = p_sc['from_resrvr']
         sc_name    = p_sc['name']
         sc_msad_p  = p_sc['p_MSAD']
         sc_msad_z  = p_sc['z_MSAD']

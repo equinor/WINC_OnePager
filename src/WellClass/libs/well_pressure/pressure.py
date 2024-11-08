@@ -1,3 +1,4 @@
+from collections import defaultdict
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -6,6 +7,7 @@ import json
 from typing import Union
 import numpy as np
 import pandas as pd
+import math
 
 from ..pvt.pvt import ( get_hydrostatic_P,
                        get_pvt)
@@ -52,10 +54,10 @@ class Pressure:
 
     def __post_init__(self):
         self._get_mixture_info()
-        self._init_pressure_CO2()
-        self._check_init_pressure()
-        self._check_scenarios()
-        self._compute_CO2_pressures()
+        self.init_pressure_curves()
+        self.check_init_pressure()
+        self._init_CO2_pressures_table()
+        self.check_scenarios_from_input()
 
 
     # TODO(hzh): non-pure function!!!
@@ -74,25 +76,24 @@ class Pressure:
         print(f'Computing pressures for {self.mixture_name} ({self.mixture_composition})')
         
 
-    def _init_pressure_CO2(self):
+    def init_pressure_curves(self):
         '''
         Initiates Pressure table for the wellbore
         By default creates a hydrostatic gradient curve and a Sh min curve
         '''
 
         #Calculate depth, temp(depth) hydrostatic_pressure(depth), H2ORHO(depth for hydrostatic pressure)
-        pressure_CO2 = get_hydrostatic_P(self.header, pvt_path=self.pvt_path) 
+        init_curves = get_hydrostatic_P(self.header, pvt_path=self.pvt_path) 
 
         #Include Minimum horizontal stress
-        pressure_CO2 = _get_shmin(self.header, pressure_CO2)
+        init_curves = _get_shmin(self.header, init_curves)
 
         #Store tables in main pressure_CO2 table 
-        self.pressure_CO2 = pressure_CO2
+        self.init_curves = init_curves
 
-    def _check_init_pressure(self):
+    def check_init_pressure(self):
         '''
-        Calculates hydrostatic pressure at 
-        reservoir_P is the entry looking something like this:
+        Calculates hydrostatic pressure at reservoir_P['depth_msl'] and stores it in reservoir_P['hydrostatic_pressure']
 
         reservoir_pressure		
         depth_msl	RP1	RP2
@@ -111,194 +112,224 @@ class Pressure:
               But the most interesting input IS actually the change in pressure compared with hydrostatic pressure.
 
         '''
+        # If no reservoir pressure is given, then we assume the reservoir is at the CO2 datum
+        if self.reservoir_P is None:
+            self.reservoir_P = {'depth_msl': self.co2_datum}
+
+        #Get initial pressure table from reservoir_P dictionary
         P_init = self.reservoir_P
 
-        #Get hydrostatic pressure
-        #A reference depth given in the input, e.g. top reservoir
+        # Get reference depth from reservoir_P, e.g. top reservoir
         ref_z        = P_init['depth_msl']                       
 
         
         #Hydrostatic pressure at reference depth (ref_z)
-        ref_p        = np.interp(ref_z, self.pressure_CO2['depth_msl'], self.pressure_CO2[ 'hs_p'])
+        ref_p        = np.interp(ref_z, self.init_curves['depth_msl'], self.init_curves[ 'hs_p'])
         print(f"Hydrostatic pressure at reference depth {ref_z:.0f} is {ref_p:.2f}")
 
         #Store value in reservoir_P table
-        self.reservoir_P['hydrostatic_pressure'] = ref_p
+        self.reservoir_P['hydrostatic_pressure'] = float(ref_p)
 
 
 
-    def _check_scenarios(self):
+    def _init_pressure_scenarios_dict(self):
+        '''
+        Returns a dictionary with default values for a new pressure scenario
+        '''
+        # Define the default dictionary
+        default_dict = {
+            'name': None,
+            'z_MSAD': None,
+            'from_resrvr': None,
+            'p_MSAD': None,
+            'p_resrv': None,
+            'z_resrv': None,
+            'p_delta': None
+        }
+            
+        self.pressure_scenarios = defaultdict(lambda: default_dict.copy())
+
+    def _init_CO2_pressures_table(self):
+         #Define and assign a multiindex that groups columns generic for all scenarios: depth_msl, temp, hs_p, RHOH2O and Shmin 
+        index_init = pd.MultiIndex.from_product([['init'], self.init_curves.columns])
+        self.pressure_CO2 = self.init_curves.copy()
+        self.pressure_CO2.columns = index_init
         
+
+    def check_scenarios_from_input(self):
+        '''
+        Reads input scenarios and creates a dictionary of scenarios to compute pressures for
+        '''
+        #Initialize dictionary of scenarios
+        self._init_pressure_scenarios_dict()
+
         MAX_PRESSURE_NAME = 'max_p'
 
-        self.pressure_scenarios = {}
-        
+        #Get hydrostatic pressure at reservoir depth
         ref_p = self.reservoir_P['hydrostatic_pressure']
-        scenario_counter = 1
 
-        #Iterate over reservoir pressure scenarios (values under reservoir_P table)
+        #Compute number of scenarios
+        n_scenarios = max(len(self.reservoir_P)-2, 0)
+
+        #Initialize scenario counter
+        scenario_counter = 0
+
+        #If no scenarios are given, then we have at least one scenario: hydrostatic pressure
+        self._add_hydrostatic_scenario(scenario_counter, ref_p)
+
+        #Increment scenario counter
+        scenario_counter += 1
+        
+        #Iterate over input scenarios
+        if n_scenarios > 0:
+            scenario_counter = self._add_input_scenarios(scenario_counter, ref_p)
+
+        #Iterate over maximum pressure scenarios
+        if not self.max_pressure_pos is None:
+            self._add_max_pressure_scenarios(scenario_counter, MAX_PRESSURE_NAME)
+
+
+
+    def _add_hydrostatic_scenario(self, scenario_counter, ref_p):
+        '''
+        Include hydrostatic pressure scenario to pressure_scenarios dictionary
+        '''
+        self.pressure_scenarios[scenario_counter]['name'] = 'hydrostatic'
+        self.pressure_scenarios[scenario_counter]['p_resrv'] = ref_p
+        self.pressure_scenarios[scenario_counter]['from_resrvr'] = True
+        self.pressure_scenarios[scenario_counter]['z_resrv'] = self.reservoir_P['depth_msl']
+        self.pressure_scenarios[scenario_counter]['p_delta'] = 0
+
+        sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
+
+        self.pressure_scenarios[scenario_counter]['p_MSAD'] = sc_pressure.p_MSAD
+        self.pressure_scenarios[scenario_counter]['z_MSAD'] = sc_pressure.z_MSAD
+
+    def _add_input_scenarios(self, scenario_counter, ref_p):
+        '''
+        If more scenarios are included in input data, then they are added to the pressure_scenarios dictionary
+        '''
+        keys_to_skip = {'depth_msl', 'hydrostatic_pressure'}
+        first_as_hydrostatic = False
+
         for sc_name, sc_pressure in self.reservoir_P.items():
+            if sc_name in keys_to_skip:
+                continue
 
-            if sc_name == 'RP1':
-                if sc_pressure is None or np.isnan(sc_pressure):
-                    print(f'RP1 set as hydrostatic P = {ref_p:.2f} bar')
-                    magnitude = ref_p
+            if sc_pressure is None or (isinstance(sc_pressure, float) and math.isnan(sc_pressure)):
+                if not first_as_hydrostatic:
 
-                else:
-                    print(f'RP1 is set as delta pressure, which yields P = {ref_p:.2f} {sc_pressure:+.2f} = {ref_p + sc_pressure:.2f} bar')
-                    magnitude = ref_p + sc_pressure
-
-                
-                self.pressure_scenarios[scenario_counter] = {'name': sc_name, 'p_resrv': magnitude, 'type': 'reservoir'}
-                scenario_counter += 1
-
-            elif sc_name.startswith('RP'):
+                    self.pressure_scenarios[0]['name'] = sc_name
 
 
-                magnitude = sc_pressure
-
-                try:
-                    if isinstance(magnitude, str):
-                        magnitude = magnitude.replace(" ", "")
-
-                    magnitude = float(magnitude)
-
-                except Exception:
-                    pass
-
-                if isinstance(magnitude, float) or isinstance(magnitude, int):
-                    # p = ref_p + RP                          #self.reservoir_P['RP1'] + RP
-                    print(f'{sc_name} is set as delta pressure, which yields P = {ref_p:.2f} {magnitude:+.2f} = {ref_p + magnitude:.2f} bar')
-                    magnitude = ref_p + magnitude
+                    self.pressure_CO2.columns = self.pressure_CO2.columns.set_levels(
+                        self.pressure_CO2.columns.levels[0].str.replace('hydrostatic', sc_name), level=0)
                     
-                    self.pressure_scenarios[scenario_counter] = {'name': sc_name, 'p_resrv': magnitude, 'type': 'reservoir'}
-                    scenario_counter += 1
+                    first_as_hydrostatic = True
+                continue
 
-                else:
-                    print(sc_name, 'ignored')
-                    continue 
+            magnitude = self._parse_pressure_magnitude(sc_pressure)
+            p_resrv = ref_p + magnitude
+            self.pressure_scenarios[scenario_counter]['name'] = sc_name
+            self.pressure_scenarios[scenario_counter]['p_resrv'] = p_resrv
+            self.pressure_scenarios[scenario_counter]['z_resrv'] = self.reservoir_P['depth_msl']
+            self.pressure_scenarios[scenario_counter]['from_resrvr'] = True
+            self.pressure_scenarios[scenario_counter]['p_delta'] = magnitude
 
-        #Iterate over maximum pressure scenarios (values entered under max_pressure_pos)
-        if isinstance(self.max_pressure_pos, dict):   #Then max_pressure_pos is the same as barriers - and max pressure is calcualted for each barrier
-            print(f'max_pressure_pos is a dictionary of barrriers')
-            for idx, key in self.max_pressure_pos['barrier_name'].items():
-                barr_depth = self.max_pressure_pos['bottom_msl'][idx]
-                sc_name = f"{MAX_PRESSURE_NAME}_{key}"
-                
-                self.pressure_scenarios[scenario_counter] = {'name': sc_name, 'z_MSAD': barr_depth, 'type': 'max_p'}
-                scenario_counter += 1
+            sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
 
+            self.pressure_scenarios[scenario_counter]['p_MSAD'] = sc_pressure.p_MSAD
+            self.pressure_scenarios[scenario_counter]['z_MSAD'] = sc_pressure.z_MSAD
+
+
+
+            scenario_counter += 1
+
+        return scenario_counter
+
+    def _parse_pressure_magnitude(self, sc_pressure):
+        '''
+        Parses pressure magnitude from string to float
+        '''
+        try:
+            if isinstance(sc_pressure, str):
+                sc_pressure = sc_pressure.replace(" ", "")
+            return float(sc_pressure)
+        except Exception:
+            return sc_pressure
+    
+    def _add_max_pressure_scenarios(self, scenario_counter, MAX_PRESSURE_NAME):
+        '''
+        Includes maximum pressure scenarios in the pressure_scenarios dictionary
+        Maximum pressure scenarios are calculated from the Shmin values at specific depths above the reservoir
+        '''
+        # Determine the iterable based on the type of self.max_pressure_pos
+        # Check if max_pressure_pos is a dictionary of barriers
+        if isinstance(self.max_pressure_pos, dict):  
+            print(f'max_pressure_pos is a dictionary of barriers')
+            iterable = [(self.max_pressure_pos['bottom_msl'][idx], key) for idx, key in self.max_pressure_pos['barrier_name'].items()]
+
+        # Check if max_pressure_pos is a depth value or a list of depths
         elif isinstance(self.max_pressure_pos, (list, float, int)):
             print(f'max_pressure_pos is a value')
-            if isinstance(self.max_pressure_pos, (float, int)): #Make it a list with one element
+            if isinstance(self.max_pressure_pos, (float, int)):  # Make it a list with one element
                 self.max_pressure_pos = [self.max_pressure_pos]
-            
-            for depth in self.max_pressure_pos:
+            iterable = [(depth, f"at_{int(depth)}") for depth in self.max_pressure_pos]
+        else:
+            raise ValueError("Invalid type for max_pressure_pos")
 
-                sc_name = f"{MAX_PRESSURE_NAME}_at_{int(depth)}" 
-                self.pressure_scenarios[scenario_counter] = {'name': sc_name, 'z_MSAD': depth, 'type': 'max_p'}
-                scenario_counter += 1
-          
-    def _compute_CO2_pressures(self):
+        # Process the iterable
+        for barr_depth, key in iterable:
+            sc_name = f"{MAX_PRESSURE_NAME}_{key}"
+            self.pressure_scenarios[scenario_counter]['name'] = sc_name
+            self.pressure_scenarios[scenario_counter]['z_MSAD'] = barr_depth
+            self.pressure_scenarios[scenario_counter]['from_resrvr'] = False
 
-        '''
-        The pressure and density for H2O and CO2  along the columns are calculated using an approximate integration
-        Hydrostatic pressure - caculatong downwards from msl
-        Pressure and density assuming a water column - starting at top reservoir and the given overpressure RP
-        Pressure and density assuming a CO2   column - starting at CO2-reference level (CO2-column could start below top reservoir) and the given overpressure RP
-        Shmin
+            sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
 
-        Input:
-        max_pressure_pos is a depth from where max pressure (wrt Shmin) is calculated. 
-        It can be a dict (my_well.barriers) a list of numbers or scalars.
-        If my_well.barriers is given then it is calculated from the base of each barrier
+            self.pressure_scenarios[scenario_counter]['p_MSAD'] = sc_pressure.p_MSAD
+            self.pressure_scenarios[scenario_counter]['p_resrv'] = sc_pressure.p_resrv
+            self.pressure_scenarios[scenario_counter]['z_resrv'] = sc_pressure.z_resrv 
+            self.pressure_scenarios[scenario_counter]['p_delta'] = sc_pressure.p_delta
 
-        Columns are
-            |--------------------init---------------------------------------------|---------------------RPx----------------------------------|
-            depth_msl        temp          hs_p          RHOH20            Shmin   h2o            h20_rho         co2                            RPx_co2_rho     RPx_h2o_rho_in_co2_column
-            depth below msl   temperature   hydrostatic  water density             hs_p+          densities at    Pressure given a CO2 column        Corresponding   water densitites if we are
-            depth ref for                   pressure     at hydrostatic            overpressure   RPx_h20         and overpressure RP                CO2 densities   in a CO2-column.
-            all other values                column       pressure                  RPx
-        
-        
-
-        ---> The RP are all RP-input + hydrostatic_pressure. Hence if e.g. RP1 is hydrostatic pressure RP1-columns and hydrostatic_pressure-columns are identical.
-        '''
+            scenario_counter += 1
 
 
-        # self.pressure_CO2 = _get_shmin(self.header, self.pressure_CO2)
-
-        
+    def _compute_scenario_profiles(self, pressure_scenario: dict):
         #Retrieve pressure, temperature and density fields for CO2 and H2O
-        pvt_T, pvt_P, pvt_RHO_CO2, pvt_RHO_H2O =  get_pvt(self.pvt_path)
-        
+        pvt_T, pvt_P, pvt_RHO_CO2, pvt_RHO_H2O =  get_pvt(self.pvt_path)        
+
         #An interpolator. Used later to look-up densities given pressure p and temperature t
         get_rho_h2o = RectBivariateSpline(pvt_P, pvt_T, pvt_RHO_H2O)
         get_rho_co2 = RectBivariateSpline(pvt_P, pvt_T, pvt_RHO_CO2)
+        
+        sc_pressure = FluidP_scenario(**pressure_scenario)
+        sc_pressure.compute_pressure_profile(init_table = self.init_curves,
+                                             well_header = self.header,
+                                             rho_co2_getter = get_rho_co2,
+                                             rho_h2o_getter = get_rho_h2o,
+                                             z_co2_datum = self.co2_datum)
+        
+        
 
+        self._merge_scenario_profiles(sc_pressure)
 
-        #Define and assign a multiindex that groups columns generic for all scenarios: depth_msl, temp, hs_p, RHOH2O and Shmin 
-        index_init = pd.MultiIndex.from_product([['init'], self.pressure_CO2.columns])
-        self.pressure_CO2.columns = index_init
-
-        #iterate over pressure scenarios to compute tables:
-        for press_sc in self.pressure_scenarios:
-
-            sc_name = self.pressure_scenarios[press_sc]['name']
-            sc_type = self.pressure_scenarios[press_sc]['type']
-
-
-            if sc_type == 'reservoir':
-                p_resrv = self.pressure_scenarios[press_sc]['p_resrv']
-                sc_pressure = FluidP_scenario( header = self.header,
-                                               ref_P = self.pressure_CO2['init'],
-                                               rho_H2O = get_rho_h2o,
-                                               rho_CO2 = get_rho_co2,
-                                               p_name = sc_name,
-                                               p_resrv = p_resrv,
-                                               z_resrv = self.reservoir_P['depth_msl'],
-                                               z_CO2_datum = self.co2_datum)
-                
-                sc_pressure.compute_pressure_profile()
-                
-                self.pressure_scenarios[press_sc]['p_MSAD'] = sc_pressure.p_MSAD
-                self.pressure_scenarios[press_sc]['z_MSAD'] = sc_pressure.z_MSAD
-                self.pressure_scenarios[press_sc]['z_resrv'] = sc_pressure.z_resrv
-                self.pressure_scenarios[press_sc]['p_delta'] = sc_pressure.p_delta
+        return sc_pressure
+        
 
 
 
-            elif sc_type == 'max_p':
-                msad = self.pressure_scenarios[press_sc]['z_MSAD']
+    def _merge_scenario_profiles(self, sc_pressure: FluidP_scenario):
 
-                sc_pressure = FluidP_scenario( header = self.header,
-                                               ref_P = self.pressure_CO2['init'],
-                                               rho_H2O = get_rho_h2o,
-                                               rho_CO2 = get_rho_co2,
-                                               p_name = sc_name,
-                                               z_MSAD = msad,
-                                               z_CO2_datum = self.co2_datum)
-                
-                sc_pressure.compute_pressure_profile()
+        #Drop repeated columns
+        sc_pressure.P_table = sc_pressure.P_table.drop(columns = self.pressure_CO2['init'].columns)
 
-                self.pressure_scenarios[press_sc]['p_MSAD'] = sc_pressure.p_MSAD
-                self.pressure_scenarios[press_sc]['p_resrv'] = sc_pressure.p_resrv
-                self.pressure_scenarios[press_sc]['z_resrv'] = sc_pressure.z_resrv
-                self.pressure_scenarios[press_sc]['p_delta'] = sc_pressure.p_delta
-
-                
-            else:
-                continue
-
-            #Drop repeated columns
-            sc_pressure.P_table = sc_pressure.P_table.drop(columns = self.pressure_CO2['init'].columns)
-
-            #Setup multiindex
-            index_table = pd.MultiIndex.from_product([[sc_name], sc_pressure.P_table.columns])
-            sc_pressure.P_table.columns = index_table
+        #Setup multiindex
+        index_table = pd.MultiIndex.from_product([[sc_pressure.name], sc_pressure.P_table.columns])
+        sc_pressure.P_table.columns = index_table
             
-            #Concatenate init table with scenario table
-            self.pressure_CO2 = pd.concat([self.pressure_CO2, sc_pressure.P_table], axis= 1)
+        #Concatenate init table with scenario table
+        self.pressure_CO2 = pd.concat([self.pressure_CO2, sc_pressure.P_table], axis= 1)
 
 
 
@@ -325,8 +356,62 @@ class Pressure:
         else:
             print(f'No barriers declared in well {well.header["well_name"]}')
 
+    def create_pressure_scenario(self, name: str = None, z_MSAD: float = None, from_resrvr: bool = None, p_MSAD: float = None, p_resrv: float = None, z_resrv: float = None, p_delta: float = None):
+        scenario_counter = len(self.pressure_scenarios)
+        self.pressure_scenarios[scenario_counter] = {
+            'name': name,
+            'z_MSAD': z_MSAD,
+            'from_resrvr': from_resrvr,
+            'p_MSAD': p_MSAD,
+            'p_resrv': p_resrv,
+            'z_resrv': z_resrv,
+            'p_delta': p_delta
+        }
+
+        if name is None:
+            raise ValueError("The 'name' parameter is required.")
+        
+        if from_resrvr is None:
+            raise ValueError("The 'from_resrvr' parameter is required.")
+        
+        if from_resrvr:
+            if p_delta is None and (p_resrv is None or z_resrv is None):
+                raise ValueError("If 'from_resrvr' is True, you must provide either 'p_delta' or both 'p_resrv' and 'z_resrv'.")
+            
+            if p_resrv is not None and z_resrv is not None:
+                # Interpolate hydrostatic pressure at z_resrv
+                hydrostatic_pressure = np.interp(z_resrv, self.init_curves['depth_msl'], self.init_curves['hs_p'])
+                
+                self.pressure_scenarios[scenario_counter]['p_delta'] = p_resrv - hydrostatic_pressure
+            elif p_delta is not None and z_resrv is not None:
+                # Interpolate hydrostatic pressure at z_resrv
+                hydrostatic_pressure = np.interp(z_resrv, self.init_curves['depth_msl'], self.init_curves['hs_p'])
+
+
+                self.pressure_scenarios[scenario_counter]['p_resrv'] = hydrostatic_pressure + p_delta
+
+            elif p_delta is not None:
+                # Use self.co2_datum as z_resrv
+                print('TESTING')
+                z_resrv = self.co2_datum
+                hydrostatic_pressure = np.interp(z_resrv, self.init_curves['depth_msl'], self.init_curves['hs_p'])
+                self.pressure_scenarios[scenario_counter]['p_resrv'] = hydrostatic_pressure + p_delta
+                self.pressure_scenarios[scenario_counter]['z_resrv'] = z_resrv
+            else:
+                raise ValueError("Invalid combination of parameters for 'from_resrvr' = True.")
+        else:
+            if z_MSAD is None:
+                raise ValueError("If 'from_resrvr' is False, you must provide 'z_MSAD'.")
+
+
+        sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
+
+        self.pressure_scenarios[scenario_counter]['p_MSAD'] = sc_pressure.p_MSAD
+        self.pressure_scenarios[scenario_counter]['z_MSAD'] = sc_pressure.z_MSAD
+        self.pressure_scenarios[scenario_counter]['p_delta'] = sc_pressure.p_delta
+        self.pressure_scenarios[scenario_counter]['p_resrv'] = sc_pressure.p_resrv
+        self.pressure_scenarios[scenario_counter]['z_resrv'] = sc_pressure.z_resrv
+
     @property
     def to_json(self):
         return json.dumps(self.__dict__, indent=4)
-
-
