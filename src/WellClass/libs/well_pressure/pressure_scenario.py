@@ -31,14 +31,15 @@ class FluidP_scenario:
     p_resrv: float = np.nan 
     z_resrv: float = np.nan
     p_delta: float = np.nan
+    z_co2_datum: float = np.nan
 
 
     def compute_pressure_profile(self,
                                  init_table: pd.DataFrame,
                                  well_header: dict,
                                  rho_co2_getter: RectBivariateSpline,
-                                 rho_h2o_getter: RectBivariateSpline,
-                                 z_co2_datum: float):
+                                 rho_h2o_getter: RectBivariateSpline
+                                 ):
         """
         Depending on input defines which method to run.
         """
@@ -46,17 +47,16 @@ class FluidP_scenario:
             # class will compute max pressure from reservoir upwards
             raise ValueError("Invalid input parameters for computing pressure profile")
         elif self.from_resrvr:
-            self.integrate_upwards(init_table, well_header,rho_co2_getter, rho_h2o_getter, z_co2_datum)
+            self.integrate_upwards(init_table, well_header,rho_co2_getter, rho_h2o_getter)
         else:
-            self.integrate_downwards(init_table, well_header,rho_co2_getter, rho_h2o_getter, z_co2_datum)
+            self.integrate_downwards(init_table, well_header,rho_co2_getter, rho_h2o_getter)
             
 
     def integrate_upwards(self,
                           init_table: pd.DataFrame,
                           well_header: dict,
                           rho_co2_getter: RectBivariateSpline,
-                          rho_h2o_getter: RectBivariateSpline,
-                          z_co2_datum: float):
+                          rho_h2o_getter: RectBivariateSpline):
         """
         Method to compute pressure tables starting from reservoir pressure.
         CO2 pressure is integrated upwards from CO2 datum and input reservoir pressure (p_resrv).
@@ -95,14 +95,14 @@ class FluidP_scenario:
 
         
         #CO2
-        p0 = np.interp(z_co2_datum, self.P_table['depth_msl'], self.P_table[water_p_colname])
+        p0 = np.interp(self.z_co2_datum, self.P_table['depth_msl'], self.P_table[water_p_colname])
         self.p_CO2_datum = p0
         co2_p_colname  = 'co2'
 
         self.P_table = _integrate_pressure(well_header=well_header,
                                            pt_df_in = self.P_table, 
                                            get_rho = rho_co2_getter, 
-                                           reference_depth = z_co2_datum, 
+                                           reference_depth = self.z_co2_datum, 
                                            reference_pressure = p0, 
                                            direction = 'up', 
                                            colname_p = co2_p_colname)
@@ -121,8 +121,7 @@ class FluidP_scenario:
                             init_table: pd.DataFrame,
                             well_header: dict,
                             rho_co2_getter: RectBivariateSpline,
-                            rho_h2o_getter: RectBivariateSpline,
-                            z_co2_datum: float):
+                            rho_h2o_getter: RectBivariateSpline):
         """
         Method to compute maximum pressure tables starting from Shmin at given depth.
         CO2 pressure is integrated downwards from input depth (z_MSAD). 
@@ -147,14 +146,14 @@ class FluidP_scenario:
 
 
         #Water
-        p0 = np.interp(float(z_co2_datum), self.P_table['depth_msl'], self.P_table[co2_p_colname])
+        p0 = np.interp(float(self.z_co2_datum), self.P_table['depth_msl'], self.P_table[co2_p_colname])
         self.p_CO2_datum = p0
         water_p_colname = 'h2o'
 
         self.P_table = _integrate_pressure(well_header=well_header,
                                            pt_df_in = self.P_table, 
                                            get_rho = rho_h2o_getter, 
-                                           reference_depth = z_co2_datum, 
+                                           reference_depth = self.z_co2_datum, 
                                            reference_pressure = p0, 
                                            direction = 'up', 
                                            colname_p = water_p_colname)
@@ -162,7 +161,7 @@ class FluidP_scenario:
         self.P_table = _integrate_pressure(well_header=well_header,
                                            pt_df_in = self.P_table, 
                                            get_rho = rho_h2o_getter, 
-                                           reference_depth = z_co2_datum, 
+                                           reference_depth = self.z_co2_datum, 
                                            reference_pressure = p0, 
                                            direction = 'down', 
                                            colname_p = water_p_colname)
@@ -174,7 +173,7 @@ class FluidP_scenario:
         #Compute reservoir pressure at CO2_datum
         hs_p = self.P_table['h2o'].values
 
-        self.z_resrv = z_co2_datum
+        self.z_resrv = self.z_co2_datum
         self.p_resrv = self.p_CO2_datum
 
         #Compute delta P
@@ -182,7 +181,7 @@ class FluidP_scenario:
 
 
         #Clean up pressure values below Gas_Water_contact
-        self.P_table.loc[self.P_table['depth_msl'] > z_co2_datum, co2_p_colname] = np.nan
+        self.P_table.loc[self.P_table['depth_msl'] > self.z_co2_datum, co2_p_colname] = np.nan
 
 
     def compute_MSAD(self):
