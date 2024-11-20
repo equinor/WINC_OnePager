@@ -20,7 +20,8 @@ def plot_pressure(my_pressure: Pressure,
                   plot_HSP:bool = True, 
                   plot_RP:bool = True, 
                   plot_MSAD:bool = True, 
-                  plot_maxP:bool = True):
+                  plot_maxP:bool = True,
+                  legend: bool = True):
     """
     pressure vs depth
     Takes the Pressure class, geology and barriers tables
@@ -66,10 +67,10 @@ def plot_pressure(my_pressure: Pressure,
 
     #Plot hydrostatic pressure gradient
     if plot_HSP:
-        pt_df['init'].plot(x='hs_p', y='depth_msl', ax=ax, label='$p_{hs}$', color='steelblue', lw = 0.75)
+        pt_df['init'].plot(x='hs_p', y='depth_msl', ax=ax, label='$p_{hs}$', color='steelblue', legend=legend, lw = 0.75)
 
     #Plot minimum horizontal stress
-    pt_df['init'].plot(x='Shmin', y='depth_msl', ax=ax, label='$\sigma_{h min}$', color='k', lw = 0.75)
+    pt_df['init'].plot(x='Shmin', y='depth_msl', ax=ax, label='$\sigma_{h min}$', color='k', legend=legend, lw = 0.75)
 
     #Plot fluid pressure scenarios
     ls_list = ['solid','dashed','dashdot', 'dotted']
@@ -119,10 +120,11 @@ def plot_pressure(my_pressure: Pressure,
             
 
     #Optimize legend
-    ax.legend()
-    handles, labels = ax.get_legend_handles_labels()  
-    lgd = dict(zip(labels, handles))
-    ax.legend(lgd.values(), lgd.keys())
+    if legend:
+        ax.legend()
+        handles, labels = ax.get_legend_handles_labels()  
+        lgd = dict(zip(labels, handles))
+        ax.legend(lgd.values(), lgd.keys())
     
     ax.set_xlim(xmin, xmax)
     ax.set_xlabel('pressure [bar]')
