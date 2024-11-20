@@ -14,7 +14,7 @@ include = [
 
 
 [tool.poetry.dependencies]
-python = ">=3.9"
+python = ">=3.9,<4.0"
 jsonpickle = "^3.0.2"
 PyYAML = "^6.0.1"
 pydantic = "^2.5.2"
