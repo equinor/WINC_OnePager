@@ -178,7 +178,8 @@ class Pressure:
 
         #If no scenarios are given, then we have at least one scenario: hydrostatic pressure
         if self.default_hs_scenario:
-            self._add_hydrostatic_scenario(scenario_counter, ref_p)
+            self.create_pressure_scenario(name='hydrostatic', p_resrv=ref_p, z_resrv=self.reservoir_P['depth_msl'], from_resrvr=True)
+            # self._add_hydrostatic_scenario(scenario_counter, ref_p)
 
             #Increment scenario counter
             scenario_counter += 1
@@ -191,24 +192,6 @@ class Pressure:
         if not self.max_pressure_pos is None:
             self._add_max_pressure_scenarios(scenario_counter, MAX_PRESSURE_NAME)
 
-
-
-    def _add_hydrostatic_scenario(self, scenario_counter, ref_p):
-        '''
-        Include hydrostatic pressure scenario to pressure_scenarios dictionary
-        '''
-        self.pressure_scenarios[scenario_counter]['name'] = 'hydrostatic'
-        self.pressure_scenarios[scenario_counter]['p_resrv'] = ref_p
-        self.pressure_scenarios[scenario_counter]['from_resrvr'] = True
-        self.pressure_scenarios[scenario_counter]['z_resrv'] = self.reservoir_P['depth_msl']
-        self.pressure_scenarios[scenario_counter]['p_delta'] = 0
-        self.pressure_scenarios[scenario_counter]['z_co2_datum'] = self.co2_datum
-        # self.pressure_scenarios[scenario_counter]['pvt_path'] = self.pvt_path
-
-        sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
-
-        self.pressure_scenarios[scenario_counter]['p_MSAD'] = sc_pressure.p_MSAD
-        self.pressure_scenarios[scenario_counter]['z_MSAD'] = sc_pressure.z_MSAD
 
     def _add_input_scenarios(self, scenario_counter, ref_p):
         '''
