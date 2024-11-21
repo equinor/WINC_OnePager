@@ -145,7 +145,8 @@ class Pressure:
             'p_MSAD': None,
             'p_resrv': None,
             'z_resrv': None,
-            'p_delta': None
+            'p_delta': None,
+            # 'pvt_path': None,
         }
             
         self.pressure_scenarios = defaultdict(lambda: default_dict.copy())
@@ -202,6 +203,7 @@ class Pressure:
         self.pressure_scenarios[scenario_counter]['z_resrv'] = self.reservoir_P['depth_msl']
         self.pressure_scenarios[scenario_counter]['p_delta'] = 0
         self.pressure_scenarios[scenario_counter]['z_co2_datum'] = self.co2_datum
+        # self.pressure_scenarios[scenario_counter]['pvt_path'] = self.pvt_path
 
         sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
 
@@ -212,39 +214,33 @@ class Pressure:
         '''
         If more scenarios are included in input data, then they are added to the pressure_scenarios dictionary
         '''
+        # Define keys to skip in the reservoir_P dictionary
         keys_to_skip = {'depth_msl', 'hydrostatic_pressure'}
+        
+        # Initialize flag to check if the first scenario is hydrostatic
         first_as_hydrostatic = False
 
+        # Iterate over the reservoir_P dictionary
         for sc_name, sc_pressure in self.reservoir_P.items():
             if sc_name in keys_to_skip:
                 continue
-
+            
+            # Check if the scenario is None or NaN
             if sc_pressure is None or (isinstance(sc_pressure, float) and math.isnan(sc_pressure)):
                 if not first_as_hydrostatic:
 
+                    # If the first scenario is not hydrostatic, then set the first scenario as hydrostatic
                     self.pressure_scenarios[0]['name'] = sc_name
-
-
-                    self.pressure_CO2.columns = self.pressure_CO2.columns.set_levels(
-                        self.pressure_CO2.columns.levels[0].str.replace('hydrostatic', sc_name), level=0)
                     
+                    # Rename first scenario to hydrostatic
+                    self.pressure_CO2.columns = self.pressure_CO2.columns.set_levels(self.pressure_CO2.columns.levels[0].str.replace('hydrostatic', sc_name), level=0)
+
                     first_as_hydrostatic = True
                 continue
 
             magnitude = self._parse_pressure_magnitude(sc_pressure)
-            p_resrv = ref_p + magnitude
-            self.pressure_scenarios[scenario_counter]['name'] = sc_name
-            self.pressure_scenarios[scenario_counter]['p_resrv'] = p_resrv
-            self.pressure_scenarios[scenario_counter]['z_resrv'] = self.reservoir_P['depth_msl']
-            self.pressure_scenarios[scenario_counter]['from_resrvr'] = True
-            self.pressure_scenarios[scenario_counter]['p_delta'] = magnitude
 
-            sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
-
-            self.pressure_scenarios[scenario_counter]['p_MSAD'] = sc_pressure.p_MSAD
-            self.pressure_scenarios[scenario_counter]['z_MSAD'] = sc_pressure.z_MSAD
-
-
+            self.create_pressure_scenario(name=sc_name, p_delta=magnitude, from_resrvr=True)
 
             scenario_counter += 1
 
@@ -284,16 +280,8 @@ class Pressure:
         # Process the iterable
         for barr_depth, key in iterable:
             sc_name = f"{MAX_PRESSURE_NAME}_{key}"
-            self.pressure_scenarios[scenario_counter]['name'] = sc_name
-            self.pressure_scenarios[scenario_counter]['z_MSAD'] = barr_depth
-            self.pressure_scenarios[scenario_counter]['from_resrvr'] = False
 
-            sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
-
-            self.pressure_scenarios[scenario_counter]['p_MSAD'] = sc_pressure.p_MSAD
-            self.pressure_scenarios[scenario_counter]['p_resrv'] = sc_pressure.p_resrv
-            self.pressure_scenarios[scenario_counter]['z_resrv'] = sc_pressure.z_resrv 
-            self.pressure_scenarios[scenario_counter]['p_delta'] = sc_pressure.p_delta
+            self.create_pressure_scenario(name=sc_name, z_MSAD=barr_depth, from_resrvr=False)
 
             scenario_counter += 1
 
