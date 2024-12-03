@@ -9,7 +9,13 @@ def compute_intersection(x: np.ndarray, y1:np.ndarray, y2: np.ndarray):
         y1, y2 = Sh_min and fluid pressure vectors.
 
         """
+        #Convert to float
+        x = x.astype(float)
+        y1 = y1.astype(float)
+        y2 = y2.astype(float)
+        
         # Filter nan values in vector
+        
         y_filter = ~np.isnan(y2)
         x =   x[y_filter]
         y1 = y1[y_filter]

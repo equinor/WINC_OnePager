@@ -163,7 +163,8 @@ def compute_T(z : Union[float, int] , well_header: dict) -> float:
 
 
 def _integrate_pressure(well_header: dict, pt_df_in: pd.DataFrame, get_rho: callable, reference_depth: float, 
-                        reference_pressure: float, direction: str, colname_p: str) -> pd.DataFrame:
+                        reference_pressure: float, colname_p: str, 
+                        top_limit: float = None, bottom_limit:float = None) -> pd.DataFrame:
     '''
     Simple integration to find pressure
     Starting point: reference_depth at reference pressure.  Reference temperature is found in pt_df
@@ -172,51 +173,62 @@ def _integrate_pressure(well_header: dict, pt_df_in: pd.DataFrame, get_rho: call
     '''
     pt_df = pt_df_in.copy()
 
+    print(f'{reference_pressure=}, {reference_depth=}')
+
     ## Initialization
     #New columns needed in DataFrame
     if colname_p not in pt_df.columns:
         pt_df[colname_p] = np.nan
 
     colname_rho = colname_p+'_rho'
+
     if colname_rho not in pt_df.columns:
         pt_df[colname_rho] = np.nan
 
-    #Take out the part of the dataframe that is either below or above the reference depth.
-    if direction.lower() == "up":
-        query = pt_df.query('depth_msl<=@reference_depth')
-        query = query[::-1]
-        sign  = -1
-    elif direction.lower() == "down":
-        query = pt_df.query('depth_msl>=@reference_depth')
-        sign = 1
-    else:
-        print(f"ERROR: Not a valid direction. It should be 'up' or 'down'. You wrote {direction.lower()}")
+    # Check and update limits
+    if top_limit is None:
+        top_limit = float(pt_df.depth_msl.min())
+    
+    if bottom_limit is None:
+        bottom_limit = float(pt_df.depth_msl.max())
 
-    z_final = query['depth_msl'].iloc[-1]
+    # Check if reference_depth is within limits
+    if reference_depth < top_limit or reference_depth > bottom_limit:
+        raise ValueError('reference_depth is out of range')
 
-    ###Do the calculations
-    #Starting pressure and depth
-    p0  = reference_pressure
-    z0 = reference_depth
+    # Check and integrate upwards if needed
+    if reference_depth > top_limit:
+    
+        query_up = pt_df[pt_df.depth_msl < reference_depth]
+        query_up = query_up.sort_values('depth_msl', ascending=False)
 
-    #Integrate pressure
-    solution = solve_ivp(_Pdz_odesys, [z0, z_final], [p0], args=(well_header, compute_T, get_rho), 
-                         t_eval=query['depth_msl'].values, dense_output=True,
+
+        solution_up = solve_ivp(_Pdz_odesys, [reference_depth, top_limit], [reference_pressure], args=(well_header, compute_T, get_rho), 
+                         t_eval=query_up['depth_msl'].values, dense_output=True,
                          method = 'Radau')
     
+        pt_df.loc[query_up.index, colname_p] = solution_up.y[0]
 
-    # Stored solution in dataframe
-    pt_df.loc[query.index, colname_p] = solution.y[0]
+    # Check and integrate downwards if needed
+    if reference_depth < bottom_limit:
+
+        query_down = pt_df[pt_df.depth_msl > reference_depth]
+        solution_down = solve_ivp(_Pdz_odesys, [reference_depth, bottom_limit], [reference_pressure], args=(well_header, compute_T, get_rho), 
+                         t_eval=query_down['depth_msl'].values, dense_output=True,
+                         method = 'Radau')
+
+        pt_df.loc[query_down.index, colname_p] = solution_down.y[0]
 
 
     # Vectorized retrieval of densities
-    P_array = pt_df.loc[query.index, colname_p].values
-    T_array = pt_df.loc[query.index, 'temp'].values
+    query_total = pt_df.query('depth_msl>=@top_limit and depth_msl<=@bottom_limit')
+    P_array = pt_df.loc[query_total.index, colname_p].values
+    T_array = pt_df.loc[query_total.index, 'temp'].values
 
     densities = np.array([get_rho(P, T) for P, T in zip(P_array, T_array)])
 
     # After integration, access the stored densities in dataframe
-    pt_df.loc[query.index, colname_rho] = densities.flatten()
+    pt_df.loc[query_total.index, colname_rho] = densities.flatten()
 
     
 

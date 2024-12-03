@@ -52,7 +52,7 @@ def plot_pressure(my_pressure: Pressure,
         depth_values.append(base_deepest_rsrv)
     
     #define plot spatial references
-    depth_values.append(my_pressure.co2_datum)
+    depth_values.append(my_pressure.z_fluid_contact)
     # base_deepest_rsrv = geology_df[geology_df.reservoir_flag]['base_msl'].max()
     # ymax = max([base_deepest_rsrv,my_pressure.co2_datum])+100
     ymax = max(depth_values)+100

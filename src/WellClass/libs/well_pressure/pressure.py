@@ -39,21 +39,25 @@ class Pressure:
         Args:
             header (dict): well header
             reservoir_P (dict): reservoir pressure
-            co2_datum (float): co2 datum depth
+            z_fluid_contact (float): co2 datum depth
             pvt_path (str): directory where PVT files are located.            
     """
     header          : dict = None
     reservoir_P     : dict = None    
-    co2_datum       : dict = None
+    z_fluid_contact   : dict = None
     pvt_path        : Union[str, Path] = None
     barriers        : dict = None
     max_pressure_pos: Union[dict, list, float, int] = None
     pressure_scenarios : dict = None
     mixture_name   :  str = None
     mixture_composition   :  str = None
+    use_fluid_sg : bool = False #Use fluid specific gravity from manual input
+    fluid_sg  :  float = None  #Manual value of fluid specific gravity
     default_hs_scenario : bool = True
 
     def __post_init__(self):
+        if self.fluid_sg is not None:
+            self.use_fluid_sg = True
         self._get_mixture_info()
         self.init_pressure_curves()
         self.check_init_pressure()
@@ -64,6 +68,7 @@ class Pressure:
     # TODO(hzh): non-pure function!!!
     def _get_mixture_info(self):
         
+
         if isinstance(self.pvt_path, str):
             pvt_path = Path(self.pvt_path)
         else:
@@ -71,10 +76,12 @@ class Pressure:
 
         with open(pvt_path / "metadata.json", "r") as file:
             mixture_info = json.load(file)
-        
+    
         self.mixture_name = mixture_info['name']
         self.mixture_composition = mixture_info['composition']
         print(f'Computing pressures for {self.mixture_name} ({self.mixture_composition})')
+        
+           
         
 
     def init_pressure_curves(self):
@@ -115,7 +122,7 @@ class Pressure:
         '''
         # If no reservoir pressure is given, then we assume the reservoir is at the CO2 datum
         if self.reservoir_P is None:
-            self.reservoir_P = {'depth_msl': self.co2_datum}
+            self.reservoir_P = {'depth_msl': self.z_fluid_contact}
 
         #Get initial pressure table from reservoir_P dictionary
         P_init = self.reservoir_P
@@ -329,18 +336,38 @@ class Pressure:
         else:
             print(f'No barriers declared in well {well.header["well_name"]}')
 
-    def create_pressure_scenario(self, name: str = None, z_MSAD: float = None, from_resrvr: bool = None, p_MSAD: float = None, p_resrv: float = None, z_resrv: float = None, p_delta: float = None):
+    def create_pressure_scenario(self, 
+                                 name: str = None, 
+                                 from_resrvr: bool = None, 
+                                 z_MSAD: float = None, 
+                                 p_MSAD: float = None, 
+                                 z_resrv: float = None, 
+                                 p_resrv: float = None,
+                                 z_fluid_contact: float = z_fluid_contact,
+                                 p_fluid_contact: float = None, 
+                                 p_delta: float = None):
+        
+        # Get the number of scenarios
         scenario_counter = len(self.pressure_scenarios)
+
+        # Create a new scenario
         self.pressure_scenarios[scenario_counter] = {
             'name': name,
-            'z_MSAD': z_MSAD,
             'from_resrvr': from_resrvr,
+            'z_MSAD': z_MSAD,
             'p_MSAD': p_MSAD,
-            'p_resrv': p_resrv,
             'z_resrv': z_resrv,
+            'p_resrv': p_resrv,
+            'z_fluid_contact': self.z_fluid_contact,
+            'p_fluid_contact': p_fluid_contact,
             'p_delta': p_delta,
-            'z_co2_datum': self.co2_datum
         }
+
+        print('\ninput parameters:')
+        print(scenario_counter)
+        for key, value in self.pressure_scenarios[scenario_counter].items():
+            print(f"Pressure scenario {name} has {key} = {value}")
+        print()
 
         if name is None:
             # Return error ir scenario name is not provided
@@ -351,7 +378,7 @@ class Pressure:
             raise ValueError("The 'from_resrvr' parameter is required.")
         
         if from_resrvr:
-            # Compute pressure depending on the input parameters provided
+            # Compute pressure profiles from reservoir upwards
             if p_delta is None and (p_resrv is None or z_resrv is None):
                 # Return error if 'p_delta' or both 'p_resrv' and 'z_resrv' are not provided
                 raise ValueError("If 'from_resrvr' is True, you must provide either 'p_delta' or both 'p_resrv' and 'z_resrv'.")
@@ -361,27 +388,32 @@ class Pressure:
                 # Interpolate hydrostatic pressure at z_resrv
                 hydrostatic_pressure = np.interp(z_resrv, self.init_curves['depth_msl'], self.init_curves['hs_p'])
 
-                # Update z_co2_datum with provided reservoir depth
-                self.pressure_scenarios[scenario_counter]['z_co2_datum'] = z_resrv
+                # Update z_fluid_contact with provided reservoir depth
+                self.pressure_scenarios[scenario_counter]['z_fluid_contact'] = z_resrv
 
                 
                 # Compute reservoir pressure
                 self.pressure_scenarios[scenario_counter]['p_delta'] = p_resrv - hydrostatic_pressure
 
             elif p_delta is not None and z_resrv is not None:
+
                 # Compute pressure if 'p_delta' and 'z_resrv' are provided
-                                
+                print(f'TESTING {z_resrv=} {z_fluid_contact=}')
+                if z_resrv > self.z_fluid_contact:
+                    z_fluid_contact = z_resrv
+                
                 # Interpolate hydrostatic pressure at z_resrv
-                hydrostatic_pressure = np.interp(z_resrv, self.init_curves['depth_msl'], self.init_curves['hs_p'])
+                hydrostatic_pressure = np.interp(self.z_fluid_contact, self.init_curves['depth_msl'], self.init_curves['hs_p'])
 
                 # Compute reservoir pressure
+                self.pressure_scenarios[scenario_counter]['z_fluid_contact'] = z_resrv
                 self.pressure_scenarios[scenario_counter]['p_resrv'] = hydrostatic_pressure + p_delta
 
             elif p_delta is not None:
                 # Compute pressure if only 'p_delta' is provided.
-                # Use self.co2_datum as z_resrv
+                # Use self.z_fluid_contact as z_resrv
                 
-                z_resrv = self.co2_datum
+                z_resrv = z_fluid_contact
                 hydrostatic_pressure = np.interp(z_resrv, self.init_curves['depth_msl'], self.init_curves['hs_p'])
                 self.pressure_scenarios[scenario_counter]['p_resrv'] = hydrostatic_pressure + p_delta
                 self.pressure_scenarios[scenario_counter]['z_resrv'] = z_resrv
@@ -391,6 +423,10 @@ class Pressure:
             if z_MSAD is None:
                 raise ValueError("If 'from_resrvr' is False, you must provide 'z_MSAD'.")
 
+        print('\ninput parameters_v2:')
+        for key, value in self.pressure_scenarios[scenario_counter].items():
+            print(f"Pressure scenario {name} has {key} = {value}")
+        print()
 
         sc_pressure = self._compute_scenario_profiles(self.pressure_scenarios[scenario_counter])
 
@@ -399,7 +435,13 @@ class Pressure:
         self.pressure_scenarios[scenario_counter]['p_delta'] = sc_pressure.p_delta
         self.pressure_scenarios[scenario_counter]['p_resrv'] = sc_pressure.p_resrv
         self.pressure_scenarios[scenario_counter]['z_resrv'] = sc_pressure.z_resrv
-        self.pressure_scenarios[scenario_counter]['z_co2_datum'] = sc_pressure.z_co2_datum
+        self.pressure_scenarios[scenario_counter]['z_fluid_contact'] = sc_pressure.z_fluid_contact
+        self.pressure_scenarios[scenario_counter]['p_fluid_contact'] = sc_pressure.p_fluid_contact
+
+        print('\ninput parameters_v3:')
+        for key, value in self.pressure_scenarios[scenario_counter].items():
+            print(f"Pressure scenario {name} has {key} = {value}")
+        print()
 
 
     @property
