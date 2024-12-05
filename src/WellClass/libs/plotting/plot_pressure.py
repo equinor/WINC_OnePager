@@ -26,7 +26,6 @@ def plot_pressure(my_pressure: Pressure,
     plot_HSP to plot brine hydrostatic pressure
     plot_RP to plot reservoir pressure scenarios
     plot_MSAD to plot Minimum Safety Abandonment pressure for each reservoir scenario
-    plot_maxP to plot max pressurization at a given depth
     plot_selected_scenarios to plot only a selection of scenarios
     """
 
