@@ -112,6 +112,7 @@ class Pressure:
         kwargs.setdefault('init_curves', self.init_curves)
         kwargs.setdefault('fluid_type', self.fluid_type)
         kwargs.setdefault('pvt_data', self.pvt_data)
+        kwargs.setdefault('z_fluid_contact', self.z_fluid_contact)
         
         # Create a new PressureScenario instance with the given name and parameters
         scenario = self.scenario_manager.create_scenario(name=scenario_name, **kwargs)
@@ -133,6 +134,7 @@ class Pressure:
                     z_fluid_contact=self.z_fluid_contact,
                     p_delta=0  # Assuming hydrostatic pressure
                 )
+
             
             # Parse the remaining scenarios and create PressureScenario instances
             for sc_name, sc_pressure in scenarios_iter:
