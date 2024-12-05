@@ -11,12 +11,10 @@ class PressureScenarioManager:
 
     def create_scenario(self, name: str, **kwargs) -> PressureScenario:
         # Create a new PressureScenario instance with the given name and parameters
-        scenario = PressureScenario(name=name, **kwargs)
-        # Print all **kwargs passed to the method
-        for key, value in kwargs.items():
-            if key in ['fluid_type', 'from_resrvr',  'z_MSAD', 'p_MSAD', 'p_resrv', 'z_resrv', 'z_fluid_contact', 'p_fluid_contact', 'p_delta']:
-                print(f"{key}: {value}")
+        if 'init_curves' in kwargs:
+            kwargs['init_curves'] = kwargs['init_curves'].copy(deep=True)
 
+        scenario = PressureScenario(name=name, **kwargs)
         
 
         # Additional logic to initialize the scenario based on kwargs
@@ -27,6 +25,9 @@ class PressureScenarioManager:
         # Iterate over all scenarios and compute their pressure profiles
         for scenario in self.scenarios.values():
             scenario.compute_pressure_profile()
+            import matplotlib.pyplot as plt
+            # plt.plot(scenario.init_curves['fluid_pressure'], scenario.init_curves['depth'], ls='--')
+
 
     def get_scenarios_summary(self) -> pd.DataFrame:
         # Collect parameters for each scenario into a list of dictionaries
