@@ -12,13 +12,13 @@ def plot_pressure(my_pressure: Pressure,
                   geology_dict: dict = None,
                   barriers: dict = None, 
                   ax = None, 
-                  plot_HSP: bool = True, 
-                  plot_MSAD: bool = True, 
+                  plot_HSP: bool = False, 
+                  plot_MSAD: bool = False, 
                   legend: bool = True,
                   plot_selected_scenarios: list = None,
-                  plot_resrv: bool = True,  # Option to plot (p_resrv, z_resrv)
-                  plot_fluid_contact: bool = True,
-                  plot_delta_p: bool = True  ):  # Option to plot (p_fluid_contact, z_fluid_contact)
+                  plot_resrv: bool = False,  # Option to plot (p_resrv, z_resrv)
+                  plot_fluid_contact: bool = False,
+                  plot_delta_p: bool = False  ):  # Option to plot (p_fluid_contact, z_fluid_contact)
     
     """
     pressure vs depth
@@ -34,6 +34,7 @@ def plot_pressure(my_pressure: Pressure,
 
     # Use the collated_profiles DataFrame from the Pressure class
     # pt_df = my_pressure.collate_all_profiles()
+    #
 
     #List to store the reference detoth values to define the spatial references of the plot
     depth_values = []
@@ -44,9 +45,10 @@ def plot_pressure(my_pressure: Pressure,
     
     #define plot spatial references
     if isinstance(my_pressure.z_fluid_contact, float):
-        depth_values.append(my_pressure.z_fluid_contact)
-    print(depth_values)
-    # Define plot spatial references
+        depth_values.append(my_pressure.z_fluid_contact + 100)
+
+
+
     ymax = np.ceil(max(depth_values))
     xmax = my_pressure.init_curves.query('depth<=@ymax')['min_horizontal_stress'].max()
     xmin = 0
@@ -108,7 +110,7 @@ def plot_pressure(my_pressure: Pressure,
             # Plot brine pressure profile if different from hydrostatic
             linestyle = next(line_style_cycle)
             ax.plot(sc_curves['brine_pressure'], sc_curves['depth'], label='brine pressure', color='steelblue', lw=0.75, ls = linestyle)
-            ax.plot(sc_curves['fluid_pressure'], sc_curves['depth'], label='fluid pressure', color='firebrick', lw=0.75, ls = linestyle)
+            ax.plot(sc_curves['fluid_pressure'], sc_curves['depth'], label=f'fluid pressure ({scenario['fluid_type']})', color='firebrick', lw=0.75, ls = linestyle)
 
             if plot_fluid_contact:
                 ax.scatter(sc_p_fluid_contact, sc_z_fluid_contact, color='blue', label=f'fluid contact')
