@@ -8,7 +8,7 @@ from scipy.integrate import solve_ivp
 
 import scipy.constants as const
 
-def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str) -> Dict[str, Dict[str, np.ndarray]]:
+def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_fluid: bool = True) -> Dict[str, Dict[str, np.ndarray]]:
     # Convert to Path object if not already
     pvt_root_path = Path(pvt_root_path)
 
@@ -30,39 +30,56 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str) -> Dict[str,
     brine_metadata_file = brine_path / "metadata.json"
     brine_rho_file = brine_path / "rho.txt"
 
-    # Load fluid-specific data
-    fluid_path = pvt_root_path / fluid_type
-    fluid_metadata_file = fluid_path / "metadata.json"
-    fluid_rho_file = fluid_path / "rho.txt"
+
 
     # Check that fluid-specific files exist before proceeding
-    for file in [brine_metadata_file, brine_rho_file, fluid_metadata_file, fluid_rho_file]:
+    for file in [brine_metadata_file, brine_rho_file]:
         if not file.exists():
             raise FileNotFoundError(f"Required PVT file not found: {file}")
 
     # Load density data
     rho_brine = np.loadtxt(brine_rho_file, delimiter=',')  # Assuming comma separation
-    rho_fluid = np.loadtxt(fluid_rho_file, delimiter=',')  # Assuming comma separation
 
-    # Load metadata
+    # Load metadata for brine
     with open(brine_metadata_file, 'r') as file:
         brine_metadata = json.load(file)
-    with open(fluid_metadata_file, 'r') as file:
-        fluid_metadata = json.load(file)
 
-    # Create a dictionary to map each type of data to its corresponding numpy array
+
+    # Create a dictionary for brine PVT data
     pvt_data = {
         "temperature": t,
         "pressure": p,
         "brine": {
             "rho": rho_brine,
             "metadata": brine_metadata,
-        },
-        fluid_type: {
-            "rho": rho_fluid,
-            "metadata": fluid_metadata,
         }
     }
+
+    # If fluid data is requested, load it
+    if load_fluid and fluid_type is not None:
+
+        # Load fluid-specific data
+        fluid_path = pvt_root_path / fluid_type
+        fluid_metadata_file = fluid_path / "metadata.json"
+        fluid_rho_file = fluid_path / "rho.txt"
+
+
+        # Check that fluid-specific files exist before proceeding
+        for file in [fluid_metadata_file, fluid_rho_file]:
+            if not file.exists():
+                raise FileNotFoundError(f"Required PVT file not found: {file}")
+
+        # Load density data for the specified fluid
+        rho_fluid = np.loadtxt(fluid_rho_file, delimiter=',')  # Assuming comma separation
+
+        # Load metadata for the specified fluid
+        with open(fluid_metadata_file, 'r') as file:
+            fluid_metadata = json.load(file)
+
+        # Add fluid data to the PVT data dictionary
+        pvt_data[fluid_type] = { "rho": rho_fluid,
+                                "metadata": fluid_metadata }
+
 
     return pvt_data
 
@@ -108,21 +125,20 @@ def compute_hydrostatic_pressure(depth_array: np.ndarray, temperature_array: np.
 def _Pdz_odesys(z: float, P: float, 
                 depth_array: np.ndarray, 
                 temperature_array: np.ndarray, 
-                get_rho_func: Callable[[float, float, Dict, str], float], 
-                pvt_data: Dict, 
+                rho_interpolator: RectBivariateSpline, 
                 fluid_key: str) -> Tuple[float]:
+    
     T = np.interp(z, depth_array, temperature_array)
-    rho = get_rho_func(P, T, pvt_data, fluid_key)
+    rho = get_rho_from_pvt_data(P, T, rho_interpolator)
     dPdz = rho * const.g / const.bar
     return dPdz,
-
 
 def _integrate_pressure(init_curves: pd.DataFrame, 
                         reference_depth: float, 
                         reference_pressure: float,
                         pvt_data: dict, 
                         fluid_key: str,
-                        get_rho_func: Callable[[float, float, Dict, str], float],
+                        interpolator: RectBivariateSpline,
                         top_limit: float = None, bottom_limit:float = None) -> np.ndarray:
     '''
     Simple integration to find pressure
@@ -179,7 +195,7 @@ def _integrate_pressure(init_curves: pd.DataFrame,
 
         solution_up = solve_ivp(_Pdz_odesys, [reference_depth, top_limit], [reference_pressure], 
                          t_eval=query_up['depth'].values, dense_output=True,
-                         args=(depth_array, temperature_array, get_rho_func, pvt_data, fluid_key),
+                         args=(depth_array, temperature_array, interpolator, fluid_key),
                          method = 'Radau')
     
         init_curves.loc[query_up.index, colname_p] = solution_up.y[0]
@@ -190,7 +206,7 @@ def _integrate_pressure(init_curves: pd.DataFrame,
         query_down = init_curves[init_curves.depth > reference_depth]
         solution_down = solve_ivp(_Pdz_odesys, [reference_depth, bottom_limit], [reference_pressure], 
                          t_eval=query_down['depth'].values, dense_output=True,
-                         args=(depth_array, temperature_array, get_rho_func, pvt_data, fluid_key),
+                         args=(depth_array, temperature_array, interpolator, fluid_key),
                          method = 'Radau')
 
         init_curves.loc[query_down.index, colname_p] = solution_down.y[0]
@@ -201,21 +217,28 @@ def _integrate_pressure(init_curves: pd.DataFrame,
     return init_curves[colname_p].values.astype(float)
 
 
-def get_rho_from_pvt_data(pressure: float, temperature: float, pvt_data: Dict[str, Dict[str, np.ndarray]], fluid_key: str = 'brine') -> float:
-    # Retrieve the temperature and pressure vectors from the PVT data
-    temperature_vector = pvt_data['temperature']
-    pressure_vector = pvt_data['pressure']
+# def get_rho_from_pvt_data(pressure: float, temperature: float, pvt_data: Dict[str, Dict[str, np.ndarray]], fluid_key: str = 'brine') -> float:
+#     # Retrieve the temperature and pressure vectors from the PVT data
+#     temperature_vector = pvt_data['temperature']
+#     pressure_vector = pvt_data['pressure']
     
-    # Determine the fluid key to use (default to 'brine' if the specified fluid is not found)
-    fluid_key_to_use = fluid_key if fluid_key in pvt_data else 'brine'
+#     # Determine the fluid key to use (default to 'brine' if the specified fluid is not found)
+#     fluid_key_to_use = fluid_key if fluid_key in pvt_data else 'brine'
     
-    # Retrieve the density matrix for the specified fluid
-    rho_matrix = pvt_data[fluid_key_to_use]['rho']
+#     # Retrieve the density matrix for the specified fluid
+#     rho_matrix = pvt_data[fluid_key_to_use]['rho']
     
-    # Create an interpolator for the density matrix
-    rho_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, rho_matrix)
+#     # Create an interpolator for the density matrix
+#     print(f'{type(pressure_vector)} {type(temperature_vector)} {type(rho_matrix)}')
+#     rho_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, rho_matrix)
     
+#     # Interpolate the density at the given pressure and temperature
+#     rho = rho_interpolator(pressure, temperature)[0, 0]
+    
+#     return rho
+
+
+def get_rho_from_pvt_data(pressure: float, temperature: float, rho_interpolator: RectBivariateSpline) -> float:
     # Interpolate the density at the given pressure and temperature
     rho = rho_interpolator(pressure, temperature)[0, 0]
-    
     return rho

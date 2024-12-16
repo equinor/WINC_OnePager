@@ -1,18 +1,24 @@
 from dataclasses import dataclass, field
 import pandas as pd
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import RectBivariateSpline
+from scipy import constants as const
 
-from .new_aux_func import _integrate_pressure, get_rho_from_pvt_data
+
+from .helper_func import _integrate_pressure, get_rho_from_pvt_data
 from ..utils.compute_intersection import compute_intersection
 
 @dataclass
 class PressureScenario:
     name: str
-    fluid_type: str
-    pvt_data: dict
     from_resrvr: bool
     init_curves: pd.DataFrame 
+    brine_interpolator: RectBivariateSpline
+    fluid_type: str = None
+    fluid_interpolator: RectBivariateSpline = None
+    fluid_composition: str = None
+    pvt_data: dict = None
+    specific_gravity: float = None
     z_MSAD: float = None
     p_MSAD: float = None
     p_resrv: float = None
@@ -20,6 +26,7 @@ class PressureScenario:
     z_fluid_contact: float = None
     p_fluid_contact: float = None
     p_delta: float = None
+
     
     def compute_pressure_profile(self):
         print(f'Computing pressure profile for scenario: {self.name}')
@@ -50,7 +57,6 @@ class PressureScenario:
             fluid_pressure_curve = self._handle_from_MSAD()
 
         # Update init_curves table with the computed fluid pressure curve
-
         self.init_curves['fluid_pressure'] = fluid_pressure_curve
         
         
@@ -60,9 +66,8 @@ class PressureScenario:
             self.init_curves['brine_pressure'] = self.init_curves['hydrostatic_pressure']
         else:
             # If delta_p is not zero, integrate using z_fluid_contact and p_fluid_contact
-            self.init_curves['brine_pressure'] = self._compute_fluid_pressure_curve( reference_depth=self.z_fluid_contact,
-                                                                                     reference_pressure=self.p_fluid_contact,
-                                                                                     fluid_key='brine')
+            self.init_curves['brine_pressure'] = self._compute_brine_pressure_curve( reference_depth=self.z_fluid_contact,
+                                                                                     reference_pressure=self.p_fluid_contact)
 
 
         self._adjust_pressure_curves()
@@ -88,7 +93,8 @@ class PressureScenario:
             # Compute fluid pressure profile from z_fluid_contact
             fluid_pressure_profile = self._compute_fluid_pressure_curve(
                 reference_depth=self.z_fluid_contact,
-                reference_pressure=self.p_fluid_contact
+                reference_pressure=self.p_fluid_contact,
+                fluid_key=self.fluid_type
             )
         
         # Check if z_fluid_contact and p_delta are provided
@@ -96,7 +102,8 @@ class PressureScenario:
             # Compute fluid pressure profile starting from z_fluid_contact
             self.p_fluid_contact = self.p_delta + np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
             fluid_pressure_profile = self._compute_fluid_pressure_curve( reference_depth=self.z_fluid_contact,
-                                                                            reference_pressure=self.p_fluid_contact)
+                                                                            reference_pressure=self.p_fluid_contact,
+                                                                            fluid_key=self.fluid_type)
 
         
             if self.z_resrv is None:
@@ -111,7 +118,8 @@ class PressureScenario:
         elif self.p_resrv is not None and self.z_resrv is not None:
             # Compute fluid pressure profile starting from z_resrv
             fluid_pressure_profile = self._compute_fluid_pressure_curve( reference_depth=self.z_resrv,
-                                                                    reference_pressure=self.p_resrv)
+                                                                    reference_pressure=self.p_resrv,
+                                                                    fluid_key=self.fluid_type)
 
             if self.z_fluid_contact is None:
                 self.p_fluid_contact = self.p_resrv
@@ -120,6 +128,7 @@ class PressureScenario:
             else:
                 if self.z_resrv < self.z_fluid_contact:
                     self.p_fluid_contact = np.interp(self.z_fluid_contact, self.init_curves['depth'], fluid_pressure_profile)
+                    self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
                 else:
                     self.p_fluid_contact = self.p_resrv
                     self.z_fluid_contact = self.z_resrv
@@ -147,7 +156,8 @@ class PressureScenario:
         self.p_MSAD = np.interp(self.z_MSAD, self.init_curves['depth'], self.init_curves['min_horizontal_stress'])
 
         fluid_pressure_curve = self._compute_fluid_pressure_curve( reference_depth=self.z_MSAD,
-                                                                                reference_pressure=self.p_MSAD)
+                                                                                reference_pressure=self.p_MSAD,
+                                                                                fluid_key=self.fluid_type)
         
         # Check if z_fluid_contact is provided
         if self.z_fluid_contact is not None:
@@ -189,23 +199,54 @@ class PressureScenario:
             self.init_curves.loc[above_intersection, 'brine_pressure'] = np.nan
 
 
+    def _compute_brine_pressure_curve(self, 
+                                      reference_depth: float, 
+                                      reference_pressure: float) -> np.ndarray:
+        
+        return _integrate_pressure(
+                init_curves=self.init_curves,
+                reference_depth=reference_depth,
+                reference_pressure=reference_pressure,
+                pvt_data=self.pvt_data,
+                fluid_key='brine',
+                interpolator=self.brine_interpolator
+            )
+
 
     def _compute_fluid_pressure_curve(self, 
                                       reference_depth: float, 
                                       reference_pressure: float,
                                       fluid_key: str = None) -> np.ndarray:
-        # Wrapper method to call _integrate_pressure with the necessary arguments
-        
-        
-        if fluid_key is None:
-            fluid_key = self.fluid_type
+        """Computes the fluid pressure curve based on a reference depth and pressure.
 
-       
-        return _integrate_pressure(
-            init_curves=self.init_curves,
-            reference_depth=reference_depth,
-            reference_pressure=reference_pressure,
-            pvt_data=self.pvt_data,
-            fluid_key=fluid_key,
-            get_rho_func=get_rho_from_pvt_data
-        )
+        This method can be used to compute the pressure curve for the specified fluid type
+        or for brine if 'brine' is passed as the fluid_key.
+
+        Args:
+            reference_depth (float): The depth at which the reference pressure is known.
+            reference_pressure (float): The known pressure at the reference depth.
+            fluid_key (str, optional): Key indicating the type of fluid or 'brine'. 
+                                    Defaults to the scenario's fluid type.
+
+        Returns:
+            np.ndarray: The computed fluid pressure curve.
+        """
+        depth_array = self.init_curves['depth'].values
+
+        if self.specific_gravity is not None:
+            # Convert specific gravity to density (assuming specific gravity is relative to water at 4°C, 1000 kg/m³)
+            density = self.specific_gravity * 1000  # kg/m³
+            # Use the constant density to compute the pressure curve directly
+            pressure_curve = reference_pressure + (depth_array - reference_depth) * density * const.g / const.bar
+        else:
+            # Use PVT data and integration to compute the pressure curve
+            interpolator = self.fluid_interpolator
+            pressure_curve = _integrate_pressure(
+                init_curves=self.init_curves,
+                reference_depth=reference_depth,
+                reference_pressure=reference_pressure,
+                pvt_data=self.pvt_data,
+                fluid_key=self.fluid_type,
+                interpolator=interpolator
+            )
+        return pressure_curve

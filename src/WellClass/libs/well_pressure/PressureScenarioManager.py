@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict
-from .new_PressureScenario import PressureScenario
+from .PressureScenario import PressureScenario
 import pandas as pd
 
 
@@ -25,8 +25,7 @@ class PressureScenarioManager:
         # Iterate over all scenarios and compute their pressure profiles
         for scenario in self.scenarios.values():
             scenario.compute_pressure_profile()
-            import matplotlib.pyplot as plt
-            # plt.plot(scenario.init_curves['fluid_pressure'], scenario.init_curves['depth'], ls='--')
+
 
 
     def get_scenarios_summary(self) -> pd.DataFrame:
@@ -42,7 +41,10 @@ class PressureScenarioManager:
                 'p_resrv': scenario.p_resrv,
                 'z_fluid_contact': scenario.z_fluid_contact,
                 'p_fluid_contact': scenario.p_fluid_contact,
-                'p_delta': scenario.p_delta
+                'p_delta': scenario.p_delta,
+                'fluid_type': scenario.fluid_type,
+                'fluid_composition': scenario.fluid_composition,
+                'specific_gravity': scenario.specific_gravity,
             }
             scenarios_data.append(scenario_data)
         
