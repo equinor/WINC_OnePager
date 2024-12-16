@@ -1,7 +1,6 @@
-
-
-from .pressure import Pressure
-from .pressure_scenario import FluidP_scenario
+from .Pressure import Pressure
+from .PressureScenarioManager import PressureScenarioManager
+from .PressureScenario import PressureScenario
 
 from .barrier_pressure import compute_barrier_leakage
 
