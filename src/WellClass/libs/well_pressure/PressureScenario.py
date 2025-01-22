@@ -80,7 +80,6 @@ class PressureScenario:
 
         # Check if only z_fluid_contact is provided (hydrostatic default case)
         all_other_none = all(x is None for x in [self.p_delta, self.p_resrv, self.z_resrv, self.p_fluid_contact])
-
         
         if self.z_fluid_contact is not None and all_other_none:
             # Assume delta_p is zero
@@ -120,7 +119,7 @@ class PressureScenario:
             fluid_pressure_profile = self._compute_fluid_pressure_curve( reference_depth=self.z_resrv,
                                                                     reference_pressure=self.p_resrv,
                                                                     fluid_key=self.fluid_type)
-
+            print(f'{self.z_fluid_contact=}')
             if self.z_fluid_contact is None:
                 self.p_fluid_contact = self.p_resrv
                 self.z_fluid_contact = self.z_resrv
