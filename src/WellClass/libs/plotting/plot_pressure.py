@@ -18,6 +18,7 @@ def plot_pressure(my_pressure: Pressure,
                   plot_selected_scenarios: list = None,
                   plot_resrv: bool = False,  # Option to plot (p_resrv, z_resrv)
                   plot_fluid_contact: bool = False,
+                  plot_fluid_pressure: bool = True,
                   plot_delta_p: bool = False  ):  # Option to plot (p_fluid_contact, z_fluid_contact)
     
     """
@@ -43,15 +44,9 @@ def plot_pressure(my_pressure: Pressure,
         base_deepest_rsrv = float(geology_df[geology_df.reservoir_flag]['base_msl'].max())
         depth_values.append(base_deepest_rsrv)
     
-    #define plot spatial references
-    if isinstance(my_pressure.z_fluid_contact, float):
-        depth_values.append(my_pressure.z_fluid_contact + 100)
 
 
 
-    ymax = np.ceil(max(depth_values))
-    xmax = my_pressure.init_curves.query('depth<=@ymax')['min_horizontal_stress'].max()
-    xmin = 0
 
     # Draw cement plugs
     if barriers:
@@ -61,7 +56,7 @@ def plot_pressure(my_pressure: Pressure,
 
     # Plot hydrostatic pressure gradient
     if plot_HSP:
-        ax.plot(my_pressure.init_curves['hydrostatic_pressure'], my_pressure.init_curves['depth'], label='Hydrostatic Pressure', color='steelblue', lw=0.75)
+        ax.plot(my_pressure.init_curves['hydrostatic_pressure'], my_pressure.init_curves['depth'], label='Hydrostatic Pressure', color='steelblue', ls = '--', lw=0.75)
 
     # Plot minimum horizontal stress
     ax.plot(my_pressure.init_curves['min_horizontal_stress'], my_pressure.init_curves['depth'], label='Min Horizontal Stress', color='black', lw=0.75)
@@ -75,10 +70,12 @@ def plot_pressure(my_pressure: Pressure,
 
     
     if len(scenarios_summary) > 0:
+
+        if plot_selected_scenarios:
+            scenarios_summary = scenarios_summary.query('@plot_selected_scenarios in name')
         
         for scenario_name, scenario in scenarios_summary.iterrows():
-            if plot_selected_scenarios and scenario_name not in plot_selected_scenarios:
-                continue
+            print(scenario['name'])
             
             sc_type         = scenario['from_resrvr']
             sc_name         = scenario['name']
@@ -89,6 +86,8 @@ def plot_pressure(my_pressure: Pressure,
             sc_z_fluid_contact = scenario['z_fluid_contact']
             sc_p_fluid_contact = scenario['p_fluid_contact']
             sc_delta_p      = scenario['p_delta']
+
+            depth_values.append(sc_z_fluid_contact+250)
 
             sc_curves = my_pressure.scenario_manager.scenarios[sc_name].init_curves
 
@@ -110,7 +109,8 @@ def plot_pressure(my_pressure: Pressure,
             # Plot brine pressure profile if different from hydrostatic
             linestyle = next(line_style_cycle)
             ax.plot(sc_curves['brine_pressure'], sc_curves['depth'], label='brine pressure', color='steelblue', lw=0.75, ls = linestyle)
-            ax.plot(sc_curves['fluid_pressure'], sc_curves['depth'], label=f'fluid pressure ({scenario['fluid_type']})', color='firebrick', lw=0.75, ls = linestyle)
+            if plot_fluid_pressure:
+                ax.plot(sc_curves['fluid_pressure'], sc_curves['depth'], label=f'fluid pressure ({scenario['fluid_type']})', color='firebrick', lw=0.75, ls = linestyle)
 
             if plot_fluid_contact:
                 ax.scatter(sc_p_fluid_contact, sc_z_fluid_contact, color='blue', label=f'fluid contact')
@@ -122,8 +122,11 @@ def plot_pressure(my_pressure: Pressure,
 
             if plot_delta_p and sc_delta_p != 0:
                 delta_p_lims = [sc_p_fluid_contact, sc_p_fluid_contact - sc_delta_p]
-                ax.hlines(sc_z_fluid_contact, min(delta_p_lims), max(delta_p_lims), color='black', linestyle=':', label=f'$\\Delta$P = {scenario["p_delta"]:.0f} bar')
+                ax.hlines(sc_z_fluid_contact, min(delta_p_lims), max(delta_p_lims), color='black', linestyle='--', label=f'$\\Delta$P = {scenario["p_delta"]:.0f} bar')
 
+    ymax = np.ceil(max(depth_values))
+    xmax = my_pressure.init_curves.query('depth<=@ymax')['min_horizontal_stress'].max()
+    xmin = 0
 
     #Optimize legend
     if legend:
@@ -134,6 +137,7 @@ def plot_pressure(my_pressure: Pressure,
 
     ax.set_xlim(xmin, xmax)
     ax.set_xlabel('Pressure [bar]')
+    ax.set_ylabel('Depth [mTVDMSL]')
     ax.set_ylim(0, ymax)
     ax.invert_yaxis()
     ax.grid(visible=True, linewidth=0.5)
