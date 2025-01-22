@@ -184,7 +184,6 @@ class Pressure:
             if fluid_type is not None and specific_gravity is not None:
                 raise ValueError("Either fluid_type or specific_gravity should be provided, not both.")        
 
-        print(f'{fluid_type=} {self.fluid_type=}')
 
         # If fluid_type is provided, use it and ensure specific_gravity is not used
         if fluid_type is not None:
@@ -195,7 +194,9 @@ class Pressure:
                 # Load PVT data for the new fluid type
                 pvt_data = load_pvt_data(self.pvt_path, fluid_type, load_fluid=True)
                 kwargs['pvt_data'] = pvt_data
+                kwargs['fluid_type'] = fluid_type
                 kwargs['fluid_composition'] = pvt_data[fluid_type]['metadata']['composition']
+
 
                 temperature_vector = pvt_data['temperature']
                 pressure_vector = pvt_data['pressure']
@@ -209,6 +210,7 @@ class Pressure:
                 kwargs.setdefault('pvt_data', self.pvt_data)
                 kwargs.setdefault('fluid_interpolator', self.fluid_interpolator)
                 kwargs.setdefault('fluid_composition', self.fluid_composition)
+                kwargs.setdefault('fluid_type', self.fluid_type)
             
         elif specific_gravity is not None:
             kwargs['specific_gravity'] = specific_gravity
@@ -222,7 +224,7 @@ class Pressure:
 
         # Ensure init_curves and z_fluid_contact are included in kwargs or add them if not present
         kwargs.setdefault('init_curves', self.init_curves)
-        kwargs.setdefault('z_fluid_contact', self.z_fluid_contact)
+        # kwargs.setdefault('z_fluid_contact', self.z_fluid_contact)
 
         # Always use the brine interpolator from the Pressure instance
         kwargs.setdefault('brine_interpolator', self.brine_interpolator)
