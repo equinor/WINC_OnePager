@@ -109,7 +109,9 @@ def plot_pressure(my_pressure: Pressure,
             linestyle = next(line_style_cycle)
             ax.plot(sc_curves['brine_pressure'], sc_curves['depth'], label='brine pressure', color='steelblue', lw=0.75, ls = linestyle)
             if plot_fluid_pressure:
-                ax.plot(sc_curves['fluid_pressure'], sc_curves['depth'], label=f'fluid pressure ({scenario['fluid_type']})', color='firebrick', lw=0.75, ls = linestyle)
+                pp_label = f'fluid pressure ({scenario["fluid_type"]})'
+
+                ax.plot(sc_curves['fluid_pressure'], sc_curves['depth'], label=pp_label, color='firebrick', lw=0.75, ls = linestyle)
 
             if plot_fluid_contact:
                 ax.scatter(sc_p_fluid_contact, sc_z_fluid_contact, color='blue', label=f'fluid contact')
@@ -144,4 +146,5 @@ def plot_pressure(my_pressure: Pressure,
     if 'fig' in locals():
         return fig, ax
     else:
+        ax.set_ylabel('')
         return ax

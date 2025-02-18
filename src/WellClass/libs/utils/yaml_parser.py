@@ -13,7 +13,7 @@ def yaml_parser(yaml_file: str) -> WellModel:
 
     """
     # load configuration file
-    with open(yaml_file, "r") as f:
+    with open(yaml_file, "r", encoding='utf-8') as f:
         config = yaml.safe_load(f)
 
     # yaml_config = yaml.dump(config, sort_keys=False)
