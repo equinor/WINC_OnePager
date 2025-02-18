@@ -4,6 +4,8 @@ import pandas as pd
 
 import scipy.constants
 
+from .helper_func import get_rho_from_pvt_data
+
 '''Some global parameters'''
 G       = scipy.constants.g   #9.81 m/s2 gravity acceleration
 BAR2PA  = scipy.constants.bar #10**5 Going from bars to Pascal: 1 bar = 10**5 Pascal
@@ -101,3 +103,38 @@ def _get_barrier_leakage(barrier_perm: dict, barrier_p_rho: pd.DataFrame, barrie
 
     # barrier_props[barrier_name]['leakage'] = df_leakage.copy()
     return df_leakage.copy()
+
+def leakage_proxy(rho_fluid_below_barrier:float, rho_brine_below_barrier:float, p_fluid_below_barrier:float, p_brine_above_barrier: float, permeability: float, barrier_props: dict) -> float:
+    """ 
+    Returns an estimate of CO2 leakage in [tons/day] after a trancient period.
+    It also is based on than the reservoir pressur does not change - hence if the process is completely stationary except for the leakage, 
+    i.e. the leaked volumes are << than the reservoir volumes.
+    The proxy is based on two steps:
+    proxy1: r*r*k/l*(g*drho*l + dp*10**5)    -> To get the most important physical properties determining rate
+    proxy2: a + b*proxy1                     -> To calibrate to actual rates estimated by a large number of runs done in pflotran.
+
+    The variables in the proxy regression must come from somewhere.
+    Here it is hardcoded in the header, but one could imagine to have several models fit for different circumstances.
+    Then the parameteters could be case dependent and an input
+    """
+    
+    '''Some global parameters'''
+    G       = scipy.constants.g   #9.81 m/s2 gravity acceleration
+    BAR2PA  = scipy.constants.bar #10**5 Going from bars to Pascal: 1 bar = 10**5 Pascal
+    REGR_A  = -0.000116           #Intercept term in regression equation for the proxy. Consider as a input
+    REGR_B  = 0.000002725         #Inclination-term in regression equation for the proxy
+
+
+    '''Barrier properties'''
+    b_radius = barrier_props['radius'] #m
+    b_length = float(barrier_props['height']) #m
+    
+    
+    drho = rho_brine_below_barrier - rho_fluid_below_barrier
+    dp   = p_fluid_below_barrier   - p_brine_above_barrier
+
+    prox = (b_radius * b_radius * permeability / b_length) * ( G * b_length * drho + dp * BAR2PA )
+    
+    return np.round(max(REGR_A + REGR_B*prox,0),5)
+
+

@@ -75,7 +75,6 @@ def plot_pressure(my_pressure: Pressure,
             scenarios_summary = scenarios_summary.query('@plot_selected_scenarios in name')
         
         for scenario_name, scenario in scenarios_summary.iterrows():
-            print(scenario['name'])
             
             sc_type         = scenario['from_resrvr']
             sc_name         = scenario['name']

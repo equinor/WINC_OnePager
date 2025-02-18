@@ -181,7 +181,7 @@ class PressureScenario:
         """
         # Set the pressure values above z_MSAD to np.nan
         above_msad = self.init_curves['depth'] < self.z_MSAD
-        self.init_curves.loc[above_msad, 'fluid_pressure'] = np.nan  # Assuming 'fluid_pressure' column exists
+        # self.init_curves.loc[above_msad, 'fluid_pressure'] = np.nan  # Assuming 'fluid_pressure' column exists
 
         # Set the pressure values below z_fluid_contact to np.nan
         below_contact = self.init_curves['depth'] > self.z_fluid_contact
@@ -195,7 +195,7 @@ class PressureScenario:
 
             # Set brine_pressure values above the intersection depth to np.nan
             above_intersection = self.init_curves['depth'] < z_MSAD_brine
-            self.init_curves.loc[above_intersection, 'brine_pressure'] = np.nan
+            # self.init_curves.loc[above_intersection, 'brine_pressure'] = np.nan
 
 
     def _compute_brine_pressure_curve(self, 

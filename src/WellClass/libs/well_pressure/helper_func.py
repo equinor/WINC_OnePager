@@ -155,15 +155,6 @@ def _integrate_pressure(init_curves: pd.DataFrame,
     temperature_array = init_curves['temperature'].values
 
 
-    # def _Pdz_odesys(z: float, y: np.ndarray)  -> Tuple[float]:
-    #     P = y[0]
-
-    #     T = np.interp(z, depth_array, temperature_array)
-
-    #     rho = get_rho_from_pvt_data(P, T, pvt_data, fluid_key)
-    #     dPdz = rho * const.g / const.bar
-    #     return dPdz,
-
     ## Initialization
     #New columns needed in DataFrame
     if fluid_key == 'brine':
@@ -217,25 +208,6 @@ def _integrate_pressure(init_curves: pd.DataFrame,
     return init_curves[colname_p].values.astype(float)
 
 
-# def get_rho_from_pvt_data(pressure: float, temperature: float, pvt_data: Dict[str, Dict[str, np.ndarray]], fluid_key: str = 'brine') -> float:
-#     # Retrieve the temperature and pressure vectors from the PVT data
-#     temperature_vector = pvt_data['temperature']
-#     pressure_vector = pvt_data['pressure']
-    
-#     # Determine the fluid key to use (default to 'brine' if the specified fluid is not found)
-#     fluid_key_to_use = fluid_key if fluid_key in pvt_data else 'brine'
-    
-#     # Retrieve the density matrix for the specified fluid
-#     rho_matrix = pvt_data[fluid_key_to_use]['rho']
-    
-#     # Create an interpolator for the density matrix
-#     print(f'{type(pressure_vector)} {type(temperature_vector)} {type(rho_matrix)}')
-#     rho_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, rho_matrix)
-    
-#     # Interpolate the density at the given pressure and temperature
-#     rho = rho_interpolator(pressure, temperature)[0, 0]
-    
-#     return rho
 
 
 def get_rho_from_pvt_data(pressure: float, temperature: float, rho_interpolator: RectBivariateSpline) -> float:

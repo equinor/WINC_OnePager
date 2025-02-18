@@ -5,9 +5,12 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d, RectBivariateSpline
 
+from ..well_class.well_class import Well
+
 
 from .PressureScenarioManager import PressureScenarioManager
-from .helper_func import load_pvt_data, compute_hydrostatic_pressure
+from .helper_func import load_pvt_data, compute_hydrostatic_pressure, get_rho_from_pvt_data
+from .barrier_pressure import leakage_proxy
 
 # Constants
 SHMIN_NAME = 'Shmin'
@@ -234,66 +237,6 @@ class Pressure:
         scenario.compute_pressure_profile()
 
 
-
-
-        #  # Assign fluid_type from the class if it's not overridden in the method call
-
-        # # Check that either fluid_type or specific_gravity is provided, but not both
-        # if fluid_type is not None and specific_gravity is not None:
-        #     raise ValueError("Either fluid_type or specific_gravity should be provided, not both.")
-
-
-
-        # print(f'{scenario_name=}')
-        # fluid_type = fluid_type or self.fluid_type
-        # pvt_arrays = list(self.pvt_data.keys())
-
-
-
-                
-        
-
-        # # Determine if specific gravity is provided for this scenario
-        # specific_gravity_provided = specific_gravity is not None
-
-        # # Ensure init_curves and z_fluid_contact are included in kwargs or add them if not present
-        # kwargs.setdefault('init_curves', self.init_curves)
-        # kwargs.setdefault('z_fluid_contact', self.z_fluid_contact)
-        # kwargs.setdefault('fluid_type', fluid_type)
-        # print(f'{specific_gravity=}')
-        # print(f'{specific_gravity is not None=}')
-
-
-        # # Handle the specific gravity and PVT data based on the scenario
-        # if specific_gravity_provided:
-        #     # Scenario added with specific gravity
-        #     kwargs['specific_gravity'] = specific_gravity
-        #     kwargs['pvt_data'] = None
-        #     kwargs['fluid_interpolator'] = None
-        # else:
-        #     # Scenario added with fluid PVT data
-        #     # Check if the fluid_type is different from the one already stored or if PVT data is not in kwargs
-        #     if fluid_type != self.fluid_type or 'pvt_data' not in kwargs:
-        #         # Load PVT data for the new fluid type
-        #         pvt_data = load_pvt_data(self.pvt_path, fluid_type, load_fluid=True)
-        #         kwargs['pvt_data'] = pvt_data
-        #         temperature_vector = pvt_data['temperature']
-        #         pressure_vector = pvt_data['pressure']
-        #         rho_matrix = pvt_data[fluid_type]['rho']
-        #         kwargs['fluid_interpolator'] = RectBivariateSpline(pressure_vector, temperature_vector, rho_matrix)
-        #     else:
-        #         # Use the existing PVT data and interpolators
-        #         kwargs.setdefault('pvt_data', self.pvt_data)
-        #         kwargs.setdefault('fluid_interpolator', self.fluid_interpolator)
-
-        # # Always use the brine interpolator from the Pressure instance
-        # kwargs.setdefault('brine_interpolator', self.brine_interpolator)
-
-       
-        # # Create a new PressureScenario instance with the given name and parameters
-        # scenario = self.scenario_manager.create_scenario(name=scenario_name, **kwargs)
-        # scenario.compute_pressure_profile()
-
     def manage_scenarios(self):
         # Check if the first scenario is 'None' and should be computed as hydrostatic
         if self.z_fluid_contact is not None and self.input_scenarios:
@@ -344,3 +287,105 @@ class Pressure:
         self.collated_profiles = self.scenario_manager.collate_scenario_profiles(common_data)
 
     
+    def compute_barrier_leakage(self, well: Well, barrier_name: str) -> pd.DataFrame:
+        """ 
+        Compute leakage rate from the given barrier
+
+        Args:
+            well (Well): well information
+            barrier_name (str): barrier to check the leakage rate
+        Returns:
+            pd.DataFrame: DataFrame containing leakage rates for different scenarios and permeabilities.
+
+        """
+        if well.inventory['barriers']:
+            # for convenience
+            barrier_perm = well.barrier_perm
+
+            # Estimate CO2 leakage in [tons/day] after a trancient period
+            sc_names = self.scenario_manager.scenarios.keys()
+
+            # Initialize a DataFrame to store the leakage rates
+            df = pd.DataFrame(columns=["p_brine_above_barrier", "p_fluid_below_barrier", "rho_brine_below_barrier", "rho_fluid_below_barrier"], index=sc_names)
+
+            # Retrieve common init curves
+            depth = self.init_curves['depth'].values
+            temperature = self.init_curves['temperature'].values
+
+            # barrier geometries
+            barrier_props = well.compute_barrier_props(barrier_name)
+
+            b_top   = barrier_props['top']
+            b_bottom= barrier_props['bottom']
+            
+            # Retrieve temperature at the top and bottom of the barrier
+            b_top_temp = np.interp(b_top, depth, temperature)
+            b_bottom_temp = np.interp(b_bottom, depth, temperature)
+
+            for sc_name in sc_names:
+                # Retrieve and interpolate pressure and density values
+                p_brine_ab, p_fluid_bb, rho_brine_ab, rho_fluid_bb = self._retrieve_and_interpolate_values(sc_name = sc_name, 
+                                                                                                           top = b_top,
+                                                                                                           bottom = b_bottom, 
+                                                                                                           top_temperature = b_top_temp, 
+                                                                                                           bottom_temperature = b_bottom_temp, 
+                                                                                                           depth = depth)
+
+                # Store retrieved values in the DataFrame
+                df.loc[sc_name, "p_brine_above_barrier"] = p_brine_ab
+                df.loc[sc_name, "p_fluid_below_barrier"] = p_fluid_bb
+                df.loc[sc_name, "rho_brine_below_barrier"] = rho_brine_ab
+                df.loc[sc_name, "rho_fluid_below_barrier"] = rho_fluid_bb
+
+                # Check if the barrier has permeabilities
+                try:
+                    perms = barrier_perm['kv'].values()
+                except Exception:
+                    perms = barrier_perm['kv']
+
+                # Compute leakage rates for different permeabilities and store in df
+                for k in perms:
+                    df[k] = np.nan
+
+                    for idx, row in df.iterrows():
+                        df.loc[idx, k] = leakage_proxy(rho_fluid_below_barrier = row['rho_fluid_below_barrier'],
+                                                    rho_brine_below_barrier = row['rho_brine_below_barrier'],
+                                                    p_fluid_below_barrier = row['p_fluid_below_barrier'],
+                                                    p_brine_above_barrier = row['p_brine_above_barrier'],
+                                                    permeability = k,
+                                                    barrier_props = barrier_props)
+
+            return df
+        
+        else:
+            print(f'No barriers declared in well {well.header["well_name"]}')
+
+    def _retrieve_and_interpolate_values(self, sc_name: str, top: float, bottom: float, top_temperature: float, bottom_temperature: float, depth: np.ndarray) -> tuple:
+        """
+        Retrieve and interpolate pressure and density values at the top and bottom of the barrier.
+
+        Args:
+            sc_name (str): Scenario name
+            top (float): Top depth of the barrier
+            bottom (float): Bottom depth of the barrier
+            top_temperature (float): Temperature at the top of the barrier
+            bottom_temperature (float): Temperature at the bottom of the barrier
+            depth (np.ndarray): Depth array
+
+        Returns:
+            tuple: Interpolated pressure and density values (p_brine_above_barrier, p_fluid_below_barrier, rho_brine_above_barrier, rho_fluid_below_barrier)
+        """
+        fluid_pressure = self.scenario_manager.scenarios[sc_name].init_curves['fluid_pressure']
+        hydrst_pressure = self.scenario_manager.scenarios[sc_name].init_curves['hydrostatic_pressure']
+        fluid_interp = self.scenario_manager.scenarios[sc_name].fluid_interpolator
+        brine_interp = self.scenario_manager.scenarios[sc_name].brine_interpolator
+
+        p_fluid_below_barrier = np.interp(bottom, depth, fluid_pressure)
+        p_brine_above_barrier = np.interp(top, depth, hydrst_pressure)
+
+        rho_fluid_below_barrier = get_rho_from_pvt_data(pressure=p_fluid_below_barrier, temperature=bottom_temperature, rho_interpolator=fluid_interp)
+        rho_brine_above_barrier = get_rho_from_pvt_data(pressure=p_brine_above_barrier, temperature=top_temperature, rho_interpolator=brine_interp)
+
+        return p_brine_above_barrier, p_fluid_below_barrier, rho_brine_above_barrier, rho_fluid_below_barrier
+
+
