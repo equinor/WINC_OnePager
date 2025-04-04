@@ -173,9 +173,15 @@ class Pressure:
 
         else:
             # No user data provided, use the empirical formula
-            shmin_curve = np.copy(hydrostatic_pressure_curve) # Copy hydrostatic pressure as a starting point
-            below_sf_mask = depth_array >= self.sf_depth_msl # Mask for depths below seafloor
-            shmin_curve[below_sf_mask] += (depth_array[below_sf_mask] - self.sf_depth_msl) * SHMIN_FAC
+            
+            # interpolate hydrostatic pressure at mudline depth (seafloor depth)
+            pressure_ml = np.interp(self.sf_depth_msl, depth_array,  hydrostatic_pressure_curve)
+            
+            depth_ml = depth_array - self.sf_depth_msl  # depth below mean sea level
+
+            shmin_curve = pressure_ml + depth_ml*SHMIN_FAC
+            shmin_curve[shmin_curve<0] = hydrostatic_pressure_curve[shmin_curve<0]
+
 
         return shmin_curve
 
