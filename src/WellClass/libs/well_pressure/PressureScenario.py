@@ -5,7 +5,7 @@ from scipy.interpolate import RectBivariateSpline
 from scipy import constants as const
 
 
-from .helper_func import _integrate_pressure, get_rho_from_pvt_data
+from ..pvt.pvt import _integrate_pressure, get_rho_from_pvt_data
 from ..utils.compute_intersection import compute_intersection
 
 @dataclass

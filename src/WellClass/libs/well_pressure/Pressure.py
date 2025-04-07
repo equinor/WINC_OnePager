@@ -9,7 +9,10 @@ from ..well_class.well_class import Well
 
 
 from .PressureScenarioManager import PressureScenarioManager
-from .helper_func import load_pvt_data, compute_hydrostatic_pressure, get_rho_from_pvt_data
+from ..pvt.pvt import (load_pvt_data, 
+                          compute_hydrostatic_pressure, 
+                          get_rho_from_pvt_data,
+                          corr_rhobrine_LaliberteCopper)
 from .barrier_pressure import leakage_proxy
 
 # Constants
@@ -69,6 +72,7 @@ class Pressure:
     input_scenarios: Dict[str, Union[float, str, None]] = field(default_factory=dict)
     default_hs_scenario: bool = True
     collated_profiles: pd.DataFrame = field(init=None)
+    salinity: float = 3.5  # Salinity in percentage (default is 3.5% for seawater)
 
 
     def __post_init__(self):
@@ -125,7 +129,13 @@ class Pressure:
         pressure_vector = self.pvt_data['pressure']
         temperature_vector = self.pvt_data['temperature']
 
-        brine_rho_matrix = self.pvt_data['brine']['rho']
+        water_rho_matrix = self.pvt_data['brine']['rho']
+
+        t_matrix, p_matrix = np.meshgrid(pressure_vector, temperature_vector)
+
+        # Correct water density for salinity using Laliberté and Cooper model
+        brine_rho_matrix = corr_rhobrine_LaliberteCopper(self.salinity, t_matrix, p_matrix, water_rho_matrix)
+
         self.brine_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, brine_rho_matrix)
 
         # Initialize the fluid interpolator based on the fluid type

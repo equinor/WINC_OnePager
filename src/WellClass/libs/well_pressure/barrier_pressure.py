@@ -4,7 +4,7 @@ import pandas as pd
 
 import scipy.constants
 
-from .helper_func import get_rho_from_pvt_data
+from ..pvt.pvt import get_rho_from_pvt_data
 
 '''Some global parameters'''
 G       = scipy.constants.g   #9.81 m/s2 gravity acceleration
