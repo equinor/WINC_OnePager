@@ -104,10 +104,11 @@ def plot_pressure(my_pressure: Pressure,
                     sc_label = f'{sc_label}\nMSAD = {sc_msad_z:.0f} mTVDMSL'
                 
                 ax.scatter(sc_msad_p, sc_msad_z, color='firebrick')
+                ax.axhline(sc_msad_z, xmax=sc_msad_p)
 
             # Plot brine pressure profile if different from hydrostatic
             linestyle = next(line_style_cycle)
-            ax.plot(sc_curves['brine_pressure'], sc_curves['depth'], label='brine pressure', color='steelblue', lw=0.75, ls = linestyle)
+            ax.plot(sc_curves['brine_pressure'], sc_curves['depth'], label='reservoir p. profile', color='steelblue', lw=0.75, ls = linestyle)
             if plot_fluid_pressure:
                 pp_label = f'fluid pressure ({scenario["fluid_type"]})'
 
