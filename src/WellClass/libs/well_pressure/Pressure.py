@@ -45,8 +45,8 @@ class Pressure:
         scenario_manager (PressureScenarioManager): Manager for pressure scenarios.
         input_scenarios (Dict[str, Union[float, str, None]]): Input scenarios for pressure calculations.
         default_hs_scenario (bool): Flag indicating whether to compute the default hydrostatic scenario.
-        collated_profiles (pd.DataFrame, optional): Collated profiles for all scenarios.
-
+        salinity (float): Salinity of the fluid in percentage (default is 3.5% for seawater).
+        shmin_gradient (float): Gradient for Shmin calculation (default is SHMIN_FAC).
     """
 
 
@@ -71,7 +71,6 @@ class Pressure:
     scenario_manager: PressureScenarioManager = field(init=False)
     input_scenarios: Dict[str, Union[float, str, None]] = field(default_factory=dict)
     default_hs_scenario: bool = True
-    collated_profiles: pd.DataFrame = field(init=None)
     salinity: float = 3.5  # Salinity in percentage (default is 3.5% for seawater)
     shmin_gradient: float = SHMIN_FAC  # Gradient for Shmin calculation
 
@@ -279,7 +278,6 @@ class Pressure:
                     # Convert string to float, handling any special string cases here
 
                     p_delta = float(sc_pressure)
-                    print(f'{p_delta=}')
                     self.add_scenario(
                         scenario_name=sc_name,
                         from_resrvr=True,
@@ -298,10 +296,6 @@ class Pressure:
                 fluid_type=self.fluid_type,
             )
             
-    def collate_all_profiles(self):
-        # Call the collate_scenario_profiles method from the scenario manager
-        common_data = self.init_curves[['depth', 'temperature', 'hydrostatic_pressure', 'min_horizontal_stress']]
-        self.collated_profiles = self.scenario_manager.collate_scenario_profiles(common_data)
 
     
     def compute_barrier_leakage(self, well: Well, barrier_name: str) -> pd.DataFrame:
@@ -404,5 +398,10 @@ class Pressure:
         rho_brine_above_barrier = get_rho_from_pvt_data(pressure=p_brine_above_barrier, temperature=top_temperature, rho_interpolator=brine_interp)
 
         return p_brine_above_barrier, p_fluid_below_barrier, rho_brine_above_barrier, rho_fluid_below_barrier
+
+    def scenarios_summary(self):
+        return self.scenario_manager.get_scenarios_summary()
+
+
 
 
