@@ -123,7 +123,7 @@ def plot_pressure(my_pressure: Pressure,
                     sc_label = f'{sc_label}\nMSAD = {sc_msad_z:.0f} mTVDMSL'
                 
                     ax.scatter(sc_msad_p, sc_msad_z, color='firebrick', s=5, marker='s')
-                    ax.hlines(y = sc_msad_z,xmin=0, xmax=sc_msad_p, lw=0.5, color='firebrick', ls=linestyle, label = f'MSAD ({sc_name})')
+                    ax.hlines(y = sc_msad_z,xmin=0, xmax=sc_msad_p, lw=0.5, color='firebrick', ls=linestyle)
 
             # Plot brine pressure profile if different from hydrostatic
 
@@ -138,7 +138,6 @@ def plot_pressure(my_pressure: Pressure,
                 fluid_pressure_x = fluid_pressure['fluid_pressure'].values
                 fluid_pressure_y = fluid_pressure['depth'].values
 
-                print(fluid_pressure_y.min(), fluid_pressure_y.shape, sc_msad_z)
 
                 # Check if the head and tail of the array are equal to the given values
                 fluid_pressure_x, fluid_pressure_y = check_head_tail_of_array(fluid_pressure_x, fluid_pressure_y,
