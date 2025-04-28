@@ -8,6 +8,22 @@ from typing import Union
 from ..well_pressure import Pressure
 
 
+def check_head_tail_of_array(arr_x, arr_y, head_x, tail_x, head_y, tail_y):
+    """
+    Check if the head and tail of the array are equal to the given values.
+    """
+    if arr_y[0] > head_y:
+        arr_x = np.concatenate(([head_x], arr_x))
+        arr_y = np.concatenate(([head_y], arr_y))
+        
+    if arr_y[-1] < tail_y:
+        arr_x = np.concatenate((arr_x, [tail_x]))
+        arr_y = np.concatenate((arr_y, [tail_y]))
+    
+    return arr_x, arr_y
+
+
+
 def plot_pressure(my_pressure: Pressure, 
                   geology_dict: dict = None,
                   barriers: dict = None, 
@@ -90,6 +106,8 @@ def plot_pressure(my_pressure: Pressure,
 
             sc_curves = my_pressure.scenario_manager.scenarios[sc_name].init_curves
 
+
+
             #define legend if it is a reservoir pressure scenario
             if sc_type:
                 sc_label = f'$CO_2$ P ($\\Delta$P = {sc_delta_p:.0f} bar)'
@@ -99,20 +117,34 @@ def plot_pressure(my_pressure: Pressure,
                 sc_label = f'max $CO_2$ P to ($\\Delta$P = {sc_delta_p:.0f} bar)'
 
             #include MSAD
+            linestyle = next(line_style_cycle)
             if plot_MSAD:
                 if ~np.isnan(sc_msad_z):
                     sc_label = f'{sc_label}\nMSAD = {sc_msad_z:.0f} mTVDMSL'
                 
-                ax.scatter(sc_msad_p, sc_msad_z, color='firebrick')
-                ax.axhline(sc_msad_z, xmax=sc_msad_p)
+                ax.scatter(sc_msad_p, sc_msad_z, color='firebrick', s=5)
+                ax.hlines(y = sc_msad_z,xmin=0, xmax=sc_msad_p, lw=0.5, color='firebrick', ls=linestyle, label = f'MSAD ({sc_name})')
 
             # Plot brine pressure profile if different from hydrostatic
-            linestyle = next(line_style_cycle)
+
             ax.plot(sc_curves['brine_pressure'], sc_curves['depth'], label='reservoir p. profile', color='steelblue', lw=0.75, ls = linestyle)
             if plot_fluid_pressure:
+
+                fluid_pressure = sc_curves.query('depth>=@sc_msad_z & depth<=@sc_z_fluid_contact')
+
+                fluid_pressure_x = fluid_pressure['fluid_pressure'].values
+                fluid_pressure_y = fluid_pressure['depth'].values
+
+                # Check if the head and tail of the array are equal to the given values
+                fluid_pressure_x, fluid_pressure_y = check_head_tail_of_array(fluid_pressure_x, fluid_pressure_y,
+                                                              head_x=sc_msad_p,
+                                                              head_y=sc_msad_z,
+                                                              tail_x=sc_p_fluid_contact,
+                                                              tail_y=sc_z_fluid_contact,)
+
                 pp_label = f'fluid pressure ({scenario["fluid_type"]})'
 
-                ax.plot(sc_curves['fluid_pressure'], sc_curves['depth'], label=pp_label, color='firebrick', lw=0.75, ls = linestyle)
+                ax.plot(fluid_pressure_x, fluid_pressure_y, label=pp_label, color='firebrick', lw=0.75, ls = linestyle)
 
             if plot_fluid_contact:
                 ax.scatter(sc_p_fluid_contact, sc_z_fluid_contact, color='blue', label=f'fluid contact')
