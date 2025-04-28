@@ -4,6 +4,8 @@ from .plot_sketch import plot_sketch
 from ..well_class.well_class import Well
 from ..well_pressure.Pressure import Pressure
 
+from IPython.display import display
+
 #Plot sketch, pressures
 
 def plot_onepager(well:Well, pressure:Pressure,
@@ -39,6 +41,7 @@ def plot_onepager(well:Well, pressure:Pressure,
     
     
     # Plot pressure profile
+    display(pressure.scenarios_summary())
     fig, (ax1, ax2) = plt.subplots(1,2, sharey=True, figsize=(10, 8))
     plot_sketch(well,  ax=ax1, 
                 draw_drillings=draw_drillings,
