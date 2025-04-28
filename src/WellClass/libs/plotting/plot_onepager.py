@@ -9,6 +9,10 @@ from IPython.display import display
 #Plot sketch, pressures
 
 def plot_onepager(well:Well, pressure:Pressure,
+                  width: float = 7.68,
+                  height: float = 5.5,
+                  save_fig: bool = False,
+                  fname: str = None,
                   #plot_sktech arguments
                   draw_drillings=True,
                   draw_casings=True,
@@ -40,9 +44,11 @@ def plot_onepager(well:Well, pressure:Pressure,
     """
     
     
+
+
     # Plot pressure profile
     display(pressure.scenarios_summary())
-    fig, (ax1, ax2) = plt.subplots(1,2, sharey=True, figsize=(10, 8))
+    fig, (ax1, ax2) = plt.subplots(1,2, sharey=True, figsize=(width, height))
     plot_sketch(well,  ax=ax1, 
                 draw_drillings=draw_drillings,
                 draw_casings=draw_casings,
@@ -69,4 +75,14 @@ def plot_onepager(well:Well, pressure:Pressure,
     fig.tight_layout()
     fig.subplots_adjust(wspace=0)
 
-    return fig, ax1, ax2
+    if save_fig:
+        if fname is None:
+            wname = well.header['well_name']
+            wname = wname.replace("/", "_")
+            wname = wname.replace(" ", "_")
+
+            fname = f"{wname}_onepager.png"
+        fig.savefig(fname, dpi=300)
+        print(f"Figure saved as {fname}")
+
+    return fig, (ax1, ax2)
