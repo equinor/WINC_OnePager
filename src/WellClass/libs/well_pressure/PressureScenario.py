@@ -141,6 +141,11 @@ class PressureScenario:
             shmin = self.init_curves['min_horizontal_stress'].values
 
             self.z_MSAD, self.p_MSAD = compute_intersection(depth, fluid_pressure_profile, shmin)
+
+            if self.z_MSAD > self.z_fluid_contact:
+                # If z_MSAD is greater than or equal to z_fluid_contact, set them to NaN
+                self.z_MSAD, self.p_MSAD = np.nan, np.nan
+
         else:
             raise KeyError("Shmin column is missing from init_curves DataFrame")
 
