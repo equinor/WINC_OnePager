@@ -18,7 +18,8 @@ def plot_sketch(mywell: Well, ax=None,
                 draw_barriers=True,
                 draw_geology=True,
                 draw_annotation=True,
-                save_file=None):
+                save_file=None,
+                ):
 
     """ 
     plot well sketch
