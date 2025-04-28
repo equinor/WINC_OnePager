@@ -73,6 +73,7 @@ class Pressure:
     default_hs_scenario: bool = True
     collated_profiles: pd.DataFrame = field(init=None)
     salinity: float = 3.5  # Salinity in percentage (default is 3.5% for seawater)
+    shmin_gradient: float = SHMIN_FAC  # Gradient for Shmin calculation
 
 
     def __post_init__(self):
@@ -189,7 +190,7 @@ class Pressure:
             
             depth_ml = depth_array - self.sf_depth_msl  # depth below mean sea level
 
-            shmin_curve = pressure_ml + depth_ml*SHMIN_FAC
+            shmin_curve = pressure_ml + depth_ml*self.shmin_gradient
             shmin_curve[shmin_curve<0] = hydrostatic_pressure_curve[shmin_curve<0]
 
 
