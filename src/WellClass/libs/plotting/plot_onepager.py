@@ -3,7 +3,7 @@ from .plot_pressure import plot_pressure
 from .plot_sketch import plot_sketch
 from ..well_class.well_class import Well
 from ..well_pressure.Pressure import Pressure
-from src.WellClass.libs.plotting.plot_wellbore_elements import geology_plotter
+from .plot_wellbore_elements import geology_plotter
 from IPython.display import display
 import pandas as pd
 
