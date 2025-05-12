@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt 
+import matplotlib.ticker as plticker
 from .plot_pressure import plot_pressure
 from .plot_sketch import plot_sketch
 from ..well_class.well_class import Well
@@ -44,6 +45,9 @@ def plot_onepager(well: Well, pressure: Pressure,
 
     display(pressure.scenarios_summary())
 
+
+
+
     if not include_sketch:
         fig, (ax_sketch, ax_pressure) = plt.subplots(1,2, sharey=True, figsize=(width, height), width_ratios=(1, 5))
         ax = (ax_sketch, ax_pressure)
@@ -55,6 +59,10 @@ def plot_onepager(well: Well, pressure: Pressure,
     else:
         fig, (ax_sketch, ax_pressure) = plt.subplots(1,2, sharey=True, figsize=(width, height))
         ax = (ax_sketch, ax_pressure)
+
+    #Automatically define the y scale in 250 m intervals
+    loc = plticker.MultipleLocator(base=250) # this locator puts ticks at regular intervals
+    ax_sketch.yaxis.set_major_locator(loc)
 
     if include_sketch:
         plot_sketch(well, ax=ax_sketch, 
@@ -97,6 +105,8 @@ def plot_onepager(well: Well, pressure: Pressure,
                 plot_fluid_contact=pressure_fluid_contact,
                 plot_fluid_pressure=pressure_fluid_pressure,
                 plot_delta_p=pressure_delta_p)
+    
+    ax_sketch.set_ylabel('depth [mTVDMSL]')
 
     fig.suptitle(f"{well.header['well_name']}")
     fig.tight_layout()
