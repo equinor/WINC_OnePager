@@ -11,6 +11,7 @@ import pandas as pd
 def plot_onepager(well: Well, pressure: Pressure,
                   include_sketch: bool = True,
                   include_pressure: bool = True,
+                  savefig: bool = False,
                   filename: str = None,
                   width: float = 10,
                   height: float = 8,
@@ -112,10 +113,12 @@ def plot_onepager(well: Well, pressure: Pressure,
     fig.tight_layout()
     fig.subplots_adjust(wspace=0)
 
-    if filename is not None:
-        wname = well.header['well_name'].replace("/", "_").replace(" ", "_")
-        fname = f"{wname}_onepager.png"
-        fig.savefig(fname, dpi=300)
-        print(f"Figure saved as {fname}")
+    if savefig:
+
+        if filename is None:
+            filename = f"{well.header['well_name'].replace('/', '_').replace(' ', '_')}_onepager.png"
+        
+        fig.savefig(filename, dpi=300)
+        print(f"Figure saved as {filename}")        
 
     return fig, (ax_sketch, ax_pressure) if include_pressure else ax_sketch

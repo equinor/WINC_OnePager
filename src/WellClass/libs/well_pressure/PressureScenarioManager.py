@@ -37,6 +37,8 @@ class PressureScenarioManager:
                 'from_resrvr': scenario.from_resrvr,
                 'z_MSAD': scenario.z_MSAD,
                 'p_MSAD': scenario.p_MSAD,
+                'z_MSAD_brine': scenario.z_MSAD_brine,
+                'p_MSAD_brine': scenario.p_MSAD_brine,
                 'z_resrv': scenario.z_resrv,
                 'p_resrv': scenario.p_resrv,
                 'z_fluid_contact': scenario.z_fluid_contact,

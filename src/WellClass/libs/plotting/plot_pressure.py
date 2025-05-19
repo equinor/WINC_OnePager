@@ -140,11 +140,11 @@ def plot_pressure(my_pressure: Pressure,
 
 
                 # Check if the head and tail of the array are equal to the given values
-                fluid_pressure_x, fluid_pressure_y = check_head_tail_of_array(fluid_pressure_x, fluid_pressure_y,
-                                                              head_x=sc_msad_p,
-                                                              head_y=sc_msad_z,
-                                                              tail_x=sc_p_fluid_contact,
-                                                              tail_y=sc_z_fluid_contact,)
+                # fluid_pressure_x, fluid_pressure_y = check_head_tail_of_array(fluid_pressure_x, fluid_pressure_y,
+                #                                               head_x=sc_msad_p,
+                #                                               head_y=sc_msad_z,
+                #                                               tail_x=sc_p_fluid_contact,
+                #                                               tail_y=sc_z_fluid_contact,)
 
                 pp_label = f'fluid pressure ({scenario["fluid_type"]})'
 

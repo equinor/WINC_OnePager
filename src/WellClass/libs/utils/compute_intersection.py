@@ -1,7 +1,6 @@
 import numpy as np
 
 def compute_intersection(x: np.ndarray, y1:np.ndarray, y2: np.ndarray):
-
         """
         Function that computes intersection between two curves.
         takes 4 parameters:
@@ -20,6 +19,14 @@ def compute_intersection(x: np.ndarray, y1:np.ndarray, y2: np.ndarray):
         x =   x[y_filter]
         y1 = y1[y_filter]
         y2 = y2[y_filter]
+
+
+        # Check for exact matches
+        exact_matches = np.isclose(y1, y2)
+        if np.any(exact_matches):
+                idx = np.where(exact_matches)[0]
+                return x[idx][0], y1[idx][0]  # Return the first exact match
+
 
         #Retrieve closest index
         idx = np.argwhere(np.diff(np.sign(y1 - y2))).flatten()

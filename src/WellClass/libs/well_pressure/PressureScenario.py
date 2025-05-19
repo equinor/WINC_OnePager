@@ -21,11 +21,14 @@ class PressureScenario:
     specific_gravity: float = None
     z_MSAD: float = None
     p_MSAD: float = None
+    z_MSAD_brine: float = None
+    p_MSAD_brine: float = None
     p_resrv: float = None
     z_resrv: float = None
     z_fluid_contact: float = None
     p_fluid_contact: float = None
     p_delta: float = None
+    cleanup_curves: bool = True
 
     
     def compute_pressure_profile(self):
@@ -59,18 +62,21 @@ class PressureScenario:
         # Update init_curves table with the computed fluid pressure curve
         self.init_curves['fluid_pressure'] = fluid_pressure_curve
         
-        
         # Compute water pressure profile
-        if self.p_delta == 0:
+        if np.isclose(self.p_delta,  0, atol=1e-2):
             # If delta_p is zero, use the hydrostatic pressure curve for the water pressure profile
             self.init_curves['brine_pressure'] = self.init_curves['hydrostatic_pressure']
+
         else:
             # If delta_p is not zero, integrate using z_fluid_contact and p_fluid_contact
             self.init_curves['brine_pressure'] = self._compute_brine_pressure_curve( reference_depth=self.z_fluid_contact,
                                                                                      reference_pressure=self.p_fluid_contact)
+            self.z_MSAD_brine, self.p_MSAD_brine = compute_intersection(self.init_curves['depth'].values, self.init_curves['brine_pressure'].values, self.init_curves['min_horizontal_stress'].values)
+            
 
 
-        self._adjust_pressure_curves()
+        if self.cleanup_curves:
+            self._adjust_pressure_curves()
 
 
     def _handle_from_reservoir(self) -> np.ndarray:
@@ -100,18 +106,22 @@ class PressureScenario:
         elif self.p_delta is not None and self.z_fluid_contact is not None:
             # Compute fluid pressure profile starting from z_fluid_contact
             self.p_fluid_contact = self.p_delta + np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
-            fluid_pressure_profile = self._compute_fluid_pressure_curve( reference_depth=self.z_fluid_contact,
-                                                                            reference_pressure=self.p_fluid_contact,
-                                                                            fluid_key=self.fluid_type)
+
+
 
         
+            fluid_pressure_profile = self._compute_fluid_pressure_curve( reference_depth=self.z_fluid_contact,
+                                                                        reference_pressure=self.p_fluid_contact,
+                                                                        fluid_key=self.fluid_type)
+
+    
             if self.z_resrv is None:
                 self.z_resrv = self.z_fluid_contact
                 self.p_resrv = self.p_fluid_contact
             else:
                 if self.z_resrv < self.z_fluid_contact:
                     self.p_resrv = np.interp(self.z_resrv, self.init_curves['depth'], fluid_pressure_profile)
-                # else: ignore (z_resrv >= z_fluid_contact)
+            # else: ignore (z_resrv >= z_fluid_contact)
 
         # Check if p_resrv and z_resrv are provided
         elif self.p_resrv is not None and self.z_resrv is not None:
@@ -119,7 +129,6 @@ class PressureScenario:
             fluid_pressure_profile = self._compute_fluid_pressure_curve( reference_depth=self.z_resrv,
                                                                     reference_pressure=self.p_resrv,
                                                                     fluid_key=self.fluid_type)
-            print(f'{self.z_fluid_contact=}')
             if self.z_fluid_contact is None:
                 self.p_fluid_contact = self.p_resrv
                 self.z_fluid_contact = self.z_resrv
@@ -142,9 +151,19 @@ class PressureScenario:
 
             self.z_MSAD, self.p_MSAD = compute_intersection(depth, fluid_pressure_profile, shmin)
 
+
+
+            # if self.p_delta > 0:
+            #     self.z_MSAD_brine, self.p_MSAD_brine = compute_intersection(depth, self.init_curves['brine_pressure'].values, shmin)
+
+
             if self.z_MSAD > self.z_fluid_contact:
                 # If z_MSAD is greater than or equal to z_fluid_contact, set them to NaN
-                self.z_MSAD, self.p_MSAD = np.nan, np.nan
+                self.z_fluid_contact = self.z_MSAD
+                self.p_fluid_contact = self.p_MSAD
+                self.z_resrv = self.z_MSAD
+                self.p_resrv = self.p_MSAD
+                self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
 
         else:
             raise KeyError("Shmin column is missing from init_curves DataFrame")
@@ -164,7 +183,19 @@ class PressureScenario:
                                                                                 fluid_key=self.fluid_type)
         
         # Check if z_fluid_contact is provided
-        if self.z_fluid_contact is not None:
+        
+
+        if self.z_fluid_contact is not None and  self.z_MSAD > self.z_fluid_contact:
+            # z_MSAD to evaluate deeper than z_fluid_contact.
+            self.z_fluid_contact = self.z_MSAD
+            self.p_fluid_contact = self.p_MSAD
+            self.z_resrv = self.z_MSAD
+            self.p_resrv = self.p_MSAD
+            self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
+            
+        
+        
+        elif self.z_fluid_contact is not None:
             self.p_fluid_contact = np.interp(self.z_fluid_contact, self.init_curves['depth'], fluid_pressure_curve)
             self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
 
@@ -184,23 +215,28 @@ class PressureScenario:
         """
         Adjust the fluid_pressure_curve and brine_pressure_curve to be valid within the given ranges.
         """
-        # Set the pressure values above z_MSAD to np.nan
-        above_msad = self.init_curves['depth'] < self.z_MSAD
-        # self.init_curves.loc[above_msad, 'fluid_pressure'] = np.nan  # Assuming 'fluid_pressure' column exists
 
-        # Set the pressure values below z_fluid_contact to np.nan
-        below_contact = self.init_curves['depth'] > self.z_fluid_contact
-        self.init_curves.loc[below_contact, 'fluid_pressure'] = np.nan
 
-        # If p_delta is not zero, adjust the brine pressure curve as well
-        if self.p_delta != 0:
-            # Set the brine pressure values above the intersection with shmin to np.nan
-            # Get the depth at which brine_pressure intersects min_horizontal_stress (shmin)
-            z_MSAD_brine, p_MSAD_brine = compute_intersection(self.init_curves['depth'].values, self.init_curves['brine_pressure'].values, self.init_curves['min_horizontal_stress'].values)
+        for z_val in set([self.z_MSAD, self.z_fluid_contact, self.z_resrv]):
 
-            # Set brine_pressure values above the intersection depth to np.nan
-            above_intersection = self.init_curves['depth'] < z_MSAD_brine
-            # self.init_curves.loc[above_intersection, 'brine_pressure'] = np.nan
+            # Check if the z_val is close to any depth in the init_curves
+            eval_array = ~np.isclose(self.init_curves['depth'], z_val, atol=0.001, rtol=0)
+            if np.all(eval_array) and ~np.isnan(z_val):
+
+                new_index = z_val
+                new_record = {'depth': new_index }
+
+                # insert the new record into the DataFrame
+                self.init_curves.loc[new_index] = new_record
+
+        self.init_curves = self.init_curves.sort_index()
+        self.init_curves = self.init_curves.interpolate()
+
+        self.init_curves.loc[self.init_curves['fluid_pressure'] > self.init_curves['min_horizontal_stress'], 'fluid_pressure'] = np.nan
+        self.init_curves.loc[self.init_curves['brine_pressure'] > self.init_curves['min_horizontal_stress'], 'brine_pressure'] = np.nan
+        self.init_curves.loc[self.init_curves['fluid_pressure'] < self.init_curves['brine_pressure'], 'fluid_pressure'] = np.nan
+
+
 
 
     def _compute_brine_pressure_curve(self, 
