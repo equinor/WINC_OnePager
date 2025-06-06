@@ -14,6 +14,9 @@ class PressureScenarioManager:
         if 'init_curves' in kwargs:
             kwargs['init_curves'] = kwargs['init_curves'].copy(deep=True)
 
+        if name in self.scenarios:
+            raise ValueError(f"Scenario with name '{name}' already exists.")
+        
         scenario = PressureScenario(name=name, **kwargs)
         
 
