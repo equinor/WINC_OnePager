@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Union, Dict
+from typing import Union, Dict, Optional
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -57,19 +57,19 @@ class Pressure:
     geo_tgrad: float  # Geothermal gradient in degC/km
     pvt_path: Union[str, Path]
     fluid_type: str
-    z_fluid_contact: float = None
-    p_fluid_contact: float = None
-    z_resrv: float = None
-    p_resrv: float = None
-    fluid_composition: str = None
-    specific_gravity: float = None
+    z_fluid_contact: Optional[float] = None
+    p_fluid_contact: Optional[float] = None
+    z_resrv: Optional[float] = None
+    p_resrv: Optional[float] = None
+    fluid_composition: Optional[str] = None
+    specific_gravity: Optional[float] = None
     pvt_data: Dict[str, Dict[str, np.ndarray]] = field(init=False)
     brine_interpolator: RectBivariateSpline = field(init=False)
     fluid_interpolator: RectBivariateSpline = field(init=False)
     ip_shmin_data: np.ndarray = field(default=None) # User-provided Shmin data
     init_curves: pd.DataFrame = field(init=False)
     scenario_manager: PressureScenarioManager = field(init=False)
-    input_scenarios: Dict[str, Union[float, str, None]] = field(default_factory=dict)
+    input_scenarios: Dict[str, Optional[Union[float, str]]] = field(default_factory=dict)
     default_hs_scenario: bool = True
     salinity: float = 3.5  # Salinity in percentage (default is 3.5% for seawater)
     shmin_gradient: float = SHMIN_FAC  # Gradient for Shmin calculation
@@ -80,24 +80,20 @@ class Pressure:
         Initializes PVT data, interpolators, initial curves, and manages scenarios 
         after class instantiation.
         """
-
-        if self.specific_gravity is not None:
-            # Load brine data only
-            self.pvt_data = load_pvt_data(self.pvt_path, load_fluid=False)
-            # Initialize brine interpolator only
-            self._initialize_interpolators(load_fluid=False)
-            self.fluid_composition = None
-        else:
-            # Load both brine and fluid data
-            self.pvt_data = load_pvt_data(self.pvt_path, self.fluid_type, load_fluid=True)
-            self.fluid_composition = self.pvt_data[self.fluid_type]['metadata']['composition']
-            # Initialize both brine and fluid interpolators
-            self._initialize_interpolators(load_fluid=True)
-
-
+        self.pvt_data = self._load_pvt_data()
+        self._initialize_interpolators()
         self.init_curves = self._compute_init_curves()
         self.scenario_manager = PressureScenarioManager()
         self.manage_scenarios()
+
+    def _load_pvt_data(self):
+        """Load PVT data based on specific gravity and fluid type."""
+        if self.specific_gravity is not None:
+            return load_pvt_data(self.pvt_path, load_fluid=False)
+        else:
+            pvt_data = load_pvt_data(self.pvt_path, self.fluid_type, load_fluid=True)
+            self.fluid_composition = pvt_data[self.fluid_type]['metadata']['composition']
+            return pvt_data
 
     def _compute_init_curves(self) -> pd.DataFrame:
         """
@@ -139,9 +135,12 @@ class Pressure:
         self.brine_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, brine_rho_matrix)
 
         # Initialize the fluid interpolator based on the fluid type
-        if load_fluid:
+        if self.specific_gravity is None:
             fluid_rho_matrix = self.pvt_data[self.fluid_type]['rho']
             self.fluid_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, fluid_rho_matrix)
+        else:
+            # If specific gravity is provided, set fluid_interpolator to None
+            self.fluid_interpolator = None
 
 
     def _calculate_depth_curve(self) -> np.ndarray:
@@ -195,105 +194,141 @@ class Pressure:
 
         return shmin_curve
 
-    def add_scenario(self, scenario_name: str, fluid_type: str = None, specific_gravity: float = None, **kwargs):
-        # Check that either fluid_type or specific_gravity is provided, but not both
-        if fluid_type is None and specific_gravity is None:
-            fluid_type = self.fluid_type
-            specific_gravity = self.specific_gravity
-            if fluid_type is not None and specific_gravity is not None:
-                raise ValueError("Either fluid_type or specific_gravity should be provided, not both.")        
+    def add_scenario(self, scenario_name: str, **kwargs):
+        # # Check that either fluid_type or specific_gravity is provided, but not both
+        # if fluid_type is None and specific_gravity is None:
+        #     fluid_type = self.fluid_type
+        #     specific_gravity = self.specific_gravity
+        #     if fluid_type is not None and specific_gravity is not None:
+        #         raise ValueError("Either fluid_type or specific_gravity should be provided, not both.")        
 
 
-        # If fluid_type is provided, use it and ensure specific_gravity is not used
-        if fluid_type is not None:
-            # Ensure specific_gravity is not set in kwargs
-            kwargs['specific_gravity'] = None
+        # # If fluid_type is provided, use it and ensure specific_gravity is not used
+        # if fluid_type is not None:
+        #     # Ensure specific_gravity is not set in kwargs
+        #     kwargs['specific_gravity'] = None
 
-            if fluid_type != self.fluid_type or 'pvt_data' not in kwargs:
-                # Load PVT data for the new fluid type
-                pvt_data = load_pvt_data(self.pvt_path, fluid_type, load_fluid=True)
-                kwargs['pvt_data'] = pvt_data
-                kwargs['fluid_type'] = fluid_type
-                kwargs['fluid_composition'] = pvt_data[fluid_type]['metadata']['composition']
+        #     if fluid_type != self.fluid_type or 'pvt_data' not in kwargs:
+        #         # Load PVT data for the new fluid type
+        #         pvt_data = load_pvt_data(self.pvt_path, fluid_type, load_fluid=True)
+        #         kwargs['pvt_data'] = pvt_data
+        #         kwargs['fluid_type'] = fluid_type
+        #         kwargs['fluid_composition'] = pvt_data[fluid_type]['metadata']['composition']
 
 
-                temperature_vector = pvt_data['temperature']
-                pressure_vector = pvt_data['pressure']
-                rho_matrix = pvt_data[fluid_type]['rho']
+        #         temperature_vector = pvt_data['temperature']
+        #         pressure_vector = pvt_data['pressure']
+        #         rho_matrix = pvt_data[fluid_type]['rho']
 
-                kwargs['fluid_interpolator'] = RectBivariateSpline(pressure_vector, temperature_vector, rho_matrix)
+        #         kwargs['fluid_interpolator'] = RectBivariateSpline(pressure_vector, temperature_vector, rho_matrix)
                 
 
-            else:
-                # Use the existing PVT data and interpolators
-                kwargs.setdefault('pvt_data', self.pvt_data)
-                kwargs.setdefault('fluid_interpolator', self.fluid_interpolator)
-                kwargs.setdefault('fluid_composition', self.fluid_composition)
-                kwargs.setdefault('fluid_type', self.fluid_type)
+        #     else:
+        #         # Use the existing PVT data and interpolators
+        #         kwargs.setdefault('pvt_data', self.pvt_data)
+        #         kwargs.setdefault('fluid_interpolator', self.fluid_interpolator)
+        #         kwargs.setdefault('fluid_composition', self.fluid_composition)
+        #         kwargs.setdefault('fluid_type', self.fluid_type)
             
-        elif specific_gravity is not None:
-            kwargs['specific_gravity'] = specific_gravity
-            kwargs['pvt_data'] = None
-            kwargs['fluid_interpolator'] = None
-            # Ensure fluid_type is not set in kwargs
-            kwargs['fluid_type'] = None
+        # elif specific_gravity is not None:
+        #     kwargs['specific_gravity'] = specific_gravity
+        #     kwargs['pvt_data'] = None
+        #     kwargs['fluid_interpolator'] = None
+        #     # Ensure fluid_type is not set in kwargs
+        #     kwargs['fluid_type'] = None
 
 
 
 
-        # Ensure init_curves and z_fluid_contact are included in kwargs or add them if not present
-        kwargs.setdefault('init_curves', self.init_curves)
-        # kwargs.setdefault('z_fluid_contact', self.z_fluid_contact)
+        # # Ensure init_curves and z_fluid_contact are included in kwargs or add them if not present
+        # kwargs.setdefault('init_curves', self.init_curves)
+        # # kwargs.setdefault('z_fluid_contact', self.z_fluid_contact)
 
-        # Always use the brine interpolator from the Pressure instance
-        kwargs.setdefault('brine_interpolator', self.brine_interpolator)
+        # # Always use the brine interpolator from the Pressure instance
+        # kwargs.setdefault('brine_interpolator', self.brine_interpolator)
 
-        # Create the PressureScenario with the parameters and store it
-        scenario = self.scenario_manager.create_scenario(name=scenario_name, **kwargs)
+        # # Create the PressureScenario with the parameters and store it
+        # scenario = self.scenario_manager.create_scenario(name=scenario_name, **kwargs)
+        # scenario.compute_pressure_profile()
+
+        defaults = {
+            'z_fluid_contact': self.z_fluid_contact,
+            'p_fluid_contact': self.p_fluid_contact,
+            'init_curves': self.init_curves,
+            'brine_interpolator': self.brine_interpolator,
+            'fluid_type': self.fluid_type,
+            'fluid_composition': self.fluid_composition,
+            'pvt_data': self.pvt_data,
+            'fluid_interpolator': self.fluid_interpolator,
+            'specific_gravity': self.specific_gravity,
+            'z_resrv': self.z_resrv,
+            'p_resrv': self.p_resrv,
+            # Add other default values as needed
+        }
+
+        # Update defaults with user-provided values
+        defaults.update(kwargs)
+
+
+
+        # Store the scenario
+        scenario = self.scenario_manager.create_scenario(name=scenario_name, **defaults)
         scenario.compute_pressure_profile()
 
 
     def manage_scenarios(self):
         # Check if the first scenario is 'None' and should be computed as hydrostatic
-        if self.z_fluid_contact is not None and self.input_scenarios:
-            # Skip 'depth_msl' and find the first actual scenario name and pressure
-            scenarios_iter = ((name, pressure) for name, pressure in self.input_scenarios.items() if name.startswith('RP'))
-            first_scenario_name, first_scenario_pressure = next(scenarios_iter, (None, None))
+        # Skip the first entry in the input_scenarios dictionary
+
+        if self.input_scenarios:
+            scenarios_iter = iter(self.input_scenarios.items())
+            next(scenarios_iter)  
+            for scenario_name, scenario_pressure in scenarios_iter:
+                print(f'{scenario_pressure=}')
+                try:
+                    p_delta = float(scenario_pressure)
+                except:
+                    p_delta = None  # Handle cases where pressure is not a float
+                print(f'{scenario_name=} {scenario_pressure=}')
+                self.add_scenario(scenario_name=scenario_name, p_delta=p_delta, from_resrvr=True,)
+
+        # if self.z_fluid_contact is not None and self.input_scenarios:
+        #     # Skip 'depth_msl' and find the first actual scenario name and pressure
+        #     scenarios_iter = ((name, pressure) for name, pressure in self.input_scenarios.items() if name.startswith('RP'))
+        #     first_scenario_name, first_scenario_pressure = next(scenarios_iter, (None, None))
             
-            # Check if the first scenario pressure is None and should be computed as hydrostatic
-            if first_scenario_pressure is None:
-                # Compute hydrostatic scenario named as the first scenario
-                self.add_scenario(
-                    scenario_name=first_scenario_name,
-                    from_resrvr=True,
-                    fluid_type=self.fluid_type,
-                    z_fluid_contact=self.z_fluid_contact,
-                    p_delta=0  # Assuming hydrostatic pressure
-                )
+        #     # Check if the first scenario pressure is None and should be computed as hydrostatic
+        #     if first_scenario_pressure is None:
+        #         # Compute hydrostatic scenario named as the first scenario
+        #         self.add_scenario(
+        #             scenario_name=first_scenario_name,
+        #             from_resrvr=True,
+        #             fluid_type=self.fluid_type,
+        #             z_fluid_contact=self.z_fluid_contact,
+        #             p_delta=0  # Assuming hydrostatic pressure
+        #         )
 
             
-            # Parse the remaining scenarios and create PressureScenario instances
-            for sc_name, sc_pressure in scenarios_iter:
-                if sc_pressure is not None and isinstance(sc_pressure, str):
-                    # Convert string to float, handling any special string cases here
+        #     # Parse the remaining scenarios and create PressureScenario instances
+        #     for sc_name, sc_pressure in scenarios_iter:
+        #         if sc_pressure is not None and isinstance(sc_pressure, str):
+        #             # Convert string to float, handling any special string cases here
 
-                    p_delta = float(sc_pressure)
-                    self.add_scenario(
-                        scenario_name=sc_name,
-                        from_resrvr=True,
-                        fluid_type=self.fluid_type,
-                        z_fluid_contact=self.z_fluid_contact,
-                        p_delta=p_delta
-                    )
+        #             p_delta = float(sc_pressure)
+        #             self.add_scenario(
+        #                 scenario_name=sc_name,
+        #                 from_resrvr=True,
+        #                 fluid_type=self.fluid_type,
+        #                 z_fluid_contact=self.z_fluid_contact,
+        #                 p_delta=p_delta
+        #             )
 
         
         elif self.z_fluid_contact is not None and self.default_hs_scenario:
             # Handle default hydrostatic scenario if no input scenarios are provided
             self.add_scenario(
-                scenario_name='hydrostatic',
+                scenario_name='base_case',
                 from_resrvr=True,
-                z_fluid_contact=self.z_fluid_contact,
-                fluid_type=self.fluid_type,
             )
             
 
