@@ -33,6 +33,9 @@ class PressureScenario:
     
     def compute_pressure_profile(self):
         print(f'Computing pressure profile for scenario: {self.name}')
+
+
+
         # Create default NaN arrays for fluid and brine pressure
         default_length = len(self.init_curves['depth'])
         default_nan_array = np.full(default_length, np.nan)
@@ -43,18 +46,13 @@ class PressureScenario:
         self.init_curves['brine_pressure'] = default_nan_array
 
         # Validate required parameters
-        if self.name is None:
-            # Return error ir scenario name is not provided
-            raise ValueError("The 'name' parameter is required.")
-        
-        if self.from_resrvr is None:
-            # Return error if 'from_resrvr' is not provided
-            raise ValueError("The 'from_resrvr' parameter is required.")
+        self._validate_parameters()
         
         # Compute fluid pressure profile based on provided parameters
         if self.from_resrvr:
             # Handle scenarios when from_resrvr is True
             fluid_pressure_curve = self._handle_from_reservoir()
+            self._compute_MSAD(fluid_pressure_curve)
         else:
             # Handle scenarios when from_resrvr is False
             fluid_pressure_curve = self._handle_from_MSAD()
@@ -63,20 +61,35 @@ class PressureScenario:
         self.init_curves['fluid_pressure'] = fluid_pressure_curve
         
         # Compute water pressure profile
-        if np.isclose(self.p_delta,  0, atol=1e-2):
-            # If delta_p is zero, use the hydrostatic pressure curve for the water pressure profile
-            self.init_curves['brine_pressure'] = self.init_curves['hydrostatic_pressure']
-
-        else:
-            # If delta_p is not zero, integrate using z_fluid_contact and p_fluid_contact
-            self.init_curves['brine_pressure'] = self._compute_brine_pressure_curve( reference_depth=self.z_fluid_contact,
-                                                                                     reference_pressure=self.p_fluid_contact)
-            self.z_MSAD_brine, self.p_MSAD_brine = compute_intersection(self.init_curves['depth'].values, self.init_curves['brine_pressure'].values, self.init_curves['min_horizontal_stress'].values)
-            
+        self._compute_brine_pressure() 
 
 
         if self.cleanup_curves:
             self._adjust_pressure_curves()
+
+    def _validate_parameters(self):
+        """Validate required parameters for pressure computation."""
+        if self.name is None:
+            raise ValueError("The 'name' parameter is required.")
+        if self.from_resrvr is None:
+            raise ValueError("The 'from_resrvr' parameter is required.")
+        # if self.from_resrvr and self.z_fluid_contact and self.p_delta is None:
+        #     self.p_delta = 0
+
+
+    def _compute_brine_pressure(self):
+        """Compute the brine pressure profile based on fluid pressure."""
+        print(self.p_delta)
+        if np.isclose(self.p_delta, 0, atol=1e-2):
+            # If delta_p is zero, use the hydrostatic pressure curve for the water pressure profile
+            self.init_curves['brine_pressure'] = self.init_curves['hydrostatic_pressure']
+        else:
+            # If delta_p is not zero, integrate using z_fluid_contact and p_fluid_contact
+            self.init_curves['brine_pressure'] = self._integrate_brine_pressure_curve( reference_depth=self.z_fluid_contact,
+                                                                                     reference_pressure=self.p_fluid_contact)
+
+            if self.p_delta > 0:
+                self.z_MSAD_brine, self.p_MSAD_brine = compute_intersection(self.init_curves['depth'].values, self.init_curves['brine_pressure'].values, self.init_curves['min_horizontal_stress'].values)
 
 
     def _handle_from_reservoir(self) -> np.ndarray:
@@ -84,66 +97,152 @@ class PressureScenario:
         Method to handle scenarios when the fluid pressure profile is computed from the reservoir.
         """
 
+        ip_params = zip(
+            ['z_fluid_contact', 'p_fluid_contact', 'p_delta', 'p_resrv', 'z_resrv'],
+            np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float)
+        )
+
+        ip_params = pd.Series(dict(ip_params))
+
+
         # Check if only z_fluid_contact is provided (hydrostatic default case)
-        all_other_none = all(x is None for x in [self.p_delta, self.p_resrv, self.z_resrv, self.p_fluid_contact])
+        # if all(param is None for param in (self.p_delta, self.p_resrv, self.z_resrv, self.p_fluid_contact, self.z_fluid_contact)):
+        if ip_params.isna().all():
+            raise ValueError("At least one parameter (z_fluid_contact or z_resrv) must be provided.")
         
-        if self.z_fluid_contact is not None and all_other_none:
-            # Assume delta_p is zero
-            self.p_delta = 0
-            # Compute hydrostatic pressure at z_fluid_contact
+
+        ip_params_with_value = ip_params.dropna()
+
+
+        # Check if only z_fluid_contact or z_resrv are provided, make a hydrostatic case
+        if ip_params[['p_fluid_contact', 'p_resrv', 'p_delta']].isna().all() and ('z_fluid_contact' in ip_params_with_value.index or 'z_resrv' in ip_params_with_value.index):
+            if self.z_resrv is None:
+                # Only z_fluid_contact is provided, assume hydrostatic pressure
+                self.z_resrv = self.z_fluid_contact
+
+            if self.z_fluid_contact is None:
+                self.z_fluid_contact = self.z_resrv
+            
+            
             self.p_fluid_contact = np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
-            # Set reservoir pressure and depth to fluid contact values
-            self.p_resrv = self.p_fluid_contact
-            self.z_resrv = self.z_fluid_contact
-            # Compute fluid pressure profile from z_fluid_contact
-            fluid_pressure_profile = self._compute_fluid_pressure_curve(
-                reference_depth=self.z_fluid_contact,
-                reference_pressure=self.p_fluid_contact,
-                fluid_key=self.fluid_type
-            )
+
+            ref_z = self.z_fluid_contact
+            ref_p = self.p_fluid_contact
+
         
-        # Check if z_fluid_contact and p_delta are provided
-        elif self.p_delta is not None and self.z_fluid_contact is not None:
-            # Compute fluid pressure profile starting from z_fluid_contact
+        elif 'z_fluid_contact' in ip_params_with_value.index and 'p_fluid_contact' in ip_params_with_value.index:
+            # Both z_fluid_contact and p_fluid_contact are provided
+            self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
+
+            ref_z = self.z_fluid_contact
+            ref_p = self.p_fluid_contact
+
+            
+        
+        elif 'p_delta' in ip_params_with_value.index and 'z_fluid_contact' in ip_params_with_value.index:
+            # Both p_delta and z_fluid_contact are provided
             self.p_fluid_contact = self.p_delta + np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
 
+            ref_z = self.z_fluid_contact
+            ref_p = self.p_fluid_contact
 
+        elif 'p_resrv' in ip_params_with_value.index and 'z_resrv' in ip_params_with_value.index:
+            ref_z = self.z_resrv
+            ref_p = self.p_resrv
+
+        elif 'p_resrv' in ip_params_with_value.index and 'z_fluid_contact' in ip_params_with_value.index:
+            self.p_fluid_contact = self.p_resrv
+            ref_z = self.z_fluid_contact
+            ref_p = self.p_fluid_contact
+
+        elif 'p_fluid_contact' in ip_params_with_value.index and 'z_resrv' in ip_params_with_value.index:
+            self.z_fluid_contact = self.z_resrv
+            ref_z = self.z_fluid_contact
+            ref_p = self.p_fluid_contact
+
+        elif 'p_delta' in ip_params_with_value.index and 'z_resrv' in ip_params_with_value.index:
+            self.z_fluid_contact = self.z_resrv
+            self.p_fluid_contact = self.p_delta + np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
+            ref_z = self.z_fluid_contact
+            ref_p = self.p_fluid_contact
+
+        else:
+            ValueError("Insufficient parameters provided for 'from_resrvr' scenario.")            
+        
 
         
-            fluid_pressure_profile = self._compute_fluid_pressure_curve( reference_depth=self.z_fluid_contact,
-                                                                        reference_pressure=self.p_fluid_contact,
-                                                                        fluid_key=self.fluid_type)
 
-    
-            if self.z_resrv is None:
-                self.z_resrv = self.z_fluid_contact
-                self.p_resrv = self.p_fluid_contact
-            else:
-                if self.z_resrv < self.z_fluid_contact:
-                    self.p_resrv = np.interp(self.z_resrv, self.init_curves['depth'], fluid_pressure_profile)
-            # else: ignore (z_resrv >= z_fluid_contact)
 
-        # Check if p_resrv and z_resrv are provided
-        elif self.p_resrv is not None and self.z_resrv is not None:
-            # Compute fluid pressure profile starting from z_resrv
-            fluid_pressure_profile = self._compute_fluid_pressure_curve( reference_depth=self.z_resrv,
-                                                                    reference_pressure=self.p_resrv,
-                                                                    fluid_key=self.fluid_type)
-            if self.z_fluid_contact is None:
-                self.p_fluid_contact = self.p_resrv
-                self.z_fluid_contact = self.z_resrv
+        # print('\nafter check\n', ip_params)
+
+        fluid_pressure_profile = self._compute_fluid_pressure_curve(
+            reference_depth=ref_z,
+            reference_pressure=ref_p,
+            fluid_key=self.fluid_type
+        )
+
+
+        # Fill missing parameters based on combination of provided parameters
+        if self.z_fluid_contact and self.p_fluid_contact:
+            if self.p_delta is None:
+            # Compute p_delta if z_fluid_contact and p_fluid_contact are provided
                 self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
+            
+            if self.z_resrv is None:
+                self.p_resrv = self.p_fluid_contact
+                self.z_resrv = self.z_fluid_contact
+
+            elif self.z_resrv < self.z_fluid_contact:
+                # If z_resrv is less than z_fluid_contact, set p_resrv to the fluid pressure at z_fluid_contact
+                self.p_resrv = np.interp(self.z_resrv, self.init_curves['depth'], fluid_pressure_profile)
+            
             else:
-                if self.z_resrv < self.z_fluid_contact:
-                    self.p_fluid_contact = np.interp(self.z_fluid_contact, self.init_curves['depth'], fluid_pressure_profile)
-                    self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
-                else:
-                    self.p_fluid_contact = self.p_resrv
-                    self.z_fluid_contact = self.z_resrv
-                    self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
-                
-        else:
-            raise ValueError("Insufficient parameters provided for 'from_resrvr' scenario.")
+                # If z_resrv is greater than or equal to z_fluid_contact, set p_resrv to p_fluid_contact
+                self.p_resrv = self.p_fluid_contact
+                self.z_resrv = self.z_fluid_contact
+
+        elif self.p_resrv and self.z_resrv:
+            if self.z_fluid_contact is None:
+                # If z_fluid_contact is not provided, set it to z_resrv
+                self.z_fluid_contact = self.z_resrv
+                self.p_fluid_contact = self.p_resrv
+                self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
+
+            elif self.z_fluid_contact > self.z_resrv:
+                # If z_fluid_contact is greater than z_resrv, set p_fluid_contact to p_resrv
+                self.p_fluid_contact = np.interp(self.z_fluid_contact, self.init_curves['depth'], fluid_pressure_profile)
+                self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
+
+            else:
+                # If z_fluid_contact is less than or equal to z_resrv, set p_fluid_contact to p_resrv
+                self.z_fluid_contact = self.z_resrv
+                self.p_fluid_contact = self.p_resrv
+                self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
+            
+        
+
+        #PRINT DEBUGGING INFO
+        # op_params = dict(zip(
+        #     ['z_fluid_contact', 'p_fluid_contact', 'p_delta', 'p_resrv', 'z_resrv'],
+        #     np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float)
+        # ))
+
+        
+        # for key, ip_param, op_param in zip(ip_params.keys(), ip_params, pd.Series(op_params)):
+        #     if np.isclose(ip_param, op_param):
+        #         # If the input parameter is close to the output parameter, update the output parameter
+        #         print(f'{key}: Input value used.')
+        #     elif np.isnan(ip_param):
+        #         # If the input parameter is None, set it to the output parameter
+        #         print(f'{key}: value computed and updated.')
+        #     elif ~np.isnan(ip_param):
+        #         # If the input parameter is not None, keep the input value
+        #         print(f'{key}: Input value {ip_param} overriden by {op_param}.')
+        return fluid_pressure_profile
+
+
+
+    def _compute_MSAD(self, fluid_pressure_profile):
 
         if 'min_horizontal_stress' in self.init_curves.columns:
             depth = self.init_curves['depth'].values
@@ -168,7 +267,6 @@ class PressureScenario:
         else:
             raise KeyError("Shmin column is missing from init_curves DataFrame")
 
-        return fluid_pressure_profile
         
 
     def _handle_from_MSAD(self) -> np.ndarray:
@@ -239,10 +337,10 @@ class PressureScenario:
 
 
 
-    def _compute_brine_pressure_curve(self, 
+    def _integrate_brine_pressure_curve(self, 
                                       reference_depth: float, 
                                       reference_pressure: float) -> np.ndarray:
-        
+
         return _integrate_pressure(
                 init_curves=self.init_curves,
                 reference_depth=reference_depth,
