@@ -14,6 +14,7 @@ from ..pvt.pvt import (load_pvt_data,
                           get_rho_from_pvt_data,
                           corr_rhobrine_LaliberteCopper)
 from .barrier_pressure import leakage_proxy
+import warnings
 
 # Constants
 SHMIN_NAME = 'Shmin'
@@ -108,8 +109,6 @@ class Pressure:
         temperature_curve = self._calculate_temperature_curve(depth_curve)
         hydrostatic_pressure_curve = self._calculate_hydrostatic_pressure(depth_curve, temperature_curve)
         min_horizontal_stress = self._calculate_shmin(depth_curve, hydrostatic_pressure_curve)
-        min_horizontal_stress[min_horizontal_stress<hydrostatic_pressure_curve] = hydrostatic_pressure_curve[min_horizontal_stress<hydrostatic_pressure_curve]  
-        # min_horizontal_stress[hydrostatic_pressure_curve>min_horizontal_stress] = hydrostatic_pressure_curve[hydrostatic_pressure_curve>min_horizontal_stress]
         # Combine into a single DataFrame
         init_curves = pd.DataFrame({
             'depth': depth_curve,
@@ -173,12 +172,39 @@ class Pressure:
         Returns:
             np.ndarray: Array of Shmin values.
         """
+        pressure_ml = np.interp(self.sf_depth_msl, depth_array,  hydrostatic_pressure_curve)
+
+
         if self.ip_shmin_data is not None:
             # User has provided custom Shmin data, so interpolate it
             depth_values, shmin_values = self.ip_shmin_data.T
+
+            if min(depth_values) > self.sf_depth_msl:
+                print(min(depth_values))
+                warnings.warn(
+                    f"No Shmin data between seafloor depth ({self.sf_depth_msl}) and minimum provided depth ({min(depth_values)}). "
+                    "Extrapolating using hydrostatic pressure at seafloor."
+                )
+                depth_values = np.insert(depth_values, 0, self.sf_depth_msl)
+                shmin_values = np.insert(shmin_values, 0, pressure_ml)
+
+            else:
+                depth_values = depth_values[depth_values >= self.sf_depth_msl]
+                shmin_values = shmin_values[depth_values >= self.sf_depth_msl]
+                
+
             shmin_interpolator = interp1d(depth_values, shmin_values, bounds_error=False, fill_value="extrapolate")
 
+
             shmin_curve = shmin_interpolator(depth_array)
+
+            # Ensure Shmin is equual to hydrostatic pressure above seafloor depth
+            shmin_curve[depth_array < self.sf_depth_msl] = hydrostatic_pressure_curve[depth_array < self.sf_depth_msl] 
+            
+            # Ensure Shmin is not below hydrostatic pressure at any depth
+            shmin_curve[shmin_curve<hydrostatic_pressure_curve] = hydrostatic_pressure_curve[shmin_curve<hydrostatic_pressure_curve]  
+
+
 
         else:
             # No user data provided, use the empirical formula
@@ -195,15 +221,37 @@ class Pressure:
         return shmin_curve
 
     def add_scenario(self, scenario_name: str, **kwargs):
+
+        if 'fluid_type' in kwargs and kwargs['fluid_type'] != self.fluid_type:
+            # If fluid_type is provided, load the PVT data for the new fluid type
+            pvt_data = load_pvt_data(self.pvt_path, kwargs['fluid_type'], load_fluid=True)
+            kwargs['pvt_data'] = pvt_data
+            kwargs['fluid_composition'] = pvt_data[kwargs['fluid_type']]['metadata']['composition']
+
+            temperature_vector = pvt_data['temperature']
+            pressure_vector = pvt_data['pressure']
+            rho_matrix = pvt_data[kwargs['fluid_type']]['rho']
+
+            kwargs['fluid_interpolator'] = RectBivariateSpline(pressure_vector, temperature_vector, rho_matrix)
+
+        elif 'specific_gravity' in kwargs and kwargs['specific_gravity'] is not None:
+            # If specific_gravity is provided, set fluid_type to None and fluid_interpolator to None
+            kwargs['fluid_type'] = None
+            kwargs['fluid_interpolator'] = None
+            kwargs['pvt_data'] = None
+            kwargs['fluid_composition'] = None
         # # Check that either fluid_type or specific_gravity is provided, but not both
-        # if fluid_type is None and specific_gravity is None:
-        #     fluid_type = self.fluid_type
-        #     specific_gravity = self.specific_gravity
-        #     if fluid_type is not None and specific_gravity is not None:
-        #         raise ValueError("Either fluid_type or specific_gravity should be provided, not both.")        
+        if 'fluid_type' not in kwargs and 'specific_gravity' not in kwargs:
+            if self.fluid_type is None and self.specific_gravity is None:
+                raise ValueError("Either fluid_type or specific_gravity should be provided, not both.")
+            else:
+                kwargs['fluid_type'] = self.fluid_type
+                kwargs['specific_gravity'] = self.specific_gravity
 
 
         # # If fluid_type is provided, use it and ensure specific_gravity is not used
+
+            
         # if fluid_type is not None:
         #     # Ensure specific_gravity is not set in kwargs
         #     kwargs['specific_gravity'] = None

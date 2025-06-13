@@ -130,12 +130,14 @@ class PressureScenario:
             ref_p = self.p_fluid_contact
 
         
-        elif 'z_fluid_contact' in ip_params_with_value.index and 'p_fluid_contact' in ip_params_with_value.index:
+        elif 'z_fluid_contact' in ip_params_with_value.index and 'p_fluid_contact' in ip_params_with_value.index and 'p_delta' not in ip_params_with_value.index:
             # Both z_fluid_contact and p_fluid_contact are provided
             self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
 
             ref_z = self.z_fluid_contact
             ref_p = self.p_fluid_contact
+
+
 
             
         
