@@ -201,8 +201,6 @@ class Pressure:
             # Ensure Shmin is equual to hydrostatic pressure above seafloor depth
             shmin_curve[depth_array < self.sf_depth_msl] = hydrostatic_pressure_curve[depth_array < self.sf_depth_msl] 
             
-            # Ensure Shmin is not below hydrostatic pressure at any depth
-            shmin_curve[shmin_curve<hydrostatic_pressure_curve] = hydrostatic_pressure_curve[shmin_curve<hydrostatic_pressure_curve]  
 
 
 
@@ -215,8 +213,10 @@ class Pressure:
             depth_ml = depth_array - self.sf_depth_msl  # depth below mean sea level
 
             shmin_curve = pressure_ml + depth_ml*self.shmin_gradient
-            shmin_curve[shmin_curve<0] = hydrostatic_pressure_curve[shmin_curve<0]
+            # shmin_curve[shmin_curve<0] = hydrostatic_pressure_curve[shmin_curve<0]
 
+        # Ensure Shmin is not below hydrostatic pressure at any depth
+        shmin_curve[shmin_curve<hydrostatic_pressure_curve] = hydrostatic_pressure_curve[shmin_curve<hydrostatic_pressure_curve]  
 
         return shmin_curve
 
