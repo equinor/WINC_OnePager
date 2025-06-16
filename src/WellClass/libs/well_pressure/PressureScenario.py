@@ -79,7 +79,6 @@ class PressureScenario:
 
     def _compute_brine_pressure(self):
         """Compute the brine pressure profile based on fluid pressure."""
-        print(self.p_delta)
         if np.isclose(self.p_delta, 0, atol=1e-2):
             # If delta_p is zero, use the hydrostatic pressure curve for the water pressure profile
             self.init_curves['brine_pressure'] = self.init_curves['hydrostatic_pressure']
@@ -139,10 +138,12 @@ class PressureScenario:
 
         elif 'z_fluid_contact' in ip_params_with_value.index and 'p_fluid_contact' in ip_params_with_value.index and 'p_delta' in ip_params_with_value.index:
             # Both z_fluid_contact and p_fluid_contact are provided
-            self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
+            self.p_fluid_contact = self.p_delta + self.p_fluid_contact
 
+            self.p_delta = self.p_fluid_contact - np.interp(self.z_fluid_contact, self.init_curves['depth'], self.init_curves['hydrostatic_pressure'])
+            
             ref_z = self.z_fluid_contact
-            ref_p = self.p_fluid_contact + self.p_delta
+            ref_p = self.p_fluid_contact
 
 
             
@@ -229,23 +230,23 @@ class PressureScenario:
             
         
 
-        #PRINT DEBUGGING INFO
-        # op_params = dict(zip(
-        #     ['z_fluid_contact', 'p_fluid_contact', 'p_delta', 'p_resrv', 'z_resrv'],
-        #     np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float)
-        # ))
+        # PRINT DEBUGGING INFO
+        op_params = dict(zip(
+            ['z_fluid_contact', 'p_fluid_contact', 'p_delta', 'p_resrv', 'z_resrv'],
+            np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float)
+        ))
 
         
-        # for key, ip_param, op_param in zip(ip_params.keys(), ip_params, pd.Series(op_params)):
-        #     if np.isclose(ip_param, op_param):
-        #         # If the input parameter is close to the output parameter, update the output parameter
-        #         print(f'{key}: Input value used.')
-        #     elif np.isnan(ip_param):
-        #         # If the input parameter is None, set it to the output parameter
-        #         print(f'{key}: value computed and updated.')
-        #     elif ~np.isnan(ip_param):
-        #         # If the input parameter is not None, keep the input value
-        #         print(f'{key}: Input value {ip_param} overriden by {op_param}.')
+        for key, ip_param, op_param in zip(ip_params.keys(), ip_params, pd.Series(op_params)):
+            if np.isclose(ip_param, op_param):
+                # If the input parameter is close to the output parameter, update the output parameter
+                print(f'{key}: Input value used.')
+            elif np.isnan(ip_param):
+                # If the input parameter is None, set it to the output parameter
+                print(f'{key}: value computed and updated.')
+            elif ~np.isnan(ip_param):
+                # If the input parameter is not None, keep the input value
+                print(f'{key}: Input value {ip_param} overriden by {op_param}.')
         return fluid_pressure_profile
 
 
