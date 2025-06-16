@@ -179,20 +179,25 @@ class Pressure:
             # User has provided custom Shmin data, so interpolate it
             depth_values, shmin_values = self.ip_shmin_data.T
 
+
             if min(depth_values) > self.sf_depth_msl:
-                print(min(depth_values))
                 warnings.warn(
                     f"No Shmin data between seafloor depth ({self.sf_depth_msl}) and minimum provided depth ({min(depth_values)}). "
                     "Extrapolating using hydrostatic pressure at seafloor."
                 )
-                depth_values = np.insert(depth_values, 0, self.sf_depth_msl)
-                shmin_values = np.insert(shmin_values, 0, pressure_ml)
+
 
             
 
             else:
-                depth_values = depth_values[depth_values >= self.sf_depth_msl]
-                shmin_values = shmin_values[depth_values >= self.sf_depth_msl]
+                filtered_depth_values = depth_values[depth_values >= self.sf_depth_msl]
+                filtered_shmin_values = shmin_values[depth_values >= self.sf_depth_msl]
+
+                depth_values = filtered_depth_values
+                shmin_values = filtered_shmin_values
+
+            depth_values = np.insert(depth_values, 0, self.sf_depth_msl)
+            shmin_values = np.insert(shmin_values, 0, pressure_ml)
                 
 
             shmin_interpolator = interp1d(depth_values, shmin_values, bounds_error=False, fill_value="extrapolate")
