@@ -230,23 +230,23 @@ class PressureScenario:
             
         
 
-        # PRINT DEBUGGING INFO
-        op_params = dict(zip(
-            ['z_fluid_contact', 'p_fluid_contact', 'p_delta', 'p_resrv', 'z_resrv'],
-            np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float)
-        ))
+        # # PRINT DEBUGGING INFO
+        # op_params = dict(zip(
+        #     ['z_fluid_contact', 'p_fluid_contact', 'p_delta', 'p_resrv', 'z_resrv'],
+        #     np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float)
+        # ))
 
         
-        for key, ip_param, op_param in zip(ip_params.keys(), ip_params, pd.Series(op_params)):
-            if np.isclose(ip_param, op_param):
-                # If the input parameter is close to the output parameter, update the output parameter
-                print(f'{key}: Input value used.')
-            elif np.isnan(ip_param):
-                # If the input parameter is None, set it to the output parameter
-                print(f'{key}: value computed and updated.')
-            elif ~np.isnan(ip_param):
-                # If the input parameter is not None, keep the input value
-                print(f'{key}: Input value {ip_param} overriden by {op_param}.')
+        # for key, ip_param, op_param in zip(ip_params.keys(), ip_params, pd.Series(op_params)):
+        #     if np.isclose(ip_param, op_param):
+        #         # If the input parameter is close to the output parameter, update the output parameter
+        #         print(f'{key}: Input value used.')
+        #     elif np.isnan(ip_param):
+        #         # If the input parameter is None, set it to the output parameter
+        #         print(f'{key}: value computed and updated.')
+        #     elif ~np.isnan(ip_param):
+        #         # If the input parameter is not None, keep the input value
+        #         print(f'{key}: Input value {ip_param} overriden by {op_param}.')
         return fluid_pressure_profile
 
 

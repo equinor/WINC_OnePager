@@ -188,6 +188,8 @@ class Pressure:
                 depth_values = np.insert(depth_values, 0, self.sf_depth_msl)
                 shmin_values = np.insert(shmin_values, 0, pressure_ml)
 
+            
+
             else:
                 depth_values = depth_values[depth_values >= self.sf_depth_msl]
                 shmin_values = shmin_values[depth_values >= self.sf_depth_msl]
@@ -199,7 +201,7 @@ class Pressure:
             shmin_curve = shmin_interpolator(depth_array)
 
             # Ensure Shmin is equual to hydrostatic pressure above seafloor depth
-            shmin_curve[depth_array < self.sf_depth_msl] = hydrostatic_pressure_curve[depth_array < self.sf_depth_msl] 
+            
             
 
 
@@ -216,7 +218,8 @@ class Pressure:
             # shmin_curve[shmin_curve<0] = hydrostatic_pressure_curve[shmin_curve<0]
 
         # Ensure Shmin is not below hydrostatic pressure at any depth
-        shmin_curve[shmin_curve<hydrostatic_pressure_curve] = hydrostatic_pressure_curve[shmin_curve<hydrostatic_pressure_curve]  
+        # shmin_curve[shmin_curve<hydrostatic_pressure_curve] = hydrostatic_pressure_curve[shmin_curve<hydrostatic_pressure_curve]  
+        shmin_curve[depth_array < self.sf_depth_msl] = hydrostatic_pressure_curve[depth_array < self.sf_depth_msl] 
 
         return shmin_curve
 
