@@ -196,8 +196,18 @@ class Pressure:
                 depth_values = filtered_depth_values
                 shmin_values = filtered_shmin_values
 
+            # Remove duplicates while keeping the first occurrence
+            unique_indices = np.unique(depth_values, return_index=True)[1]
+            depth_values = depth_values[np.sort(unique_indices)]
+            shmin_values = shmin_values[np.sort(unique_indices)]
+
+            # Insert the seafloor depth and pressure at mudline into the arrays
             depth_values = np.insert(depth_values, 0, self.sf_depth_msl)
             shmin_values = np.insert(shmin_values, 0, pressure_ml)
+
+            # Insert values af MSL
+            depth_values = np.insert(depth_values, 0, 0)
+            shmin_values = np.insert(shmin_values, 0, hydrostatic_pressure_curve[0])
                 
 
             shmin_interpolator = interp1d(depth_values, shmin_values, bounds_error=False, fill_value="extrapolate")
