@@ -19,6 +19,7 @@ class PressureScenario:
     fluid_composition: str = None
     pvt_data: dict = None
     specific_gravity: float = None
+    rho_brine: float = None
     z_MSAD: float = None
     p_MSAD: float = None
     z_MSAD_brine: float = None
@@ -82,6 +83,13 @@ class PressureScenario:
         if np.isclose(self.p_delta, 0, atol=1e-2):
             # If delta_p is zero, use the hydrostatic pressure curve for the water pressure profile
             self.init_curves['brine_pressure'] = self.init_curves['hydrostatic_pressure']
+
+        elif self.rho_brine is not None:
+            self.init_curves['brine_pressure'] = self.init_curves['hydrostatic_pressure'] + self.p_delta
+
+            if self.p_delta > 0:
+                self.z_MSAD_brine, self.p_MSAD_brine = compute_intersection(self.init_curves['depth'].values, self.init_curves['brine_pressure'].values, self.init_curves['min_horizontal_stress'].values)
+
         else:
             # If delta_p is not zero, integrate using z_fluid_contact and p_fluid_contact
             self.init_curves['brine_pressure'] = self._integrate_brine_pressure_curve( reference_depth=self.z_fluid_contact,

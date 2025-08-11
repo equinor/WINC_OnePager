@@ -302,6 +302,7 @@ class Pressure:
             'specific_gravity': self.specific_gravity,
             'z_resrv': self.z_resrv,
             'p_resrv': self.p_resrv,
+            'rho_brine': self.rho_brine,
             # Add other default values as needed
         }
 
