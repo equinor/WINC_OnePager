@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d, RectBivariateSpline
+import scipy.constants as const
 
 from ..well_class.well_class import Well
 
@@ -64,6 +65,7 @@ class Pressure:
     p_resrv: Optional[float] = None
     fluid_composition: Optional[str] = None
     specific_gravity: Optional[float] = None
+    rho_brine : Optional[float] = None  # Density of brine in kg/m^3, if known
     pvt_data: Dict[str, Dict[str, np.ndarray]] = field(init=False)
     brine_interpolator: RectBivariateSpline = field(init=False)
     fluid_interpolator: RectBivariateSpline = field(init=False)
@@ -74,6 +76,7 @@ class Pressure:
     default_hs_scenario: bool = True
     salinity: float = 3.5  # Salinity in percentage (default is 3.5% for seawater)
     shmin_gradient: float = SHMIN_FAC  # Gradient for Shmin calculation
+
 
 
     def __post_init__(self):
@@ -157,9 +160,20 @@ class Pressure:
         
         return temperature_curve
 
-    def _calculate_hydrostatic_pressure(self, depth_curve: np.ndarray, temperature_curve: np.ndarray) -> np.ndarray:
-         # Compute hydrostatic pressure using density data from pvt_data and integrate pressure
-         return compute_hydrostatic_pressure(depth_curve, temperature_curve, self.pvt_data)
+    def _calculate_hydrostatic_pressure(self, depth_curve: np.ndarray, temperature_curve: np.ndarray,) -> np.ndarray:
+        # Compute hydrostatic pressure using density data from pvt_data and integrate pressure
+
+        if self.rho_brine is not None:
+            hydrostatic_pressure = (const.atm + depth_curve * self.rho_brine * const.g) / const.bar
+
+    
+        else:
+            
+            hydrostatic_pressure = compute_hydrostatic_pressure(depth_array = depth_curve, 
+                                             temperature_array = temperature_curve,  
+                                             pvt_data = self.pvt_data)
+        return hydrostatic_pressure
+
 
     def _calculate_shmin(self, depth_array: np.ndarray, hydrostatic_pressure_curve: np.ndarray) -> np.ndarray:
         """
@@ -288,6 +302,7 @@ class Pressure:
             'specific_gravity': self.specific_gravity,
             'z_resrv': self.z_resrv,
             'p_resrv': self.p_resrv,
+            'rho_brine': self.rho_brine,
             # Add other default values as needed
         }
 
