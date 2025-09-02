@@ -1,38 +1,55 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+// Definition for the devcontainer used by GitHub Codespaces.
 {
-	"name": "Ubuntu",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/base:jammy",
-	"features": {
-        "ghcr.io/devcontainers/features/python:1": {
-			"installTools": true,
-			"version": "3.12"
-		},
-	},
-
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-
-	// Configure tool-specific properties.
-	// "customizations": {},
-
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
-	"customizations": {
+    "name": "Full-stack devcontainer (Backend & Frontend)",
+    "image": "mcr.microsoft.com/devcontainers/universal:2",
+    "hostRequirements": {
+        "cpus": 8,
+        "memory": "8gb",
+        "storage": "32gb"
+    },
+    "postAttachCommand": {
+        "backend": "uv sync --all-groups",
+    },
+    "customizations": {
         "vscode": {
+            "settings": {
+                // Set formatter for specific filetypes and enable format on save
+                "[toml]": {
+                    "editor.defaultFormatter": "tamasfe.even-better-toml",
+                    "editor.formatOnSave": true
+                },
+                "[json][jsonc]": {
+                    "editor.defaultFormatter": "vscode.json-language-features",
+                    "editor.formatOnSave": true
+                },
+                "[python]": {
+                    "editor.formatOnSave": true,
+                    "editor.defaultFormatter": "charliermarsh.ruff",
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit",
+                        "source.fixAll": "explicit"
+                    }
+                },
+                "editor.formatOnSave": true,
+                // Python specific settings
+                "notebook.formatOnSave.enabled": true,
+                "python.defaultInterpreterPath": ".venv/bin/python",
+
+            },
+            // Extensions that is handy to have in the devcontainer
             "extensions": [
+                "charliermarsh.ruff",
                 "ms-python.python",
                 "ms-toolsai.jupyter",
-                "ms-python.vscode-pylance",
-                "snyk-security.snyk-vulnerability-scanner",
-				"GitHub.copilot"
+                "tamasfe.even-better-toml",
+                "eamodio.gitlens",
+                "streetsidesoftware.code-spell-checker",
+                "streetsidesoftware.code-spell-checker-norwegian-bokmal",
+                "streetsidesoftware.code-spell-checker-scientific-terms"
             ]
         }
+    },
+    "features": {
+        "ghcr.io/va-h/devcontainers-features/uv:1": {}
     }
 }
