@@ -14,6 +14,7 @@ dependencies = [
     "scipy>=1.11.2",
     "openpyxl>=3.1.5",
     "ruff>=0.1.15",
+    "coolprop>=7.0.0",
 ]
 
 [project.scripts]
