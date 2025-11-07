@@ -9,6 +9,16 @@ from scipy.integrate import solve_ivp
 import scipy.constants as const
 
 
+def file_exists(files_path: list):
+    '''
+    Receives a list of file paths and verify if the files in such
+    path exists. Throws an exception in case the file is not found
+    '''
+    for file in files_path:
+        if not file.exists():
+            raise FileNotFoundError(f"Required PVT file not found: {file}")
+
+
 def get_mixture_info(pvt_path: Union[str, Path]):
     with open(f"{pvt_path}/metadata.json", "r") as file:
         mixture_info = json.load(file)
@@ -57,27 +67,18 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_
     # Define file names for shared PVT data files
     temperature_file = pvt_root_path / "temperature.txt"
     pressure_file = pvt_root_path / "pressure.txt"
-
-    # Check that shared files exist before proceeding
-    for file in [temperature_file, pressure_file]:
-        if not file.exists():
-            raise FileNotFoundError(f"Required PVT file not found: {file}")
-
-    # Load shared data from files
-    t = np.loadtxt(temperature_file)
-    p = np.loadtxt(pressure_file)
-
-    # Load brine data
+    
+    # Define file names for brine data files
     brine_path = pvt_root_path / "water"
     brine_metadata_file = brine_path / "metadata.json"
     brine_rho_file = brine_path / "rho.txt"
 
+    # Check that shared files exist before proceeding
+    file_exists([temperature_file, pressure_file, brine_metadata_file, brine_rho_file])
 
-
-    # Check that fluid-specific files exist before proceeding
-    for file in [brine_metadata_file, brine_rho_file]:
-        if not file.exists():
-            raise FileNotFoundError(f"Required PVT file not found: {file}")
+    # Load shared data from files
+    temperature_data = np.loadtxt(temperature_file)
+    pressure_data = np.loadtxt(pressure_file)
 
     # Load density data
     rho_brine = np.loadtxt(brine_rho_file, delimiter=',')  # Assuming comma separation
@@ -85,11 +86,10 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_
     # Load metadata for brine
     brine_metadata = get_mixture_info(brine_path)
 
-
     # Create a dictionary for brine PVT data
     pvt_data = {
-        "temperature": t,
-        "pressure": p,
+        "temperature": temperature_data,
+        "pressure": pressure_data,
         "brine": {
             "rho": rho_brine,
             "metadata": brine_metadata,
@@ -104,11 +104,8 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_
         fluid_metadata_file = fluid_path / "metadata.json"
         fluid_rho_file = fluid_path / "rho.txt"
 
-
         # Check that fluid-specific files exist before proceeding
-        for file in [fluid_metadata_file, fluid_rho_file]:
-            if not file.exists():
-                raise FileNotFoundError(f"Required PVT file not found: {file}")
+        file_exists([fluid_metadata_file, fluid_rho_file])
 
         # Load density data for the specified fluid
         rho_fluid = np.loadtxt(fluid_rho_file, delimiter=',')  # Assuming comma separation
@@ -117,12 +114,12 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_
         fluid_metadata = get_mixture_info(fluid_path)
 
         # Add fluid data to the PVT data dictionary
-        pvt_data[fluid_type] = { "rho": rho_fluid,
-                                "metadata": fluid_metadata }
-
+        pvt_data[fluid_type] = {
+            "rho": rho_fluid,
+            "metadata": fluid_metadata 
+        }
 
     return pvt_data
-
 
 
 def compute_hydrostatic_pressure(depth_array: np.ndarray, temperature_array: np.ndarray, 
@@ -178,7 +175,8 @@ def _Pdz_odesys(z: float, P: float,
     T = np.interp(z, depth_array, temperature_array)
     rho = get_rho_from_pvt_data(P, T, rho_interpolator)
     dPdz = rho * const.g / const.bar
-    return dPdz,
+    return dPdz
+
 
 def _integrate_pressure(init_curves: pd.DataFrame, 
                         reference_depth: float, 
@@ -193,14 +191,7 @@ def _integrate_pressure(init_curves: pd.DataFrame,
                     Then iterate upwards (up) or downwards (down) to subtract or add pressure.
                     Recalculates rho at each step.
     '''
-    
-    
-    # ip_arrays = {'depth': depth_array, 'temperature': temperature_array}
-    # init_curves = pd.DataFrame(data = ip_arrays)
-
     depth_array = init_curves['depth'].values
-    temperature_array = init_curves['temperature'].values
-
 
     ## Initialization
     #New columns needed in DataFrame
@@ -225,30 +216,22 @@ def _integrate_pressure(init_curves: pd.DataFrame,
     # Check if reference_depth is within limits
     if reference_depth < top_limit or reference_depth > bottom_limit:
         raise ValueError('reference_depth is out of range')
+    
+    # Check if the reference_depth value is equal to bottom AND top limit
+    if reference_depth == top_limit and reference_depth == bottom_limit:
+        raise ValueError('reference_depth cannot be equal to bottom and top limit')
 
     # Check and integrate upwards if needed
     if reference_depth >= top_limit:
-    
-        query_up = init_curves[init_curves.depth < reference_depth]
-        query_up = query_up.sort_values('depth', ascending=False)
-
-        solution_up = solve_ivp(_Pdz_odesys, [reference_depth, top_limit], [reference_pressure], 
-                         t_eval=query_up['depth'].values, dense_output=True,
-                         args=(depth_array, temperature_array, interpolator, fluid_key),
-                         method = 'Radau')
-    
-        init_curves.loc[query_up.index, colname_p] = solution_up.y[0]
+        ivp_data = build_ivp_data(reference_depth, top_limit, reference_pressure, init_curves)
+        ivp_solution = solve_ivp_with_data(ivp_data, interpolator, fluid_key)
+        init_curves.loc[ivp_data["t_eval"].index, colname_p] = ivp_solution.y[0]
 
     # Check and integrate downwards if needed
     if reference_depth <= bottom_limit:
-
-        query_down = init_curves[init_curves.depth > reference_depth]
-        solution_down = solve_ivp(_Pdz_odesys, [reference_depth, bottom_limit], [reference_pressure], 
-                         t_eval=query_down['depth'].values, dense_output=True,
-                         args=(depth_array, temperature_array, interpolator, fluid_key),
-                         method = 'Radau')
-
-        init_curves.loc[query_down.index, colname_p] = solution_down.y[0]
+        ivp_data = build_ivp_data(reference_depth, bottom_limit, reference_pressure, init_curves)
+        ivp_solution = solve_ivp_with_data(ivp_data, interpolator, fluid_key)
+        init_curves.loc[ivp_data["t_eval"].index, colname_p] = ivp_solution.y[0]
 
     if reference_depth in init_curves['depth'].values:
         init_curves.loc[init_curves['depth'] == reference_depth, colname_p] = reference_pressure
@@ -256,6 +239,73 @@ def _integrate_pressure(init_curves: pd.DataFrame,
     return init_curves[colname_p].values.astype(float)
 
 
+def build_ivp_data(interval_start: float,
+                   interval_end: float,
+                   initial_state: float,
+                   init_curves: pd.DataFrame) -> Dict:
+    """
+    Builds a dictionary containing all the necessary values to solve the IVP
+
+    Args:
+        interval_start (float): The start reference depth
+        interval_end   (float): The end reference depth
+        initial_state  (float): Reference pressure value
+        init_curves    (pd.Dataframe): Data frame containing 
+                                        the data values
+
+    Returns:
+        Dict: A dictionary containing the necessary VALUES to solve the IVP. Considering that the solve_ivp
+            method has the following signature: 
+                solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False, events=None, 
+                    vectorized=False, args=None, **options)
+        
+        The following can be used:
+            t_span: [ivp_data["interval_start"], ivp_data["interval_end"]]
+            y0: [ivp_data["initial_state"]], 
+            t_eval = ivp_data["t_eval"].values,
+            args = (ivp_data["depth_array"].values, 
+                    ivp_data["temperature_array"].values
+                    /*other arguments not related to ivp_data*/),
+
+        This method DOES NOT account for:
+         1. The function to solve the IVP 
+         2. Default parameters of the 'solve_ivp' method (e.g.: method, dense_output)
+         3. Arguments that have no need to be calculated or extracted from the input data frame
+    """
+    
+    query = None
+    if (interval_start >= interval_end):
+        query = init_curves[init_curves.depth < interval_start]
+        query = query.sort_values('depth', ascending = False)
+    elif (interval_start <= interval_end):
+        query = init_curves[init_curves.depth > interval_start]
+
+    ivp_data = {
+        "interval_start": interval_start,
+        "interval_end": interval_end,
+        "initial_state": initial_state,
+        "t_eval": query['depth'],
+        "depth_array": init_curves['depth'],
+        "temperature_array": init_curves['temperature']
+    }
+    return ivp_data
+
+
+def solve_ivp_with_data(ivp_data: dict,
+                        interpolator: RectBivariateSpline,
+                        fluid_key: str):
+    
+    ivp_solution = solve_ivp(fun = _Pdz_odesys,
+                             t_span = [ivp_data["interval_start"], ivp_data["interval_end"]], 
+                             y0 = [ivp_data["initial_state"]], 
+                             t_eval = ivp_data["t_eval"].value,
+                             dense_output = True, 
+                             args = (ivp_data["depth_array"].value,
+                                      ivp_data["temperature_array"].value, 
+                                      interpolator, 
+                                      fluid_key),
+                             method = 'Radau')
+    return ivp_solution
 
 
 def get_rho_from_pvt_data(pressure: float, temperature: float, rho_interpolator: RectBivariateSpline) -> float:
