@@ -162,6 +162,10 @@ def plot_pressure(my_pressure: Pressure,
                 delta_p_lims = [sc_p_fluid_contact, sc_p_fluid_contact - sc_delta_p]
                 ax.hlines(sc_z_fluid_contact, min(delta_p_lims), max(delta_p_lims), color='black', linestyle='--', label=f'$\\Delta$P = {scenario["p_delta"]:.0f} bar')
 
+
+    if len(depth_values) == 0:
+        depth_values.append(my_pressure.well_td_rkb - my_pressure.well_rkb)
+  
     ymax = np.ceil(max(depth_values))
     xmax = my_pressure.init_curves.query('depth<=@ymax')['min_horizontal_stress'].max()
     xmin = 0
