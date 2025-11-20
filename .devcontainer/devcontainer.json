@@ -7,6 +7,9 @@
         "memory": "8gb",
         "storage": "32gb"
     },
+    "containerEnv": {
+        "UV_LINK_MODE": "copy"
+    },
     "postAttachCommand": {
         "backend": "uv sync --all-groups",
     },
