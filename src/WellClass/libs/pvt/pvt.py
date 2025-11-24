@@ -117,49 +117,6 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_
     return pvt_data
 
 
-def compute_hydrostatic_pressure(
-    depth_array: np.ndarray, temperature_array: np.ndarray, pvt_data: Dict[str, np.ndarray], salinity: float = 3.5
-) -> np.ndarray:
-    """
-    Compute the hydrostatic pressure profile based on depth and temperature arrays and PVT data for water.
-
-    Args:
-        depth_array (np.ndarray): Array of depth values.
-        temperature_array (np.ndarray): Array of temperature values corresponding to the depth values.
-        pvt_data (Dict[str, np.ndarray]): Dictionary containing PVT data, including pressure and water density.
-
-    Returns:
-        np.ndarray: Array of hydrostatic pressure values corresponding to the depth values.
-    """
-    # Extract pressure and water density data from PVT data
-    p_vec = pvt_data["pressure"]
-    t_vec = pvt_data["temperature"]
-    rho_h2o_vec = pvt_data["brine"]["rho"]
-
-    t_grid, p_grid = np.meshgrid(p_vec, t_vec)
-
-    # Correct water density for salinity using Laliberté and Cooper model
-    rho_brine = corr_rhobrine_LaliberteCopper(salinity, t_grid, p_grid, rho_h2o_vec)
-
-    # Create an interpolator for water density based on PVT data
-    get_rho_brine = RectBivariateSpline(p_vec, pvt_data["temperature"], rho_brine)
-
-    # Define the ODE system for hydrostatic pressure integration
-    def odesys(z, P):
-        T = np.interp(z, depth_array, temperature_array)  # Interpolate temperature at depth z
-        rho = get_rho_brine(P, T)  # Get water density at pressure P and temperature T
-        dPdz = rho * const.g / const.bar  # Pressure gradient
-        return dPdz
-
-    # Initial conditions: atmospheric pressure at the surface
-    P_0 = const.atm / const.bar
-
-    # Solve ODEs from the surface to the final depth
-    solution = solve_ivp(odesys, [depth_array[0], depth_array[-1]], [P_0], t_eval=depth_array, vectorized=True, method="Radau")
-
-    # Return the hydrostatic pressure profile
-    return solution.y[0]
-
 
 # Define _Pdz_odesys outside with necessary arguments
 def _Pdz_odesys(
@@ -187,9 +144,9 @@ def _integrate_pressure(
                     Then iterate upwards (up) or downwards (down) to subtract or add pressure.
                     Recalculates rho at each step.
     """
-    depth_array = init_curves["depth"].values
+    init_curves = init_curves.copy()
 
-    print(f"{reference_depth=}, {reference_pressure=}")
+    depth_array = init_curves["depth"].values
 
     ## Initialization
     # New columns needed in DataFrame
@@ -219,22 +176,18 @@ def _integrate_pressure(
         raise ValueError("reference_depth cannot be equal to bottom and top limit")
 
     # Check and integrate upwards if needed
-    if reference_depth >= top_limit:
-        print("Integrating upwards...")
+    if reference_depth > top_limit:
         ivp_data = build_ivp_data(reference_depth, top_limit, reference_pressure, init_curves)
-        print(f"{ivp_data=}")
         ivp_solution = solve_ivp_with_data(ivp_data, interpolator, fluid_key)
         init_curves.loc[ivp_data["index"], colname_p] = ivp_solution.y[0]
 
     # Check and integrate downwards if needed
     if reference_depth <= bottom_limit:
-        print("Integrating downwards...")
         ivp_data = build_ivp_data(reference_depth, bottom_limit, reference_pressure, init_curves)
         ivp_solution = solve_ivp_with_data(ivp_data, interpolator, fluid_key)
         init_curves.loc[ivp_data["index"], colname_p] = ivp_solution.y[0]
 
     if reference_depth in init_curves["depth"].values:
-        print(f"Setting reference pressure at depth {reference_depth} to {reference_pressure}")
         init_curves.loc[init_curves["depth"] == reference_depth, colname_p] = reference_pressure
 
     return init_curves[colname_p].values.astype(float)
