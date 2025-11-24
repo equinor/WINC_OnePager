@@ -189,8 +189,6 @@ def _integrate_pressure(
     """
     depth_array = init_curves["depth"].values
 
-    print(f"{reference_depth=}, {reference_pressure=}")
-
     ## Initialization
     # New columns needed in DataFrame
     if fluid_key == "brine":
@@ -220,21 +218,17 @@ def _integrate_pressure(
 
     # Check and integrate upwards if needed
     if reference_depth >= top_limit:
-        print("Integrating upwards...")
         ivp_data = build_ivp_data(reference_depth, top_limit, reference_pressure, init_curves)
-        print(f"{ivp_data=}")
         ivp_solution = solve_ivp_with_data(ivp_data, interpolator, fluid_key)
         init_curves.loc[ivp_data["index"], colname_p] = ivp_solution.y[0]
 
     # Check and integrate downwards if needed
     if reference_depth <= bottom_limit:
-        print("Integrating downwards...")
         ivp_data = build_ivp_data(reference_depth, bottom_limit, reference_pressure, init_curves)
         ivp_solution = solve_ivp_with_data(ivp_data, interpolator, fluid_key)
         init_curves.loc[ivp_data["index"], colname_p] = ivp_solution.y[0]
 
     if reference_depth in init_curves["depth"].values:
-        print(f"Setting reference pressure at depth {reference_depth} to {reference_pressure}")
         init_curves.loc[init_curves["depth"] == reference_depth, colname_p] = reference_pressure
 
     return init_curves[colname_p].values.astype(float)
