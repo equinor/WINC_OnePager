@@ -9,7 +9,7 @@ import scipy.constants as const
 from IPython.display import display
 from scipy.interpolate import RectBivariateSpline, interp1d
 
-from ..pvt.pvt import _integrate_pressure, compute_hydrostatic_pressure, corr_rhobrine_LaliberteCopper, get_rho_from_pvt_data, load_pvt_data
+from ..pvt.pvt import _integrate_pressure, corr_rhobrine_LaliberteCopper, get_rho_from_pvt_data, load_pvt_data
 from ..well_class.well_class import Well
 from .barrier_pressure import leakage_proxy
 from .PressureScenarioManager import PressureScenarioManager
@@ -182,7 +182,6 @@ class Pressure:
                 interpolator=self.brine_interpolator,
             )
 
-            print(hydrostatic_pressure)
         return hydrostatic_pressure
 
     def _calculate_shmin(self, depth_array: np.ndarray, hydrostatic_pressure_curve: np.ndarray) -> np.ndarray:
