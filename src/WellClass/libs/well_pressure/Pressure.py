@@ -6,7 +6,6 @@ from typing import Dict, Optional, Union
 import numpy as np
 import pandas as pd
 import scipy.constants as const
-from IPython.display import display
 from scipy.interpolate import RectBivariateSpline, interp1d
 
 from ..pvt.pvt import _integrate_pressure, corr_rhobrine_LaliberteCopper, get_rho_from_pvt_data, load_pvt_data
