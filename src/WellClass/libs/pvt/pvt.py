@@ -25,6 +25,13 @@ def get_mixture_info(pvt_path: Union[str, Path]):
     return mixture_info
 
 
+def load_envelopes(pvt_path: Union[str, Path]):
+    bubble_point = np.loadtxt(pvt_path / "bubble_point.csv", delimiter=",", skiprows=1)
+    dew_point = np.loadtxt(pvt_path / "dew_point.csv", delimiter=",", skiprows=1)
+
+    return {"bubble_point": bubble_point, "dew_point": dew_point}
+
+
 def corr_rhobrine_LaliberteCopper(salinity: float, temperature: np.ndarray, pressure: np.ndarray, rho_h2o: np.ndarray) -> np.ndarray:
     """
     Reads the vectors for pressure and temperature and the matrix for rho
@@ -115,7 +122,6 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_
         pvt_data[fluid_type] = {"rho": rho_fluid, "metadata": fluid_metadata}
 
     return pvt_data
-
 
 
 # Define _Pdz_odesys outside with necessary arguments
