@@ -1,4 +1,8 @@
 {
     "name": "pure C1",
-    "composition": "100% CH4"
+    "composition": "100% CH4",
+    "EOS": "U. Setzmann and W. Wagner",
+    "source": "CoolProp",
+    "p_crit": 45.992,
+    "T_crit": -82.586
 }

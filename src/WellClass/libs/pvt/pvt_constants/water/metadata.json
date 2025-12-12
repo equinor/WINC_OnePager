@@ -1,4 +1,8 @@
 {
     "name": "pure water",
-    "composition": "100% H2O"
+    "composition": "100% H2O",
+    "EOS": "W. Wagner and A. Pruß.",
+    "source": "CoolProp",
+    "p_crit": 220.640,
+    "T_crit": 373.946
 }
