@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import scipy.constants as const
 from scipy.integrate import solve_ivp
-from scipy.interpolate import RectBivariateSpline
+from scipy.interpolate import Akima1DInterpolator, RectBivariateSpline
 
 
 def file_exists(files_path: list):
@@ -23,6 +23,34 @@ def get_mixture_info(pvt_path: Union[str, Path]):
     with open(f"{pvt_path}/metadata.json", "r") as file:
         mixture_info = json.load(file)
     return mixture_info
+
+
+def load_envelopes(pvt_path: Union[str, Path]):
+    bubble_point = np.loadtxt(pvt_path / "bubble_point.csv", delimiter=",", skiprows=1)
+    dew_point = np.loadtxt(pvt_path / "dew_point.csv", delimiter=",", skiprows=1)
+
+    return {"bubble_point": bubble_point, "dew_point": dew_point}
+
+
+def set_envelope_interpolator(envelope_data: np.ndarray) -> Callable:
+    """
+    Sets an interpolator function for the envelope data
+    """
+    if envelope_data is None:
+        return None
+
+    T_envelope = envelope_data[:, 0]
+    p_envelope = envelope_data[:, 1]
+
+    # sort by T
+    sorted_indices = np.argsort(T_envelope)
+
+    T_envelope = T_envelope[sorted_indices]
+    p_envelope = p_envelope[sorted_indices]
+
+    envelope_interpolator = Akima1DInterpolator(T_envelope, p_envelope, method="makima", extrapolate=False)
+
+    return envelope_interpolator
 
 
 def corr_rhobrine_LaliberteCopper(salinity: float, temperature: np.ndarray, pressure: np.ndarray, rho_h2o: np.ndarray) -> np.ndarray:
@@ -85,6 +113,15 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_
     # Load metadata for brine
     brine_metadata = get_mixture_info(brine_path)
 
+    # load brine envelopes if available
+    brine_envelopes = load_envelopes(brine_path)
+
+    bubble_point_brine = brine_envelopes.get("bubble_point", None)
+    dew_point_brine = brine_envelopes.get("dew_point", None)
+
+    bubble_point_brine_interpolator = set_envelope_interpolator(bubble_point_brine)
+    dew_point_brine_interpolator = set_envelope_interpolator(dew_point_brine)
+
     # Create a dictionary for brine PVT data
     pvt_data = {
         "temperature": temperature_data,
@@ -92,6 +129,8 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_
         "brine": {
             "rho": rho_brine,
             "metadata": brine_metadata,
+            "bubble_point": bubble_point_brine_interpolator,
+            "dew_point": dew_point_brine_interpolator,
         },
     }
 
@@ -111,18 +150,121 @@ def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_
         # Load metadata for the specified fluid
         fluid_metadata = get_mixture_info(fluid_path)
 
+        # Load fluid envelopes if available
+        fluid_envelopes = load_envelopes(fluid_path)
+        fluid_bubble_point = fluid_envelopes.get("bubble_point", None)
+        fluid_dew_point = fluid_envelopes.get("dew_point", None)
+
+        fluid_bubble_point_interpolator = set_envelope_interpolator(fluid_bubble_point)
+        fluid_dew_point_interpolator = set_envelope_interpolator(fluid_dew_point)
+
         # Add fluid data to the PVT data dictionary
-        pvt_data[fluid_type] = {"rho": rho_fluid, "metadata": fluid_metadata}
+        pvt_data[fluid_type] = {
+            "rho": rho_fluid,
+            "metadata": fluid_metadata,
+            "bubble_point": fluid_bubble_point_interpolator,
+            "dew_point": fluid_dew_point_interpolator,
+        }
 
     return pvt_data
 
 
+def _check_phase(P: float, T: float, T_crit: float, bubble_interp: Callable, dew_interp: Callable):
+    """
+    Return one of: "supercritical", "liquid", "gas", "two-phase", "unknown".
+    Safely handles missing interpolators or NaN envelope values.
+    """
+    if (T_crit is not None) and (T >= T_crit):
+        return "supercritical"
+
+    # Evaluate envelopes
+    p_bubble = np.nan
+    p_dew = np.nan
+
+    if bubble_interp is not None:
+        try:
+            p_bubble = float(bubble_interp(T))
+        except Exception:
+            p_bubble = np.nan
+
+    if dew_interp is not None:
+        try:
+            p_dew = float(dew_interp(T))
+        except Exception:
+            p_dew = np.nan
+
+    # If both envelopes invalid, return "unknown"
+    if np.isnan(p_bubble) and np.isnan(p_dew):
+        return "unknown"
+
+    # Check liquid/gas/two-phase (prefer bubble/dew where available)
+    if not np.isnan(p_bubble) and P > p_bubble:
+        return "liquid"
+    if not np.isnan(p_dew) and P < p_dew:
+        return "gas"
+    return "two-phase"
+
+
+def _flag_phase_changes(P: float, phase: str, p_dew: float, p_bubble: float, tol: float = 0.665):
+    """
+    Return a flag string when approaching envelope within tol (bar),
+    or None otherwise.
+    """
+
+    # Ensure p_dew / p_bubble may be NaN
+    if phase == "gas" and not np.isnan(p_dew):
+        diff_dew = p_dew - P
+        if diff_dew <= tol:
+            return "approaching dew point"
+    if phase == "liquid" and not np.isnan(p_bubble):
+        diff_bubble = P - p_bubble
+        if diff_bubble <= tol:
+            return "approaching bubble point"
+    return None
+
+
+def _eval_envelopes_for_temps(temps: np.ndarray, dew_interp: Callable, bub_interp: Callable, T_crit: float = None):
+    """
+    Returns (p_dew_vals, p_bub_vals) arrays aligned with temps.
+    If an interpolator is None or fails or returns NaN, corresponding entries are NaN.
+    Also mark values above T_crit as NaN.
+    """
+    # dew
+    if dew_interp is not None:
+        try:
+            p_dew_vals = np.asarray(dew_interp(temps), dtype=float)
+            # ensure shape matches temps
+            if p_dew_vals.shape != temps.shape:
+                p_dew_vals = np.broadcast_to(p_dew_vals, temps.shape).copy()
+        except Exception:
+            p_dew_vals = np.full(temps.shape, np.nan, dtype=float)
+    else:
+        p_dew_vals = np.full(temps.shape, np.nan, dtype=float)
+
+    # bubble
+    if bub_interp is not None:
+        try:
+            p_bub_vals = np.asarray(bub_interp(temps), dtype=float)
+            if p_bub_vals.shape != temps.shape:
+                p_bub_vals = np.broadcast_to(p_bub_vals, temps.shape).copy()
+        except Exception:
+            p_bub_vals = np.full(temps.shape, np.nan, dtype=float)
+    else:
+        p_bub_vals = np.full(temps.shape, np.nan, dtype=float)
+
+    # invalidate above critical temperature if T_crit provided
+    if T_crit is not None:
+        invalid = temps >= T_crit
+        p_dew_vals[invalid] = np.nan
+        p_bub_vals[invalid] = np.nan
+
+    return p_dew_vals, p_bub_vals
+
 
 # Define _Pdz_odesys outside with necessary arguments
-def _Pdz_odesys(
-    z: float, P: float, depth_array: np.ndarray, temperature_array: np.ndarray, rho_interpolator: RectBivariateSpline, fluid_key: str
-) -> Tuple[float]:
-    T = np.interp(z, depth_array, temperature_array)
+def _Pdz_odesys(z, y, depth_array: np.ndarray, temperature_array: np.ndarray, rho_interpolator: RectBivariateSpline, fluid_key: str) -> Tuple[float]:
+    P = float(y[0])
+    T = float(np.interp(z, depth_array, temperature_array))
     rho = get_rho_from_pvt_data(P, T, rho_interpolator)
     dPdz = rho * const.g / const.bar
     return np.array([dPdz])
@@ -146,7 +288,21 @@ def _integrate_pressure(
     """
     init_curves = init_curves.copy()
 
+    warnings = []
+    warning_item = {"p": np.nan, "T": np.nan, "z": np.nan, "message": ""}
+
     depth_array = init_curves["depth"].values
+
+    # metadata and envelopes
+    T_crit = pvt_data[fluid_key]["metadata"].get("T_crit", None)
+    bubble_point_interpolator = pvt_data[fluid_key].get("bubble_point", None)
+    dew_point_interpolator = pvt_data[fluid_key].get("dew_point", None)
+
+    # evaluate envelopes into DataFrame columns safely
+    temps = init_curves["temperature"].values
+    p_dew_vals, p_bub_vals = _eval_envelopes_for_temps(temps, dew_point_interpolator, bubble_point_interpolator, T_crit)
+    init_curves["dew_point"] = p_dew_vals
+    init_curves["bubble_point"] = p_bub_vals
 
     ## Initialization
     # New columns needed in DataFrame
@@ -177,23 +333,72 @@ def _integrate_pressure(
 
     # Check and integrate upwards if needed
     if reference_depth > top_limit:
-        ivp_data = build_ivp_data(reference_depth, top_limit, reference_pressure, init_curves)
+        ivp_data = build_ivp_data(reference_depth, top_limit, reference_pressure, init_curves, pvt_data[fluid_key])
         ivp_solution = solve_ivp_with_data(ivp_data, interpolator, fluid_key)
         init_curves.loc[ivp_data["index"], colname_p] = ivp_solution.y[0]
 
+        reference_temperature = np.interp(reference_depth, init_curves["depth"].values, init_curves["temperature"].values)
+
+        reference_phase = _check_phase(reference_pressure, reference_temperature, T_crit, bubble_point_interpolator, dew_point_interpolator)
+
+        init_curves["phase"] = init_curves.apply(
+            lambda row: _check_phase(
+                row[colname_p],
+                row["temperature"],
+                T_crit,
+                bubble_point_interpolator,
+                dew_point_interpolator,
+            ),
+            axis=1,
+        )
+
+        init_curves["phase_change_flag"] = init_curves.apply(
+            lambda row: _flag_phase_changes(
+                row[colname_p],
+                row["phase"],
+                row["dew_point"],
+                row["bubble_point"],
+            ),
+            axis=1,
+        )
+
+        # Logging and trigger warnings
+        supercritical_log = init_curves.loc[ivp_data["index"]][["phase"]].drop_duplicates()
+        if reference_phase == "supercritical" and supercritical_log.shape[0] >= 2 and fluid_key != "brine":
+            p_log = init_curves.loc[supercritical_log.index[1], colname_p].astype(float)
+            T_log = init_curves.loc[supercritical_log.index[1], "temperature"].astype(float)
+            z_log = init_curves.loc[supercritical_log.index[1], "depth"].astype(float)
+            initial_phase = supercritical_log["phase"].values[0]
+            final_phase = supercritical_log["phase"].values[1]
+            message = f"Message: Fluid changed phase from {initial_phase} to {final_phase} at {z_log} mTVDMSL (P = {p_log:.1f} bar)."
+
+            warnings.append({"p": p_log, "T": T_log, "z": z_log, "message": message})
+
+        phase_log = init_curves.loc[ivp_data["index"]][["phase_change_flag"]].drop_duplicates().dropna()
+        if phase_log.shape[0] >= 1 and fluid_key != "brine":
+            p_log = init_curves.loc[phase_log.index[0], colname_p].astype(float)
+            T_log = init_curves.loc[phase_log.index[0], "temperature"].astype(float)
+            z_log = init_curves.loc[phase_log.index[0], "depth"].astype(float)
+            phase = init_curves.loc[phase_log.index[0], "phase"]
+            trigger = phase_log["phase_change_flag"].values[0]
+            message = f"Warning: Fluid is in {phase} phase and is {trigger} at {z_log} m (P = {p_log:.1f} bar)."
+            warnings.append({"p": p_log, "T": T_log, "z": z_log, "message": message})
+
     # Check and integrate downwards if needed
     if reference_depth <= bottom_limit:
-        ivp_data = build_ivp_data(reference_depth, bottom_limit, reference_pressure, init_curves)
+        ivp_data = build_ivp_data(reference_depth, bottom_limit, reference_pressure, init_curves, pvt_data[fluid_key])
         ivp_solution = solve_ivp_with_data(ivp_data, interpolator, fluid_key)
         init_curves.loc[ivp_data["index"], colname_p] = ivp_solution.y[0]
 
     if reference_depth in init_curves["depth"].values:
         init_curves.loc[init_curves["depth"] == reference_depth, colname_p] = reference_pressure
 
-    return init_curves[colname_p].values.astype(float)
+    pressures = init_curves[colname_p].to_numpy(dtype=float)
+
+    return pressures, warnings
 
 
-def build_ivp_data(interval_start: float, interval_end: float, initial_state: float, init_curves: pd.DataFrame) -> Dict:
+def build_ivp_data(interval_start: float, interval_end: float, initial_state: float, init_curves: pd.DataFrame, pvt_data: dict) -> Dict:
     """
     Builds a dictionary containing all the necessary values to solve the IVP
 
@@ -223,6 +428,8 @@ def build_ivp_data(interval_start: float, interval_end: float, initial_state: fl
          2. Default parameters of the 'solve_ivp' method (e.g.: method, dense_output)
          3. Arguments that have no need to be calculated or extracted from the input data frame
     """
+    depth = init_curves["depth"].to_numpy()
+    temperature = init_curves["temperature"].to_numpy()
 
     query = None
     if interval_start >= interval_end:
@@ -231,15 +438,19 @@ def build_ivp_data(interval_start: float, interval_end: float, initial_state: fl
     elif interval_start <= interval_end:
         query = init_curves[init_curves.depth > interval_start]
 
+    index = query.index.to_numpy()
+    t_eval = query["depth"].to_numpy()
+
     ivp_data = {
         "interval_start": interval_start,
         "interval_end": interval_end,
         "initial_state": initial_state,
-        "index": query.index.to_numpy(),
-        "t_eval": query["depth"].to_numpy(),
-        "depth_array": init_curves["depth"].to_numpy(),
-        "temperature_array": init_curves["temperature"].to_numpy(),
+        "index": index,
+        "t_eval": t_eval,
+        "depth_array": depth,
+        "temperature_array": temperature,
     }
+
     return ivp_data
 
 

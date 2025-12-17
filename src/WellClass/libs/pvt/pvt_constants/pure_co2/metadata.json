@@ -1,4 +1,8 @@
 {
     "name": "pure CO2",
-    "composition": "100% CO2"
+    "composition": "100% CO2",
+    "metadata": "Span-Wagner",
+    "source": "CoolProp",
+    "p_crit": 73.773,
+    "T_crit": 30.978
 }

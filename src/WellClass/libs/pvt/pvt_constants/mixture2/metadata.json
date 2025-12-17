@@ -1,4 +1,8 @@
 {
     "name": "mixture2",
-    "composition": "95% CO2, 5% CH4"
+    "composition": "95% CO2, 5% CH4",
+    "EOS": "SRK",
+    "source": "PVTSim",
+    "p_crit": 76.7681,
+    "T_crit": 27.2814
 }
