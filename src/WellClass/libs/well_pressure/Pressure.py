@@ -172,7 +172,7 @@ class Pressure:
             #                                  temperature_array = temperature_curve,
             #                                  pvt_data = self.pvt_data)
 
-            hydrostatic_pressure = _integrate_pressure(
+            hydrostatic_pressure, _ = _integrate_pressure(
                 init_curves=init_curves,
                 reference_depth=0,
                 reference_pressure=const.atm / const.bar,
@@ -275,7 +275,7 @@ class Pressure:
             # If specific_gravity is provided, set fluid_type to None and fluid_interpolator to None
             kwargs["fluid_type"] = None
             kwargs["fluid_interpolator"] = None
-            kwargs["pvt_data"] = None
+            # kwargs["pvt_data"] = None
             kwargs["fluid_composition"] = None
         # # Check that either fluid_type or specific_gravity is provided, but not both
         if "fluid_type" not in kwargs and "specific_gravity" not in kwargs:
@@ -375,7 +375,7 @@ class Pressure:
             for sc_name in sc_names:
                 # Retrieve and interpolate pressure and density values
                 p_brine_ab, p_fluid_bb, rho_brine_ab, rho_fluid_bb = self._retrieve_and_interpolate_values(
-                    sc_name=sc_name, top=b_top, bottom=b_bottom, top_temperature=b_top_temp, bottom_temperature=b_bottom_temp, depth=depth
+                    sc_name=sc_name, top=b_top, bottom=b_bottom, top_temperature=b_top_temp, bottom_temperature=b_bottom_temp
                 )
 
                 # Store retrieved values in the DataFrame
@@ -410,7 +410,12 @@ class Pressure:
             print(f"No barriers declared in well {well.header['well_name']}")
 
     def _retrieve_and_interpolate_values(
-        self, sc_name: str, top: float, bottom: float, top_temperature: float, bottom_temperature: float, depth: np.ndarray
+        self,
+        sc_name: str,
+        top: float,
+        bottom: float,
+        top_temperature: float,
+        bottom_temperature: float,
     ) -> tuple:
         """
         Retrieve and interpolate pressure and density values at the top and bottom of the barrier.
@@ -426,11 +431,13 @@ class Pressure:
         Returns:
             tuple: Interpolated pressure and density values (p_brine_above_barrier, p_fluid_below_barrier, rho_brine_above_barrier, rho_fluid_below_barrier)
         """
-        fluid_pressure = self.scenario_manager.scenarios[sc_name].init_curves["fluid_pressure"]
-        hydrst_pressure = self.scenario_manager.scenarios[sc_name].init_curves["hydrostatic_pressure"]
+        fluid_pressure = self.scenario_manager.scenarios[sc_name].init_curves["fluid_pressure"].to_numpy()
+        hydrst_pressure = self.scenario_manager.scenarios[sc_name].init_curves["hydrostatic_pressure"].to_numpy()
+        depth = self.scenario_manager.scenarios[sc_name].init_curves["depth"].to_numpy()
         fluid_interp = self.scenario_manager.scenarios[sc_name].fluid_interpolator
         brine_interp = self.scenario_manager.scenarios[sc_name].brine_interpolator
 
+        
         p_fluid_below_barrier = np.interp(bottom, depth, fluid_pressure)
         p_brine_above_barrier = np.interp(top, depth, hydrst_pressure)
 
