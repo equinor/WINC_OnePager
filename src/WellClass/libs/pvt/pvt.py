@@ -381,7 +381,13 @@ def _integrate_pressure(
             z_log = init_curves.loc[phase_log.index[0], "depth"].astype(float)
             phase = init_curves.loc[phase_log.index[0], "phase"]
             trigger = phase_log["phase_change_flag"].values[0]
-            message = f"Warning: Fluid is in {phase} phase and is {trigger} at {z_log} m (P = {p_log:.1f} bar)."
+            message = f"""
+                        Warning: At depth {z_log} m, the phase change to {phase}. Pressures above this depth 
+                        cannot be accurately resolved by this method. For reliable pressure profiles above {z_log} m,
+                        use OLGA Dynamic Multiphase Flow Simulator (SLB).
+                      """
+
+
             warnings.append({"p": p_log, "T": T_log, "z": z_log, "message": message})
 
     # Check and integrate downwards if needed
