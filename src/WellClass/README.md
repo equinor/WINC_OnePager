@@ -130,7 +130,5 @@ The pressure plot, besides visualizing the provided pressure scenarios, has the 
 
 <!-- ![well_sketch](https://github.com/equinor/SCREEN/assets/49291809/01544f8f-fcae-4602-b188-bf032a64d20b) -->
 
-![well sketch](docs/imgs/well-sketch.png)
-
 ![well sketch](imgs/well-sketch.png)
 
