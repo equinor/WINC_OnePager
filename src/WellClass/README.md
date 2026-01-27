@@ -1,6 +1,6 @@
 # WELL CLASS for pre-processing well data
 ## Data Preparation
-The first step in using the SCREEN method is to gather all the necessary data to build a plugged and abandoned well sketch, along with any relevant subsurface data surrounding the well. This data should be prepared in a CSV file with multiple tables, each separated by a blank line.
+The first step in using the WINC_OnePager toolbox is to gather all the necessary data to build a plugged and abandoned well sketch, along with any relevant subsurface data surrounding the well. This data should be prepared in a CSV file with multiple tables, each separated by a blank line.
 
 To collect the data these are some steps that can be followed:
 

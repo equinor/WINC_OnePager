@@ -1,6 +1,8 @@
 # WINC_OnePager
 
-This repository contains source codes and documentation for WINC_OnePager project.
+This repository contains source codes and documentation for the WINC_OnePager project - an analytical wellbore pressure estimation tool for CO2 leakage risk assessment through abandoned wells.
+
+> **Note:** This project was initially developed as part of the [SCREEN project](https://colab.equinor.com/technologies/4FAAF5BD-19C3-46A3-ACB6-5D38DD2C7A89/summary), but the analytical pressure estimation module has been developed and maintained as a separate, standalone entity.
 
 [![WINC_OnePager-unittest](https://github.com/equinor/WINC_OnePager/actions/workflows/pytest.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/pytest.yaml)
 [![WINC_OnePager-docs](https://github.com/equinor/WINC_OnePager/actions/workflows/mkdocs.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/mkdocs.yaml)
