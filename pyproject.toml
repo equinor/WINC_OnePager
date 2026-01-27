@@ -1,8 +1,8 @@
 [project]
 name = "WINC_OnePager"
 version = "0.1.0"
-description = "SCREEN: A tool to build legacy well representations on reservoir simulation grids"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+description = "WINC_OnePager: Analytical wellbore pressure estimation for CO2 leakage risk assessment"
+authors = [{ name = "Alejandro Bello", email = "gpb@equinor.com" }]
 requires-python = ">=3.11,<4.0"
 readme = "README.md"
 dependencies = [

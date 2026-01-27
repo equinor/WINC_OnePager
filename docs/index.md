@@ -1,17 +1,13 @@
 
-# SCREEN
-
-**SCREEN stands for "<ins>S</ins>imulation-based <ins>C</ins>omparative <ins>R</ins>isk <ins>E</ins>stimation of well leakage in <ins>E</ins>arly phase evaluatio<ins>N</ins>".**
-
-
+# Wellbore Pressure calculation
 
 ## Introduction
 
-The <a href="https://colab.equinor.com/technologies/4FAAF5BD-19C3-46A3-ACB6-5D38DD2C7A89/summary" target="_blank">SCREEN project</a> shall provide a workflow and a toolbox to assess CO2 leakage through abandoned wells. 
+**WINC_OnePager** provides analytical wellbore pressure estimation tools for assessing CO2 leakage risk through abandoned wells. This project was initially developed as part of the <a href="https://colab.equinor.com/technologies/4FAAF5BD-19C3-46A3-ACB6-5D38DD2C7A89/summary" target="_blank">SCREEN project</a>, but the analytical pressure estimation module has been developed and maintained as a separate, standalone entity.
 
-In addition to adjacent activities run internally and externally, the project aims to deliver a series of scrip-based tools to assist risk assesment of legacy wells and modelling leakage.
+The toolbox provides a series of script-based tools to assist risk assessment of legacy wells by computing pressure gradients and visualizing well construction data.
  
-The toolbox can be grouped in two main modules: A **pre-processing and preliminary assesment**, and a **detailed simulation workflow** as shown in the figure below.
+The toolbox can be grouped in two main modules: A **pre-processing and preliminary assessment**, and a **detailed simulation workflow** as shown in the figure below.
 
 ![fig1](/docs/imgs/screen_workflow.png)
 
@@ -19,7 +15,7 @@ The toolbox can be grouped in two main modules: A **pre-processing and prelimina
 
 #### Data Preparation
 
-The first step in using the SCREEN toolbox is to gather all the necessary data. Sources of data include both subsurface data nearby well and specifics about the well construction. Some of this data can ba gathered from internal databases, but some other has to be retrieved manually. Whichever the method, the current solution requires the data to be collected on an input sheet (CSV or YAML file) with tables containing different datasets.
+The first step in using the WINC_OnePager toolbox is to gather all the necessary data. Sources of data include both subsurface data nearby well and specifics about the well construction. Some of this data can ba gathered from internal databases, but some other has to be retrieved manually. Whichever the method, the current solution requires the data to be collected on an input sheet (CSV or YAML file) with tables containing different datasets.
 
 To collect the data these are some steps that can be followed:
 
