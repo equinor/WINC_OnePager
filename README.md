@@ -9,118 +9,84 @@ This repository contains source codes and documentation for the WINC_OnePager pr
 [![WINC_OnePager-lint](https://github.com/equinor/WINC_OnePager/actions/workflows/ruff.yaml/badge.svg)](https://github.com/equinor/WINC_OnePager/actions/workflows/ruff.yaml)
 
 ## Installation Instructions
-There are two methods to install and run the project - with cloning and without cloning. You can choose depending on whether you need to work with the repository directly or just want to use the package.
 
+### Prerequisites: Python Installation
 
-### With Poetry (Recommended for Dependency Management in Equinor)
-Poetry is Equinor's recommended tool complying with IT policy for Python dependency management.
+This code has been tested with Python versions 3.9 through 3.12. The recommended way to install and manage Python is using [uv](https://docs.astral.sh/uv/).
 
-#### 1. Prerequisites
-    
-Ensure you have Python `^3.9` installed and accessible in your path.
+> **Equinor users:** Please follow the internal guidelines available at: https://wiki.equinor.com/wiki/Using_Python_on_Windows_11_with_uv
 
-#### 2. Installing Poetry
-    
-If you don't have Poetry installed, you can do so with the following command:
+**For Windows users**, install uv using winget:
 
 ```shell
-curl -sSL https://install.python-poetry.org | python3 
+winget install --id=astral-sh.uv -e
 ```
 
-After installation, verify that Poetry is correctly installed:
-```shell
-poetry --version
-```
-#### 3A. Install the Project Using Poetry Without Cloning
-
-To install the project without cloning the repository:
+**For Linux/macOS users**:
 
 ```shell
-mkdir my-project
-
-cd my-project
-
-# Create a pyproject.toml file with the content described in the original README, then execute:
-poetry init
-```
-Open the pyproject.toml file. Open the file in your preferred text editor, copy and Paste the follwing contents:
-
-```poetry
-[tool.poetry]
-name = "my-project"
-version = "0.1.0"
-package-mode = false  # Add this line
-
-
-[tool.poetry.dependencies]
-python = ">=3.9,<=3.12"
-
-[tool.poetry.dependencies.winc-onepager]
-git = "git@github.com:equinor/WINC_OnePager.git"
-rev = "main"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Save the changes and close the editor.
-Install dependencies.
+Once uv is installed, reload your terminal and install Python:
 
 ```shell
-poetry install
+uv python install 3.12
 ```
 
-#### 3B. Install the Project Using Poetry With Cloning
-To install the project after cloning the repository:
+For other installation methods, see the [uv installation docs](https://docs.astral.sh/uv/getting-started/installation/).
+
+### Clone and Install
 
 ```shell
 git clone https://github.com/equinor/WINC_OnePager
 cd WINC_OnePager
-# Optionally, create a new branch
-# Then execute:
-poetry install
+uv sync
 ```
 
-#### 4. Activate the Poetry environment:
-```shell
-poetry shell
-```
+This will create a virtual environment and install all dependencies including dev, docs, test, and dash groups.
 
+### Run Commands
 
-
-### Installation Using pip and a Virtual Environment
-
-The installation of the WINC_OnePager project can be done using `pip`, which is a straightforward approach regardless of cloning. First, ensure that you are in a Python virtual environment to isolate the project dependencies.
-
-#### 1. Creating a Virtual Environment
-
-If you haven't already set up a virtual environment, you can create one using Python's built-in `venv`:
+Use `uv run` to execute commands in the project environment:
 
 ```shell
-python -m venv venv_screen
-source venv_screen/bin/activate
+uv run python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml
 ```
 
-For Windows users, activate the virtual environment with:
+Or activate the environment:
 
 ```shell
-.\venv_screen\Scripts\activate.bat
+source .venv/bin/activate  # Linux/macOS
+# or
+.venv\Scripts\activate     # Windows
 ```
-#### 2. Installing the Project
 
--   **Using `pip install .`**: This method works both when the repository has been cloned and when you have a project directory set up with a pyproject.toml or setup.py file. It installs the current directory as a package along with its dependencies:
 
-    ```shell
-    pip install .
-    ```
+### With pip
 
-    This command tells pip to install the current directory (i.e., the project) as a package.
+You can also install using pip in a virtual environment:
 
--   **Using `pip install -r requirements.txt`**: This method is specific to situations where the repository has been cloned. It will install the dependencies specified in the requirements.txt file:
-    ```shell
-    pip install -r requirements.txt
-    ```
+#### 1. Create and Activate a Virtual Environment
+
+```shell
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# or
+.venv\Scripts\activate     # Windows
+```
+
+#### 2. Install the Project
+
+```shell
+pip install .
+```
+
+Or install with development dependencies:
+
+```shell
+pip install -e ".[dev,docs,test]"
+```
 
 
 ## Experiments
@@ -143,15 +109,13 @@ Two python scripts for commandline option are available in directory `experiment
 
 The followings are some of  the sample runs. In either way, you should run the python script inside the ```WINC_OnePager``` directory. 
 
-1. To test **well_sketch.py**, run either of the followings:
-```
-# 1. for smeaheia_v1
+1. To test **well_sketch_pressure.py**, run either of the followings:
+```shell
+# for smeaheia_v1
+uv run python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml -pvt ./test_data/pvt_constants 
 
-python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml -pvt ./test_data/pvt_constants 
-
-# 3. for wildcat
-
-python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml -pvt ./test_data/pvt_constants 
+# for wildcat
+uv run python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml -pvt ./test_data/pvt_constants 
 ```
 
 ### 3. Test data
@@ -174,23 +138,23 @@ In order for a quick test of the codes, we include some test dataset in the fold
 
 ## Unit testing and code coverage
 We are using `pytest` for unit testing and code coverage. The unit testing utilizes `wildcat` as the testing example. So please make sure the saved .pkl files in ```test_data/examples/wildcat/pytest``` exists and is updated. Here is a commandline example:
-```python
-python -m pytest tests
+```shell
+uv run pytest tests
 ```
 This will report the unit testing results. And the following will report not only unit testing but also code coverage:
-```python
-python -m pytest --cov tests
+```shell
+uv run pytest --cov tests
 ```
-or a litle bit more complex command:
-```python
-python -m pytest --cov --cov-branch --cov-report term-missing tests
+or a little bit more complex command:
+```shell
+uv run pytest --cov --cov-branch --cov-report term-missing tests
 ```
 
 ## Documentation
 
-The document can be automatically generated and deployed to github pages. To do that, type the following at the command line:
-```
-mkdocs gh-deploy
+The documentation can be automatically generated and deployed to GitHub Pages. To do that, type the following at the command line:
+```shell
+uv run mkdocs gh-deploy
 ```
 It may take some minutes until the documentation goes live. And the generated documentation page can be found at [WINC_OnePager docs](https://redesigned-dollop-m5l6pme.pages.github.io/).
 
@@ -213,7 +177,6 @@ The following represents the current code structures:
 │   ├── PVT_data.ipynb
 │   ├── WellClass_csv_yaml.ipynb
 │   └── WellClass-onepager.ipynb
-├── poetry.lock
 ├── pyproject.toml
 ├── README.md
 ├── requirements.txt
