@@ -1,4 +1,5 @@
-
+from src.WellClass.libs.well_class import Well
+from tests.conftest import example_well_dict
 
 def test_well_header(well_class_fixture,
                      well_class_dict_fixture) -> None:
@@ -81,3 +82,14 @@ def test_barriers(well_class_fixture,
     assert info == info_gt
     
 
+def test_well_instantiation_from_dict(well_class_fixture,
+                                      well_class_dict_fixture):
+
+    assert well_class_fixture.header['well_name'] == well_class_dict_fixture['header']['well_name']
+    assert isinstance(well_class_fixture.casings, dict)
+    assert well_class_fixture.casings['diameter_in']  # Check key exists
+
+
+def test_well_instantiation_from_yaml(well_class_fixture):
+    assert well_class_fixture.header['well_name']
+    assert well_class_fixture.barriers  # Should not be empty
