@@ -112,10 +112,10 @@ The followings are some of  the sample runs. In either way, you should run the p
 1. To test **well_sketch_pressure.py**, run either of the followings:
 ```shell
 # for smeaheia_v1
-uv run python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml -pvt ./test_data/pvt_constants 
+uv run python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml
 
 # for wildcat
-uv run python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml -pvt ./test_data/pvt_constants 
+uv run python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml
 ```
 
 ### 3. Test data
@@ -156,7 +156,7 @@ The documentation can be automatically generated and deployed to GitHub Pages. T
 ```shell
 uv run mkdocs gh-deploy
 ```
-It may take some minutes until the documentation goes live. And the generated documentation page can be found at [WINC_OnePager docs](https://redesigned-dollop-m5l6pme.pages.github.io/).
+It may take some minutes until the documentation goes live. And the generated documentation page can be found at [WINC_OnePager docs](https://equinor.github.io/WINC_OnePager/).
 
 ## The code structures
 
