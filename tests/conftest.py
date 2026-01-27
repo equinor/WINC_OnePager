@@ -88,3 +88,15 @@ def well_class_dict_fixture():
 
     return my_well_dict
 
+@pytest.fixture
+def example_well_dict():
+    # Return a minimal or example well dictionary for testing
+    return {
+        "header": {"well_name": "TestWell", "well_td_rkb": 1000},
+        "drilling": {},
+        "casings": {"diameter_in": [13.375, 9.625]},
+        "geology": {},
+        "barriers": {},
+        "barrier_permeability": {},
+        "co2_datum": 0
+    }
