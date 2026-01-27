@@ -156,7 +156,7 @@ The documentation can be automatically generated and deployed to GitHub Pages. T
 ```shell
 uv run mkdocs gh-deploy
 ```
-It may take some minutes until the documentation goes live. And the generated documentation page can be found at [WINC_OnePager docs](https://redesigned-dollop-m5l6pme.pages.github.io/).
+It may take some minutes until the documentation goes live. And the generated documentation page can be found at [WINC_OnePager docs](https://equinor.github.io/WINC_OnePager/).
 
 ## The code structures
 
