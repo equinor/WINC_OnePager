@@ -5,7 +5,6 @@ from .plot_sketch import plot_sketch
 from ..well_class.well_class import Well
 from ..well_pressure.Pressure import Pressure
 from .plot_wellbore_elements import geology_plotter
-from IPython.display import display
 import pandas as pd
 
 def plot_onepager(well: Well, pressure: Pressure,
@@ -43,8 +42,6 @@ def plot_onepager(well: Well, pressure: Pressure,
         well (Well): Well object containing well data.
         pressure (Pressure): Pressure object containing pressure data.
     """
-
-    display(pressure.scenarios_summary())
 
 
 

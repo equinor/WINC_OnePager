@@ -4,15 +4,15 @@
 
 # 1. smeaheia_v1
 
-$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml -pvt ./test_data/pvt_constants/pure_co2
+$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v1/smeaheia.yaml -pvt ./src/WellClass/libs/pvt/pvt_constants
 
 # 2. smeaheia_v2
 
-$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v2/smeaheia.yaml -pvt ./test_data/pvt_constants/pure_co2
+$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/smeaheia_v2/smeaheia.yaml -pvt ./src/WellClass/libs/pvt/pvt_constants
 
 # 3. wildcat
 
-$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml -pvt ./test_data/pvt_constants/pure_co2
+$ python -m experiments.well_sketch_pressure --config-file ./test_data/examples/wildcat/wildcat.yaml -pvt ./src/WellClass/libs/pvt/pvt_constants
 
 """
 import os
@@ -39,7 +39,7 @@ from src.WellClass.libs.well_pressure import Pressure
 
 # plotting libraries
 from src.WellClass.libs.plotting import (
-    plot_sketch_pressure
+    plot_onepager
     )
 
 from src.WellClass.tools import init_well_pressure
@@ -52,7 +52,8 @@ def main(args: Namespace):
     # for example, './test_data/examples/smeaheia_v1.yaml'
     well_name = pathlib.Path(args.config_file)
 
-    pvt_path = pathlib.Path(args.pvt_db_path)
+    # pvt_path = pathlib.Path(args.pvt_db_path)
+    pvt_path = pathlib.Path('src/WellClass/libs/pvt/pvt_constants')
 
     # extract suffix
     suffix = well_name.suffix
@@ -72,6 +73,9 @@ def main(args: Namespace):
         well_csv = csv_parser(well_name)
 
     ########### 3. build Well and pressure classes ######################
+    
+    # extract header info for Pressure class
+    header = well_csv['well_header']
 
     # 3.1 build well class
     my_well = Well( header       = well_csv['well_header'], 
@@ -84,22 +88,32 @@ def main(args: Namespace):
             )
     
     # 3.2 build pressure class
-    my_pressure = Pressure( header      = well_csv['well_header'],
-                            reservoir_P = well_csv['reservoir_pressure'],
-                            co2_datum   = well_csv['co2_datum'],
-                            pvt_path    = pvt_path,)
+    my_pressure = Pressure( sf_depth_msl = header['sf_depth_msl'],
+                            well_td_rkb  = header['well_td_rkb'],
+                            well_rkb     = header['well_rkb'],
+                            sf_temp      = header['sf_temp'],
+                            geo_tgrad    = header['geo_tgrad'],
+                            fluid_type   = 'pure_co2',
+                            pvt_path     = pvt_path,
+                          )
 
+
+
+
+    #Plot sketch, pressures
+    onepager , (sketchplot, pressureplot) = plot_onepager(my_well, my_pressure, pressure_HSP=True)
 
     # well sketch
     output = None
     if args.out_name:
-        if not os.path.exists(args.out_path):
-            os.makedirs(args.out_path, exist_ok=True)
+        out_path = pathlib.Path(args.out_path)
+        if not out_path.exists():
+            out_path.mkdir(parents=True, exist_ok=True)
         # output file
-        output = os.path.join(args.out_path, args.out_name)
+        output = out_path / args.out_name
 
-    #Plot sketch, pressures
-    plot_sketch_pressure(my_well, my_pressure, save_file=output)
+        onepager.savefig(output)
+
 
 
     # for qc
@@ -116,7 +130,7 @@ if __name__ == '__main__':
                         help="well configuration file, can be .yaml or .csv format")
     
 
-    parser.add_argument('-pvt', "--pvt-db-path", type=str, required=True,
+    parser.add_argument('-pvt', "--pvt-db-path", type=str,
                         help="pvt fluid database path")
     
     # save figure to the disk

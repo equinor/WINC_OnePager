@@ -162,7 +162,6 @@ wcwidth==0.2.13
 webencodings==0.5.1
 websocket-client==1.8.0
 wellpathpy==0.5.0
-welly==0.5.2
 werkzeug==3.0.3
 widgetsnbextension==4.0.11
 zipp==3.19.2
