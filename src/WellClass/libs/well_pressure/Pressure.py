@@ -8,10 +8,12 @@ import pandas as pd
 import scipy.constants as const
 from scipy.interpolate import RectBivariateSpline, interp1d
 
-from ..pvt.pvt import _integrate_pressure, corr_rhobrine_LaliberteCopper, get_rho_from_pvt_data, load_pvt_data
+from ..pvt.pvt import get_rho_from_pvt_data
 from ..well_class.well_class import Well
 from .barrier_pressure import leakage_proxy
 from .PressureScenarioManager import PressureScenarioManager
+from .PVTDataManager import PVTDataManager
+from .WellConditions import WellConditions
 
 # Constants
 SHMIN_NAME = "Shmin"
@@ -22,6 +24,9 @@ SHMIN_FAC = 0.1695  # empirical factor for Shmin calculation
 class Pressure:
     """
     Manages pressure scenarios for a legacy well based on geothermal gradient and fluid properties.
+
+    This class orchestrates the computation of pressure profiles for various scenarios,
+    using WellConditions for initial curves and PVTDataManager for fluid properties.
 
     Attributes:
         sf_depth_msl (float): Seafloor depth relative to mean sea level (MSL) in meters.
@@ -36,12 +41,9 @@ class Pressure:
         z_resrv (float, optional): Depth of the reservoir in meters.
         p_resrv (float, optional): Pressure at the reservoir in bars.
         fluid_composition (str, optional): Composition of the fluid.
-        pvt_data (Dict[str, Dict[str, np.ndarray]]): PVT data for the fluid and brine.
-        brine_interpolator (RectBivariateSpline): Interpolator for brine PVT data.
-        fluid_interpolator (RectBivariateSpline): Interpolator for fluid PVT data.
+        specific_gravity (float, optional): Specific gravity if using constant density fluid.
+        rho_brine (float, optional): Density of brine in kg/m^3, if known.
         ip_shmin_data (np.ndarray, optional): User-provided minimum horizontal stress data.
-        init_curves (pd.DataFrame): Initial curves for depth, temperature, hydrostatic pressure, and minimum horizontal stress.
-        scenario_manager (PressureScenarioManager): Manager for pressure scenarios.
         input_scenarios (Dict[str, Union[float, str, None]]): Input scenarios for pressure calculations.
         default_hs_scenario (bool): Flag indicating whether to compute the default hydrostatic scenario.
         salinity (float): Salinity of the fluid in percentage (default is 3.5% for seawater).
@@ -62,222 +64,86 @@ class Pressure:
     fluid_composition: Optional[str] = None
     specific_gravity: Optional[float] = None
     rho_brine: Optional[float] = None  # Density of brine in kg/m^3, if known
-    pvt_data: Dict[str, Dict[str, np.ndarray]] = field(init=False)
-    brine_interpolator: RectBivariateSpline = field(init=False)
-    fluid_interpolator: RectBivariateSpline = field(init=False)
     ip_shmin_data: np.ndarray = field(default=None)  # User-provided Shmin data
-    init_curves: pd.DataFrame = field(init=False)
-    scenario_manager: PressureScenarioManager = field(init=False)
     input_scenarios: Dict[str, Optional[Union[float, str]]] = field(default_factory=dict)
     default_hs_scenario: bool = True
     salinity: float = 3.5  # Salinity in percentage (default is 3.5% for seawater)
     shmin_gradient: float = SHMIN_FAC  # Gradient for Shmin calculation
+
+    # Computed attributes
+    pvt_manager: PVTDataManager = field(init=False)
+    well_conditions: WellConditions = field(init=False)
+    pvt_data: Dict[str, Dict[str, np.ndarray]] = field(init=False)
+    brine_interpolator: RectBivariateSpline = field(init=False)
+    fluid_interpolator: RectBivariateSpline = field(init=False)
+    init_curves: pd.DataFrame = field(init=False)
+    scenario_manager: PressureScenarioManager = field(init=False)
 
     def __post_init__(self):
         """
         Initializes PVT data, interpolators, initial curves, and manages scenarios
         after class instantiation.
         """
-        self.pvt_data = self._load_pvt_data()
-        self._initialize_interpolators()
-        self.init_curves = self._compute_init_curves()
+        # Initialize PVT data manager
+        self.pvt_manager = PVTDataManager(
+            pvt_path=self.pvt_path,
+            fluid_type=self.fluid_type,
+            specific_gravity=self.specific_gravity,
+            salinity=self.salinity,
+        )
+
+        # Set fluid composition from PVT manager
+        self.fluid_composition = self.pvt_manager.fluid_composition
+
+        # Get PVT data and interpolators
+        self.pvt_data = self.pvt_manager.get_pvt_data()
+        self.brine_interpolator = self.pvt_manager.get_brine_interpolator()
+        self.fluid_interpolator = self.pvt_manager.get_fluid_interpolator()
+
+        # Initialize well conditions
+        self.well_conditions = WellConditions(
+            sf_depth_msl=self.sf_depth_msl,
+            well_td_rkb=self.well_td_rkb,
+            well_rkb=self.well_rkb,
+            sf_temp=self.sf_temp,
+            geo_tgrad=self.geo_tgrad,
+            pvt_data=self.pvt_data,
+            brine_interpolator=self.brine_interpolator,
+            rho_brine=self.rho_brine,
+            salinity=self.salinity,
+            shmin_gradient=self.shmin_gradient,
+            ip_shmin_data=self.ip_shmin_data,
+        )
+
+        # Get initial curves from well conditions
+        self.init_curves = self.well_conditions.get_curves()
+
+        # Initialize scenario manager and scenarios
         self.scenario_manager = PressureScenarioManager()
         self.manage_scenarios()
 
-    def _load_pvt_data(self):
-        """Load PVT data based on specific gravity and fluid type."""
-        if self.specific_gravity is not None:
-            return load_pvt_data(self.pvt_path, load_fluid=False)
-        else:
-            pvt_data = load_pvt_data(self.pvt_path, self.fluid_type, load_fluid=True)
-            self.fluid_composition = pvt_data[self.fluid_type]["metadata"]["composition"]
-            return pvt_data
-
-    def _setup_init_curves(self, depth_array) -> pd.DataFrame:
-        init_curves = pd.DataFrame(
-            {
-                "depth": depth_array,
-                "temperature": [np.nan] * len(depth_array),
-                "hydrostatic_pressure": [np.nan] * len(depth_array),
-                "min_horizontal_stress": [np.nan] * len(depth_array),
-            }
-        )
-        return init_curves
-
-    def _compute_init_curves(self) -> pd.DataFrame:
+    def add_scenario(self, scenario_name: str, **kwargs):
         """
-        Computes initial curves for depth, temperature, hydrostatic pressure, and minimum horizontal stress.
-
-        Returns:
-            pd.DataFrame: DataFrame containing the initial curves.
-        """
-        # Logic to compute depth, temperature, hydrostatic pressure, and Shmin
-        # Return a pandas DataFrame with these initial curves
-        depth_curve = self._calculate_depth_curve()
-        init_curves = self._setup_init_curves(depth_array=depth_curve)
-        init_curves["temperature"] = self._calculate_temperature_curve(depth_curve)
-        init_curves["hydrostatic_pressure"] = self._calculate_hydrostatic_pressure(init_curves)
-        init_curves["min_horizontal_stress"] = self._calculate_shmin(depth_curve, init_curves["hydrostatic_pressure"])
-
-        return init_curves
-
-    def _initialize_interpolators(self, load_fluid: bool = True):
-        # Initialize the brine interpolator
-        pressure_vector = self.pvt_data["pressure"]
-        temperature_vector = self.pvt_data["temperature"]
-
-        water_rho_matrix = self.pvt_data["brine"]["rho"]
-
-        t_matrix, p_matrix = np.meshgrid(pressure_vector, temperature_vector)
-
-        # Correct water density for salinity using Laliberté and Cooper model
-        brine_rho_matrix = corr_rhobrine_LaliberteCopper(self.salinity, t_matrix, p_matrix, water_rho_matrix)
-
-        self.brine_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, brine_rho_matrix)
-
-        # Initialize the fluid interpolator based on the fluid type
-        if self.specific_gravity is None:
-            fluid_rho_matrix = self.pvt_data[self.fluid_type]["rho"]
-            self.fluid_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, fluid_rho_matrix)
-        else:
-            # If specific gravity is provided, set fluid_interpolator to None
-            self.fluid_interpolator = None
-
-    def _calculate_depth_curve(self) -> np.ndarray:
-        # Make the depth-vector from msl and downwards
-        dz = 1.0
-        td_msl = self.well_td_rkb - self.well_rkb
-        z_bottom = int(td_msl) + 500
-        z_vec = np.arange(0, z_bottom, dz)
-
-        return z_vec
-
-    def _calculate_temperature_curve(self, depth_curve: np.ndarray) -> np.ndarray:
-        # Calculate depth sample points based on well depth and seabed depth
-        temperature_curve = self.sf_temp + np.maximum(0, (self.geo_tgrad * (depth_curve - self.sf_depth_msl)) / 1e3)
-
-        return temperature_curve
-
-    def _calculate_hydrostatic_pressure(
-        self,
-        init_curves: pd.DataFrame,
-    ) -> np.ndarray:
-        # Compute hydrostatic pressure using density data from pvt_data and integrate pressure
-
-        if self.rho_brine is not None:
-            hydrostatic_pressure = (const.atm + init_curves["depth"] * self.rho_brine * const.g) / const.bar
-
-        else:
-            # hydrostatic_pressure = compute_hydrostatic_pressure(depth_array = depth_curve,
-            #                                  temperature_array = temperature_curve,
-            #                                  pvt_data = self.pvt_data)
-
-            hydrostatic_pressure, _ = _integrate_pressure(
-                init_curves=init_curves,
-                reference_depth=0,
-                reference_pressure=const.atm / const.bar,
-                pvt_data=self.pvt_data,
-                fluid_key="brine",
-                interpolator=self.brine_interpolator,
-            )
-
-        return hydrostatic_pressure
-
-    def _calculate_shmin(self, depth_array: np.ndarray, hydrostatic_pressure_curve: np.ndarray) -> np.ndarray:
-        """
-        Compute Shmin based on user-provided data or an empirical formula.
+        Add a new pressure scenario to the scenario manager.
 
         Args:
-            depth_array (np.ndarray): Array of depth values.
-            hydrostatic_pressure_curve (np.ndarray): Array of hydrostatic pressure values.
-
-        Returns:
-            np.ndarray: Array of Shmin values.
+            scenario_name: Name of the scenario.
+            **kwargs: Scenario-specific parameters.
         """
-        pressure_ml = np.interp(self.sf_depth_msl, depth_array, hydrostatic_pressure_curve)
-
-        if self.ip_shmin_data is not None:
-            # User has provided custom Shmin data, so interpolate it
-            depth_values, shmin_values = self.ip_shmin_data.T
-
-            if min(depth_values) > self.sf_depth_msl:
-                warnings.warn(
-                    f"No Shmin data between seafloor depth ({self.sf_depth_msl}) and minimum provided depth ({min(depth_values)}). "
-                    "Extrapolating using hydrostatic pressure at seafloor."
-                )
-
-            else:
-                filtered_depth_values = depth_values[depth_values >= self.sf_depth_msl]
-                filtered_shmin_values = shmin_values[depth_values >= self.sf_depth_msl]
-
-                depth_values = filtered_depth_values
-                shmin_values = filtered_shmin_values
-
-            # Remove duplicates while keeping the first occurrence
-            unique_indices = np.unique(depth_values, return_index=True)[1]
-            depth_values = depth_values[np.sort(unique_indices)]
-            shmin_values = shmin_values[np.sort(unique_indices)]
-
-            # Insert the seafloor depth and pressure at mudline into the arrays
-            depth_values = np.insert(depth_values, 0, self.sf_depth_msl)
-            shmin_values = np.insert(shmin_values, 0, pressure_ml)
-
-            # Insert values af MSL
-            depth_values = np.insert(depth_values, 0, 0)
-            shmin_values = np.insert(shmin_values, 0, hydrostatic_pressure_curve[0])
-
-            shmin_interpolator = interp1d(depth_values, shmin_values, bounds_error=False, fill_value="extrapolate")
-
-            shmin_curve = shmin_interpolator(depth_array)
-
-            check_shmin_values = (
-                shmin_curve[depth_array > self.sf_depth_msl] < hydrostatic_pressure_curve[depth_array > self.sf_depth_msl]
-            ).sum() / len(shmin_curve[depth_array > self.sf_depth_msl])
-
-            if np.isclose(check_shmin_values, 1.0):
-                warnings.warn(
-                    f"Shmin values below seafloor depth ({self.sf_depth_msl}) are below hydrostatic pressure.\nIssues with PREDICT Shmin data. Shmin values will be set to hydrostatic pressure."
-                )
-
-            # Ensure Shmin is equual to hydrostatic pressure above seafloor depth
-            shmin_curve[shmin_curve < hydrostatic_pressure_curve] = hydrostatic_pressure_curve[shmin_curve < hydrostatic_pressure_curve]
-
-        else:
-            # No user data provided, use the empirical formula
-
-            # interpolate hydrostatic pressure at mudline depth (seafloor depth)
-            pressure_ml = np.interp(self.sf_depth_msl, depth_array, hydrostatic_pressure_curve)
-
-            depth_ml = depth_array - self.sf_depth_msl  # depth below mean sea level
-
-            shmin_curve = pressure_ml + depth_ml * self.shmin_gradient
-            # shmin_curve[shmin_curve<0] = hydrostatic_pressure_curve[shmin_curve<0]
-
-        # Ensure Shmin is not below hydrostatic pressure at any depth
-        shmin_curve[depth_array < self.sf_depth_msl] = hydrostatic_pressure_curve[depth_array < self.sf_depth_msl]
-
-        return shmin_curve
-
-    def add_scenario(self, scenario_name: str, **kwargs):
+        # Handle different fluid type if provided
         if "fluid_type" in kwargs and kwargs["fluid_type"] != self.fluid_type:
-            # If fluid_type is provided, load the PVT data for the new fluid type
-            pvt_data = load_pvt_data(self.pvt_path, kwargs["fluid_type"], load_fluid=True)
+            fluid_interpolator, fluid_composition, pvt_data = self.pvt_manager.load_additional_fluid(kwargs["fluid_type"])
             kwargs["pvt_data"] = pvt_data
-            kwargs["fluid_composition"] = pvt_data[kwargs["fluid_type"]]["metadata"]["composition"]
-
-            temperature_vector = pvt_data["temperature"]
-            pressure_vector = pvt_data["pressure"]
-            rho_matrix = pvt_data[kwargs["fluid_type"]]["rho"]
-
-            kwargs["fluid_interpolator"] = RectBivariateSpline(pressure_vector, temperature_vector, rho_matrix)
+            kwargs["fluid_composition"] = fluid_composition
+            kwargs["fluid_interpolator"] = fluid_interpolator
 
         elif "specific_gravity" in kwargs and kwargs["specific_gravity"] is not None:
             # If specific_gravity is provided, set fluid_type to None and fluid_interpolator to None
             kwargs["fluid_type"] = None
             kwargs["fluid_interpolator"] = None
-            # kwargs["pvt_data"] = None
             kwargs["fluid_composition"] = None
-        # # Check that either fluid_type or specific_gravity is provided, but not both
+
+        # Check that either fluid_type or specific_gravity is provided
         if "fluid_type" not in kwargs and "specific_gravity" not in kwargs:
             if self.fluid_type is None and self.specific_gravity is None:
                 raise ValueError("Either fluid_type or specific_gravity should be provided, not both.")
@@ -285,6 +151,7 @@ class Pressure:
                 kwargs["fluid_type"] = self.fluid_type
                 kwargs["specific_gravity"] = self.specific_gravity
 
+        # Set defaults from class attributes
         defaults = {
             "z_fluid_contact": self.z_fluid_contact,
             "p_fluid_contact": self.p_fluid_contact,
@@ -298,13 +165,12 @@ class Pressure:
             "z_resrv": self.z_resrv,
             "p_resrv": self.p_resrv,
             "rho_brine": self.rho_brine,
-            # Add other default values as needed
         }
 
         # Update defaults with user-provided values
         defaults.update(kwargs)
 
-        # Store the scenario
+        # Create and compute the scenario
         scenario = self.scenario_manager.create_scenario(name=scenario_name, **defaults)
         scenario.compute_pressure_profile()
 
@@ -319,7 +185,7 @@ class Pressure:
                 print(f"{scenario_pressure=}")
                 try:
                     p_delta = float(scenario_pressure)
-                except:
+                except (ValueError, TypeError):
                     p_delta = None  # Handle cases where pressure is not a float
                 print(f"{scenario_name=} {scenario_pressure=}")
                 self.add_scenario(
@@ -437,7 +303,6 @@ class Pressure:
         fluid_interp = self.scenario_manager.scenarios[sc_name].fluid_interpolator
         brine_interp = self.scenario_manager.scenarios[sc_name].brine_interpolator
 
-        
         p_fluid_below_barrier = np.interp(bottom, depth, fluid_pressure)
         p_brine_above_barrier = np.interp(top, depth, hydrst_pressure)
 
@@ -446,5 +311,11 @@ class Pressure:
 
         return p_brine_above_barrier, p_fluid_below_barrier, rho_brine_above_barrier, rho_fluid_below_barrier
 
-    def scenarios_summary(self):
+    def scenarios_summary(self) -> pd.DataFrame:
+        """
+        Get a summary of all scenarios.
+
+        Returns:
+            pd.DataFrame: Summary table of all scenarios.
+        """
         return self.scenario_manager.get_scenarios_summary()
