@@ -1,0 +1,1880 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../well_class/">
+      
+      
+        <link rel="next" href="../models/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Well pressure - WINC_OnePager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#src.WellClass.libs.well_pressure.Pressure" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="WINC_OnePager" class="md-header__button md-logo" aria-label="WINC_OnePager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WINC_OnePager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Well pressure
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="WINC_OnePager" class="md-nav__button md-logo" aria-label="WINC_OnePager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    WINC_OnePager
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../well_class/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WellClass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../mkdocs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MkDocs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../INSTALLATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code References
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Code References
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3_1" id="__nav_3_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WellClass
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    WellClass
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../well_class/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Well class
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Well pressure
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Well pressure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#src.WellClass.libs.well_pressure.Pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pressure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pressure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.WellClass.libs.well_pressure.Pressure.Pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pressure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pressure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.WellClass.libs.well_pressure.Pressure.Pressure.__post_init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __post_init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.WellClass.libs.well_pressure.Pressure.Pressure.compute_barrier_leakage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        compute_barrier_leakage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#src.WellClass.libs.well_pressure.Pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pressure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pressure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.WellClass.libs.well_pressure.Pressure.Pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pressure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pressure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.WellClass.libs.well_pressure.Pressure.Pressure.__post_init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __post_init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.WellClass.libs.well_pressure.Pressure.Pressure.compute_barrier_leakage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        compute_barrier_leakage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../mkdocs/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Developer Guides
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../well_class/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Code References
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../well_class/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    WellClass
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>Well pressure</h1>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="src.WellClass.libs.well_pressure.Pressure" class="doc doc-heading">
+            <code>src.WellClass.libs.well_pressure.Pressure</code>
+
+
+<a href="#src.WellClass.libs.well_pressure.Pressure" class="headerlink" title="Permanent link"></a></h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="src.WellClass.libs.well_pressure.Pressure.Pressure" class="doc doc-heading">
+            <code>Pressure</code>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#src.WellClass.libs.well_pressure.Pressure.Pressure" class="headerlink" title="Permanent link"></a></h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Manages pressure scenarios for a legacy well based on geothermal gradient and fluid properties.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.sf_depth_msl">sf_depth_msl</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Seafloor depth relative to mean sea level (MSL) in meters.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.well_td_rkb">well_td_rkb</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Total depth of the well relative to the rotary kelly bushing (RKB) in meters.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.well_rkb">well_rkb</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Rotary kelly bushing elevation in meters.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.sf_temp">sf_temp</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Seafloor temperature in degrees Celsius.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.geo_tgrad">geo_tgrad</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Geothermal gradient in degrees Celsius per kilometer.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.pvt_path">pvt_path</span></code></b>
+              (<code><span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="pathlib.Path">Path</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Path to the PVT data files.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.fluid_type">fluid_type</span></code></b>
+              (<code><span title="str">str</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Name of the fluid stored in PVT data to use in pressure scenarios.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.z_fluid_contact">z_fluid_contact</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Depth of the fluid contact in meters.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.p_fluid_contact">p_fluid_contact</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Pressure at the fluid contact in bars.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.z_resrv">z_resrv</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Depth of the reservoir in meters.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.p_resrv">p_resrv</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Pressure at the reservoir in bars.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.fluid_composition">fluid_composition</span></code></b>
+              (<code><span title="str">str</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Composition of the fluid.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.pvt_data">pvt_data</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="numpy.ndarray">ndarray</span>]]</code>)
+          –
+          <div class="doc-md-description">
+            <p>PVT data for the fluid and brine.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.brine_interpolator">brine_interpolator</span></code></b>
+              (<code><span title="scipy.interpolate.RectBivariateSpline">RectBivariateSpline</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Interpolator for brine PVT data.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.fluid_interpolator">fluid_interpolator</span></code></b>
+              (<code><span title="scipy.interpolate.RectBivariateSpline">RectBivariateSpline</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Interpolator for fluid PVT data.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.ip_shmin_data">ip_shmin_data</span></code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>User-provided minimum horizontal stress data.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.init_curves">init_curves</span></code></b>
+              (<code><span title="pandas.DataFrame">DataFrame</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Initial curves for depth, temperature, hydrostatic pressure, and minimum horizontal stress.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.scenario_manager">scenario_manager</span></code></b>
+              (<code><span title="src.WellClass.libs.well_pressure.PressureScenarioManager.PressureScenarioManager">PressureScenarioManager</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Manager for pressure scenarios.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.input_scenarios">input_scenarios</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="typing.Union">Union</span>[<span title="float">float</span>, <span title="str">str</span>, None]]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Input scenarios for pressure calculations.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.default_hs_scenario">default_hs_scenario</span></code></b>
+              (<code><span title="bool">bool</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Flag indicating whether to compute the default hydrostatic scenario.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.salinity">salinity</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Salinity of the fluid in percentage (default is 3.5% for seawater).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="src.WellClass.libs.well_pressure.Pressure.Pressure.shmin_gradient">shmin_gradient</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Gradient for Shmin calculation (default is SHMIN_FAC).</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/WellClass/libs/well_pressure/Pressure.py</code></summary>
+                <pre class="highlight"><code class="language-python">@dataclass
+class Pressure:
+    """
+    Manages pressure scenarios for a legacy well based on geothermal gradient and fluid properties.
+
+    Attributes:
+        sf_depth_msl (float): Seafloor depth relative to mean sea level (MSL) in meters.
+        well_td_rkb (float): Total depth of the well relative to the rotary kelly bushing (RKB) in meters.
+        well_rkb (float): Rotary kelly bushing elevation in meters.
+        sf_temp (float): Seafloor temperature in degrees Celsius.
+        geo_tgrad (float): Geothermal gradient in degrees Celsius per kilometer.
+        pvt_path (Union[str, Path]): Path to the PVT data files.
+        fluid_type (str): Name of the fluid stored in PVT data to use in pressure scenarios.
+        z_fluid_contact (float, optional): Depth of the fluid contact in meters.
+        p_fluid_contact (float, optional): Pressure at the fluid contact in bars.
+        z_resrv (float, optional): Depth of the reservoir in meters.
+        p_resrv (float, optional): Pressure at the reservoir in bars.
+        fluid_composition (str, optional): Composition of the fluid.
+        pvt_data (Dict[str, Dict[str, np.ndarray]]): PVT data for the fluid and brine.
+        brine_interpolator (RectBivariateSpline): Interpolator for brine PVT data.
+        fluid_interpolator (RectBivariateSpline): Interpolator for fluid PVT data.
+        ip_shmin_data (np.ndarray, optional): User-provided minimum horizontal stress data.
+        init_curves (pd.DataFrame): Initial curves for depth, temperature, hydrostatic pressure, and minimum horizontal stress.
+        scenario_manager (PressureScenarioManager): Manager for pressure scenarios.
+        input_scenarios (Dict[str, Union[float, str, None]]): Input scenarios for pressure calculations.
+        default_hs_scenario (bool): Flag indicating whether to compute the default hydrostatic scenario.
+        salinity (float): Salinity of the fluid in percentage (default is 3.5% for seawater).
+        shmin_gradient (float): Gradient for Shmin calculation (default is SHMIN_FAC).
+    """
+
+    sf_depth_msl: float
+    well_td_rkb: float
+    well_rkb: float
+    sf_temp: float
+    geo_tgrad: float  # Geothermal gradient in degC/km
+    pvt_path: Union[str, Path]
+    fluid_type: str
+    z_fluid_contact: Optional[float] = None
+    p_fluid_contact: Optional[float] = None
+    z_resrv: Optional[float] = None
+    p_resrv: Optional[float] = None
+    fluid_composition: Optional[str] = None
+    specific_gravity: Optional[float] = None
+    rho_brine: Optional[float] = None  # Density of brine in kg/m^3, if known
+    pvt_data: Dict[str, Dict[str, np.ndarray]] = field(init=False)
+    brine_interpolator: RectBivariateSpline = field(init=False)
+    fluid_interpolator: RectBivariateSpline = field(init=False)
+    ip_shmin_data: np.ndarray = field(default=None)  # User-provided Shmin data
+    init_curves: pd.DataFrame = field(init=False)
+    scenario_manager: PressureScenarioManager = field(init=False)
+    input_scenarios: Dict[str, Optional[Union[float, str]]] = field(default_factory=dict)
+    default_hs_scenario: bool = True
+    salinity: float = 3.5  # Salinity in percentage (default is 3.5% for seawater)
+    shmin_gradient: float = SHMIN_FAC  # Gradient for Shmin calculation
+
+    def __post_init__(self):
+        """
+        Initializes PVT data, interpolators, initial curves, and manages scenarios
+        after class instantiation.
+        """
+        self.pvt_data = self._load_pvt_data()
+        self._initialize_interpolators()
+        self.init_curves = self._compute_init_curves()
+        self.scenario_manager = PressureScenarioManager()
+        self.manage_scenarios()
+
+    def _load_pvt_data(self):
+        """Load PVT data based on specific gravity and fluid type."""
+        if self.specific_gravity is not None:
+            return load_pvt_data(self.pvt_path, load_fluid=False)
+        else:
+            pvt_data = load_pvt_data(self.pvt_path, self.fluid_type, load_fluid=True)
+            self.fluid_composition = pvt_data[self.fluid_type]["metadata"]["composition"]
+            return pvt_data
+
+    def _setup_init_curves(self, depth_array) -&gt; pd.DataFrame:
+        init_curves = pd.DataFrame(
+            {
+                "depth": depth_array,
+                "temperature": [np.nan] * len(depth_array),
+                "hydrostatic_pressure": [np.nan] * len(depth_array),
+                "min_horizontal_stress": [np.nan] * len(depth_array),
+            }
+        )
+        return init_curves
+
+    def _compute_init_curves(self) -&gt; pd.DataFrame:
+        """
+        Computes initial curves for depth, temperature, hydrostatic pressure, and minimum horizontal stress.
+
+        Returns:
+            pd.DataFrame: DataFrame containing the initial curves.
+        """
+        # Logic to compute depth, temperature, hydrostatic pressure, and Shmin
+        # Return a pandas DataFrame with these initial curves
+        depth_curve = self._calculate_depth_curve()
+        init_curves = self._setup_init_curves(depth_array=depth_curve)
+        init_curves["temperature"] = self._calculate_temperature_curve(depth_curve)
+        init_curves["hydrostatic_pressure"] = self._calculate_hydrostatic_pressure(init_curves)
+        init_curves["min_horizontal_stress"] = self._calculate_shmin(depth_curve, init_curves["hydrostatic_pressure"])
+
+        return init_curves
+
+    def _initialize_interpolators(self, load_fluid: bool = True):
+        # Initialize the brine interpolator
+        pressure_vector = self.pvt_data["pressure"]
+        temperature_vector = self.pvt_data["temperature"]
+
+        water_rho_matrix = self.pvt_data["brine"]["rho"]
+
+        t_matrix, p_matrix = np.meshgrid(pressure_vector, temperature_vector)
+
+        # Correct water density for salinity using Laliberté and Cooper model
+        brine_rho_matrix = corr_rhobrine_LaliberteCopper(self.salinity, t_matrix, p_matrix, water_rho_matrix)
+
+        self.brine_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, brine_rho_matrix)
+
+        # Initialize the fluid interpolator based on the fluid type
+        if self.specific_gravity is None:
+            fluid_rho_matrix = self.pvt_data[self.fluid_type]["rho"]
+            self.fluid_interpolator = RectBivariateSpline(pressure_vector, temperature_vector, fluid_rho_matrix)
+        else:
+            # If specific gravity is provided, set fluid_interpolator to None
+            self.fluid_interpolator = None
+
+    def _calculate_depth_curve(self) -&gt; np.ndarray:
+        # Make the depth-vector from msl and downwards
+        dz = 1.0
+        td_msl = self.well_td_rkb - self.well_rkb
+        z_bottom = int(td_msl) + 500
+        z_vec = np.arange(0, z_bottom, dz)
+
+        return z_vec
+
+    def _calculate_temperature_curve(self, depth_curve: np.ndarray) -&gt; np.ndarray:
+        # Calculate depth sample points based on well depth and seabed depth
+        temperature_curve = self.sf_temp + np.maximum(0, (self.geo_tgrad * (depth_curve - self.sf_depth_msl)) / 1e3)
+
+        return temperature_curve
+
+    def _calculate_hydrostatic_pressure(
+        self,
+        init_curves: pd.DataFrame,
+    ) -&gt; np.ndarray:
+        # Compute hydrostatic pressure using density data from pvt_data and integrate pressure
+
+        if self.rho_brine is not None:
+            hydrostatic_pressure = (const.atm + init_curves["depth"] * self.rho_brine * const.g) / const.bar
+
+        else:
+            # hydrostatic_pressure = compute_hydrostatic_pressure(depth_array = depth_curve,
+            #                                  temperature_array = temperature_curve,
+            #                                  pvt_data = self.pvt_data)
+
+            hydrostatic_pressure, _ = _integrate_pressure(
+                init_curves=init_curves,
+                reference_depth=0,
+                reference_pressure=const.atm / const.bar,
+                pvt_data=self.pvt_data,
+                fluid_key="brine",
+                interpolator=self.brine_interpolator,
+            )
+
+        return hydrostatic_pressure
+
+    def _calculate_shmin(self, depth_array: np.ndarray, hydrostatic_pressure_curve: np.ndarray) -&gt; np.ndarray:
+        """
+        Compute Shmin based on user-provided data or an empirical formula.
+
+        Args:
+            depth_array (np.ndarray): Array of depth values.
+            hydrostatic_pressure_curve (np.ndarray): Array of hydrostatic pressure values.
+
+        Returns:
+            np.ndarray: Array of Shmin values.
+        """
+        pressure_ml = np.interp(self.sf_depth_msl, depth_array, hydrostatic_pressure_curve)
+
+        if self.ip_shmin_data is not None:
+            # User has provided custom Shmin data, so interpolate it
+            depth_values, shmin_values = self.ip_shmin_data.T
+
+            if min(depth_values) &gt; self.sf_depth_msl:
+                warnings.warn(
+                    f"No Shmin data between seafloor depth ({self.sf_depth_msl}) and minimum provided depth ({min(depth_values)}). "
+                    "Extrapolating using hydrostatic pressure at seafloor."
+                )
+
+            else:
+                filtered_depth_values = depth_values[depth_values &gt;= self.sf_depth_msl]
+                filtered_shmin_values = shmin_values[depth_values &gt;= self.sf_depth_msl]
+
+                depth_values = filtered_depth_values
+                shmin_values = filtered_shmin_values
+
+            # Remove duplicates while keeping the first occurrence
+            unique_indices = np.unique(depth_values, return_index=True)[1]
+            depth_values = depth_values[np.sort(unique_indices)]
+            shmin_values = shmin_values[np.sort(unique_indices)]
+
+            # Insert the seafloor depth and pressure at mudline into the arrays
+            depth_values = np.insert(depth_values, 0, self.sf_depth_msl)
+            shmin_values = np.insert(shmin_values, 0, pressure_ml)
+
+            # Insert values af MSL
+            depth_values = np.insert(depth_values, 0, 0)
+            shmin_values = np.insert(shmin_values, 0, hydrostatic_pressure_curve[0])
+
+            shmin_interpolator = interp1d(depth_values, shmin_values, bounds_error=False, fill_value="extrapolate")
+
+            shmin_curve = shmin_interpolator(depth_array)
+
+            check_shmin_values = (
+                shmin_curve[depth_array &gt; self.sf_depth_msl] &lt; hydrostatic_pressure_curve[depth_array &gt; self.sf_depth_msl]
+            ).sum() / len(shmin_curve[depth_array &gt; self.sf_depth_msl])
+
+            if np.isclose(check_shmin_values, 1.0):
+                warnings.warn(
+                    f"Shmin values below seafloor depth ({self.sf_depth_msl}) are below hydrostatic pressure.\nIssues with PREDICT Shmin data. Shmin values will be set to hydrostatic pressure."
+                )
+
+            # Ensure Shmin is equual to hydrostatic pressure above seafloor depth
+            shmin_curve[shmin_curve &lt; hydrostatic_pressure_curve] = hydrostatic_pressure_curve[shmin_curve &lt; hydrostatic_pressure_curve]
+
+        else:
+            # No user data provided, use the empirical formula
+
+            # interpolate hydrostatic pressure at mudline depth (seafloor depth)
+            pressure_ml = np.interp(self.sf_depth_msl, depth_array, hydrostatic_pressure_curve)
+
+            depth_ml = depth_array - self.sf_depth_msl  # depth below mean sea level
+
+            shmin_curve = pressure_ml + depth_ml * self.shmin_gradient
+            # shmin_curve[shmin_curve&lt;0] = hydrostatic_pressure_curve[shmin_curve&lt;0]
+
+        # Ensure Shmin is not below hydrostatic pressure at any depth
+        shmin_curve[depth_array &lt; self.sf_depth_msl] = hydrostatic_pressure_curve[depth_array &lt; self.sf_depth_msl]
+
+        return shmin_curve
+
+    def add_scenario(self, scenario_name: str, **kwargs):
+        if "fluid_type" in kwargs and kwargs["fluid_type"] != self.fluid_type:
+            # If fluid_type is provided, load the PVT data for the new fluid type
+            pvt_data = load_pvt_data(self.pvt_path, kwargs["fluid_type"], load_fluid=True)
+            kwargs["pvt_data"] = pvt_data
+            kwargs["fluid_composition"] = pvt_data[kwargs["fluid_type"]]["metadata"]["composition"]
+
+            temperature_vector = pvt_data["temperature"]
+            pressure_vector = pvt_data["pressure"]
+            rho_matrix = pvt_data[kwargs["fluid_type"]]["rho"]
+
+            kwargs["fluid_interpolator"] = RectBivariateSpline(pressure_vector, temperature_vector, rho_matrix)
+
+        elif "specific_gravity" in kwargs and kwargs["specific_gravity"] is not None:
+            # If specific_gravity is provided, set fluid_type to None and fluid_interpolator to None
+            kwargs["fluid_type"] = None
+            kwargs["fluid_interpolator"] = None
+            # kwargs["pvt_data"] = None
+            kwargs["fluid_composition"] = None
+        # # Check that either fluid_type or specific_gravity is provided, but not both
+        if "fluid_type" not in kwargs and "specific_gravity" not in kwargs:
+            if self.fluid_type is None and self.specific_gravity is None:
+                raise ValueError("Either fluid_type or specific_gravity should be provided, not both.")
+            else:
+                kwargs["fluid_type"] = self.fluid_type
+                kwargs["specific_gravity"] = self.specific_gravity
+
+        defaults = {
+            "z_fluid_contact": self.z_fluid_contact,
+            "p_fluid_contact": self.p_fluid_contact,
+            "init_curves": self.init_curves,
+            "brine_interpolator": self.brine_interpolator,
+            "fluid_type": self.fluid_type,
+            "fluid_composition": self.fluid_composition,
+            "pvt_data": self.pvt_data,
+            "fluid_interpolator": self.fluid_interpolator,
+            "specific_gravity": self.specific_gravity,
+            "z_resrv": self.z_resrv,
+            "p_resrv": self.p_resrv,
+            "rho_brine": self.rho_brine,
+            # Add other default values as needed
+        }
+
+        # Update defaults with user-provided values
+        defaults.update(kwargs)
+
+        # Store the scenario
+        scenario = self.scenario_manager.create_scenario(name=scenario_name, **defaults)
+        scenario.compute_pressure_profile()
+
+    def manage_scenarios(self):
+        # Check if the first scenario is 'None' and should be computed as hydrostatic
+        # Skip the first entry in the input_scenarios dictionary
+
+        if self.input_scenarios:
+            scenarios_iter = iter(self.input_scenarios.items())
+            next(scenarios_iter)
+            for scenario_name, scenario_pressure in scenarios_iter:
+                print(f"{scenario_pressure=}")
+                try:
+                    p_delta = float(scenario_pressure)
+                except:
+                    p_delta = None  # Handle cases where pressure is not a float
+                print(f"{scenario_name=} {scenario_pressure=}")
+                self.add_scenario(
+                    scenario_name=scenario_name,
+                    p_delta=p_delta,
+                    from_resrvr=True,
+                )
+
+        elif self.z_fluid_contact is not None and self.default_hs_scenario:
+            # Handle default hydrostatic scenario if no input scenarios are provided
+            self.add_scenario(
+                scenario_name="hydrostatic",
+                from_resrvr=True,
+            )
+
+    def compute_barrier_leakage(self, well: Well, barrier_name: str) -&gt; pd.DataFrame:
+        """
+        Compute leakage rate from the given barrier
+
+        Args:
+            well (Well): well information
+            barrier_name (str): barrier to check the leakage rate
+        Returns:
+            pd.DataFrame: DataFrame containing leakage rates for different scenarios and permeabilities.
+
+        """
+        if well.inventory["barriers"]:
+            # for convenience
+            barrier_perm = well.barrier_perm
+
+            # Estimate CO2 leakage in [tons/day] after a trancient period
+            sc_names = self.scenario_manager.scenarios.keys()
+
+            # Initialize a DataFrame to store the leakage rates
+            df = pd.DataFrame(
+                columns=["p_brine_above_barrier", "p_fluid_below_barrier", "rho_brine_below_barrier", "rho_fluid_below_barrier"], index=sc_names
+            )
+
+            # Retrieve common init curves
+            depth = self.init_curves["depth"].values
+            temperature = self.init_curves["temperature"].values
+
+            # barrier geometries
+            barrier_props = well.compute_barrier_props(barrier_name)
+
+            b_top = barrier_props["top"]
+            b_bottom = barrier_props["bottom"]
+
+            # Retrieve temperature at the top and bottom of the barrier
+            b_top_temp = np.interp(b_top, depth, temperature)
+            b_bottom_temp = np.interp(b_bottom, depth, temperature)
+
+            for sc_name in sc_names:
+                # Retrieve and interpolate pressure and density values
+                p_brine_ab, p_fluid_bb, rho_brine_ab, rho_fluid_bb = self._retrieve_and_interpolate_values(
+                    sc_name=sc_name, top=b_top, bottom=b_bottom, top_temperature=b_top_temp, bottom_temperature=b_bottom_temp
+                )
+
+                # Store retrieved values in the DataFrame
+                df.loc[sc_name, "p_brine_above_barrier"] = p_brine_ab
+                df.loc[sc_name, "p_fluid_below_barrier"] = p_fluid_bb
+                df.loc[sc_name, "rho_brine_below_barrier"] = rho_brine_ab
+                df.loc[sc_name, "rho_fluid_below_barrier"] = rho_fluid_bb
+
+                # Check if the barrier has permeabilities
+                try:
+                    perms = barrier_perm["kv"].values()
+                except Exception:
+                    perms = barrier_perm["kv"]
+
+                # Compute leakage rates for different permeabilities and store in df
+                for k in perms:
+                    df[k] = np.nan
+
+                    for idx, row in df.iterrows():
+                        df.loc[idx, k] = leakage_proxy(
+                            rho_fluid_below_barrier=row["rho_fluid_below_barrier"],
+                            rho_brine_below_barrier=row["rho_brine_below_barrier"],
+                            p_fluid_below_barrier=row["p_fluid_below_barrier"],
+                            p_brine_above_barrier=row["p_brine_above_barrier"],
+                            permeability=k,
+                            barrier_props=barrier_props,
+                        )
+
+            return df
+
+        else:
+            print(f"No barriers declared in well {well.header['well_name']}")
+
+    def _retrieve_and_interpolate_values(
+        self,
+        sc_name: str,
+        top: float,
+        bottom: float,
+        top_temperature: float,
+        bottom_temperature: float,
+    ) -&gt; tuple:
+        """
+        Retrieve and interpolate pressure and density values at the top and bottom of the barrier.
+
+        Args:
+            sc_name (str): Scenario name
+            top (float): Top depth of the barrier
+            bottom (float): Bottom depth of the barrier
+            top_temperature (float): Temperature at the top of the barrier
+            bottom_temperature (float): Temperature at the bottom of the barrier
+            depth (np.ndarray): Depth array
+
+        Returns:
+            tuple: Interpolated pressure and density values (p_brine_above_barrier, p_fluid_below_barrier, rho_brine_above_barrier, rho_fluid_below_barrier)
+        """
+        fluid_pressure = self.scenario_manager.scenarios[sc_name].init_curves["fluid_pressure"].to_numpy()
+        hydrst_pressure = self.scenario_manager.scenarios[sc_name].init_curves["hydrostatic_pressure"].to_numpy()
+        depth = self.scenario_manager.scenarios[sc_name].init_curves["depth"].to_numpy()
+        fluid_interp = self.scenario_manager.scenarios[sc_name].fluid_interpolator
+        brine_interp = self.scenario_manager.scenarios[sc_name].brine_interpolator
+
+
+        p_fluid_below_barrier = np.interp(bottom, depth, fluid_pressure)
+        p_brine_above_barrier = np.interp(top, depth, hydrst_pressure)
+
+        rho_fluid_below_barrier = get_rho_from_pvt_data(pressure=p_fluid_below_barrier, temperature=bottom_temperature, rho_interpolator=fluid_interp)
+        rho_brine_above_barrier = get_rho_from_pvt_data(pressure=p_brine_above_barrier, temperature=top_temperature, rho_interpolator=brine_interp)
+
+        return p_brine_above_barrier, p_fluid_below_barrier, rho_brine_above_barrier, rho_fluid_below_barrier
+
+    def scenarios_summary(self):
+        return self.scenario_manager.get_scenarios_summary()</code></pre>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="src.WellClass.libs.well_pressure.Pressure.Pressure.__post_init__" class="doc doc-heading">
+            <code class="highlight language-python">__post_init__()</code>
+
+<a href="#src.WellClass.libs.well_pressure.Pressure.Pressure.__post_init__" class="headerlink" title="Permanent link"></a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initializes PVT data, interpolators, initial curves, and manages scenarios
+after class instantiation.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/WellClass/libs/well_pressure/Pressure.py</code></summary>
+              <pre class="highlight"><code class="language-python">def __post_init__(self):
+    """
+    Initializes PVT data, interpolators, initial curves, and manages scenarios
+    after class instantiation.
+    """
+    self.pvt_data = self._load_pvt_data()
+    self._initialize_interpolators()
+    self.init_curves = self._compute_init_curves()
+    self.scenario_manager = PressureScenarioManager()
+    self.manage_scenarios()</code></pre>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="src.WellClass.libs.well_pressure.Pressure.Pressure.compute_barrier_leakage" class="doc doc-heading">
+            <code class="highlight language-python">compute_barrier_leakage(well: Well, barrier_name: str) -&gt; pd.DataFrame</code>
+
+<a href="#src.WellClass.libs.well_pressure.Pressure.Pressure.compute_barrier_leakage" class="headerlink" title="Permanent link"></a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute leakage rate from the given barrier</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>well</code></b>
+              (<code><a class="autorefs autorefs-internal" title="&lt;code&gt;Well&lt;/code&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;src.WellClass.libs.well_class.well_class.Well&lt;/code&gt;)" href="../well_class/#src.WellClass.libs.well_class.well_class.Well">Well</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>well information</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>barrier_name</code></b>
+              (<code><span title="str">str</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>barrier to check the leakage rate</p>
+          </div>
+        </li>
+    </ul>
+        <p>Returns:
+    pd.DataFrame: DataFrame containing leakage rates for different scenarios and permeabilities.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/WellClass/libs/well_pressure/Pressure.py</code></summary>
+              <pre class="highlight"><code class="language-python">def compute_barrier_leakage(self, well: Well, barrier_name: str) -&gt; pd.DataFrame:
+    """
+    Compute leakage rate from the given barrier
+
+    Args:
+        well (Well): well information
+        barrier_name (str): barrier to check the leakage rate
+    Returns:
+        pd.DataFrame: DataFrame containing leakage rates for different scenarios and permeabilities.
+
+    """
+    if well.inventory["barriers"]:
+        # for convenience
+        barrier_perm = well.barrier_perm
+
+        # Estimate CO2 leakage in [tons/day] after a trancient period
+        sc_names = self.scenario_manager.scenarios.keys()
+
+        # Initialize a DataFrame to store the leakage rates
+        df = pd.DataFrame(
+            columns=["p_brine_above_barrier", "p_fluid_below_barrier", "rho_brine_below_barrier", "rho_fluid_below_barrier"], index=sc_names
+        )
+
+        # Retrieve common init curves
+        depth = self.init_curves["depth"].values
+        temperature = self.init_curves["temperature"].values
+
+        # barrier geometries
+        barrier_props = well.compute_barrier_props(barrier_name)
+
+        b_top = barrier_props["top"]
+        b_bottom = barrier_props["bottom"]
+
+        # Retrieve temperature at the top and bottom of the barrier
+        b_top_temp = np.interp(b_top, depth, temperature)
+        b_bottom_temp = np.interp(b_bottom, depth, temperature)
+
+        for sc_name in sc_names:
+            # Retrieve and interpolate pressure and density values
+            p_brine_ab, p_fluid_bb, rho_brine_ab, rho_fluid_bb = self._retrieve_and_interpolate_values(
+                sc_name=sc_name, top=b_top, bottom=b_bottom, top_temperature=b_top_temp, bottom_temperature=b_bottom_temp
+            )
+
+            # Store retrieved values in the DataFrame
+            df.loc[sc_name, "p_brine_above_barrier"] = p_brine_ab
+            df.loc[sc_name, "p_fluid_below_barrier"] = p_fluid_bb
+            df.loc[sc_name, "rho_brine_below_barrier"] = rho_brine_ab
+            df.loc[sc_name, "rho_fluid_below_barrier"] = rho_fluid_bb
+
+            # Check if the barrier has permeabilities
+            try:
+                perms = barrier_perm["kv"].values()
+            except Exception:
+                perms = barrier_perm["kv"]
+
+            # Compute leakage rates for different permeabilities and store in df
+            for k in perms:
+                df[k] = np.nan
+
+                for idx, row in df.iterrows():
+                    df.loc[idx, k] = leakage_proxy(
+                        rho_fluid_below_barrier=row["rho_fluid_below_barrier"],
+                        rho_brine_below_barrier=row["rho_brine_below_barrier"],
+                        p_fluid_below_barrier=row["p_fluid_below_barrier"],
+                        p_brine_above_barrier=row["p_brine_above_barrier"],
+                        permeability=k,
+                        barrier_props=barrier_props,
+                    )
+
+        return df
+
+    else:
+        print(f"No barriers declared in well {well.header['well_name']}")</code></pre>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["search.suggest", "search.highlight", "content.tabs.link", "navigation.indexes", "content.tooltips", "navigation.path", "content.code.annotate", "content.code.copy", "content.code.select"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
