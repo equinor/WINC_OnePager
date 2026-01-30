@@ -329,8 +329,17 @@ class PressureScenario:
                 # insert the new record into the DataFrame
                 self.init_curves.loc[new_index] = new_record
 
+                if z_val == self.z_MSAD:
+                    # Set fluid pressure and min horizontal stress at z_MSAD
+                    self.init_curves.loc[new_index, "fluid_pressure"] = self.p_MSAD
+                    self.init_curves.loc[new_index, "min_horizontal_stress"] = self.p_MSAD
+
+
         self.init_curves = self.init_curves.sort_index()
+
+        # Interpolate missing values in the DataFrame
         self.init_curves = self.init_curves.interpolate()
+
 
         self.init_curves.loc[self.init_curves["fluid_pressure"] > self.init_curves["min_horizontal_stress"], "fluid_pressure"] = np.nan
         self.init_curves.loc[self.init_curves["brine_pressure"] > self.init_curves["min_horizontal_stress"], "brine_pressure"] = np.nan
