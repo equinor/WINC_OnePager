@@ -146,9 +146,18 @@ class Pressure:
     def _calculate_depth_curve(self) -> np.ndarray:
         # Make the depth-vector from msl and downwards
         dz = 1.0
+
+        top_depth = min(0, -self.well_rkb)
+
         td_msl = self.well_td_rkb - self.well_rkb
-        z_bottom = int(td_msl) + 500
-        z_vec = np.arange(0, z_bottom, dz)
+
+        if self.z_fluid_contact is not None:
+            td_msl = self.z_fluid_contact
+
+        bottom_depth = int(td_msl) + 500
+        print(f"{bottom_depth=}")
+
+        z_vec = np.linspace(top_depth, bottom_depth, int(bottom_depth - top_depth) + 1)
 
         return z_vec
 
@@ -437,7 +446,6 @@ class Pressure:
         fluid_interp = self.scenario_manager.scenarios[sc_name].fluid_interpolator
         brine_interp = self.scenario_manager.scenarios[sc_name].brine_interpolator
 
-        
         p_fluid_below_barrier = np.interp(bottom, depth, fluid_pressure)
         p_brine_above_barrier = np.interp(top, depth, hydrst_pressure)
 
