@@ -155,7 +155,6 @@ class Pressure:
             td_msl = self.z_fluid_contact
 
         bottom_depth = int(td_msl) + 500
-        print(f"{bottom_depth=}")
 
         z_vec = np.linspace(top_depth, bottom_depth, int(bottom_depth - top_depth) + 1)
 

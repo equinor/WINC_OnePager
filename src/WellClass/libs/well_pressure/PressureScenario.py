@@ -334,7 +334,8 @@ class PressureScenario:
                     self.init_curves.loc[new_index, "fluid_pressure"] = self.p_MSAD
                     self.init_curves.loc[new_index, "min_horizontal_stress"] = self.p_MSAD
 
-        self.init_curves = self.init_curves.sort_index()
+        self.init_curves = self.init_curves.sort_values(by="depth")
+        self.init_curves.reset_index(inplace=True)
 
         # Interpolate missing values in the DataFrame
         self.init_curves = self.init_curves.interpolate()
@@ -378,7 +379,6 @@ class PressureScenario:
         else:
             # Use PVT data and integration to compute the pressure curve
             interpolator = self.fluid_interpolator
-            print(self.init_curves.depth.max())
             pressure_curve, warnings = _integrate_pressure(
                 init_curves=self.init_curves,
                 reference_depth=reference_depth,
