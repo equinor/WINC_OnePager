@@ -152,9 +152,9 @@ class Pressure:
         td_msl = self.well_td_rkb - self.well_rkb
 
         if self.z_fluid_contact is not None:
-            td_msl = self.z_fluid_contact
+            td_msl = max(self.z_fluid_contact, td_msl)
 
-        bottom_depth = int(td_msl) + 500
+        bottom_depth = int(td_msl) + 300
 
         z_vec = np.linspace(top_depth, bottom_depth, int(bottom_depth - top_depth) + 1)
 
