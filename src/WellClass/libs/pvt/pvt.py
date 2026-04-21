@@ -381,7 +381,7 @@ def _integrate_pressure(
             z_log = init_curves.loc[phase_log.index[0], "depth"].astype(float)
             phase = init_curves.loc[phase_log.index[0], "phase"]
             trigger = phase_log["phase_change_flag"].values[0]
-            message = f"Warning: Phase change at {z_log:.2f} mTVDMSL ({phase}). Above this depth, use OLGA (SLB) for reliable pressure results."
+            message = f"Warning: {phase} {trigger} at {z_log:.2f} mTVDMSL. Above this depth, use OLGA (SLB) for reliable pressure results."
 
             warnings.append({"p": p_log, "T": T_log, "z": z_log, "message": message})
 
