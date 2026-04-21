@@ -344,6 +344,16 @@ class PressureScenario:
         self.init_curves.loc[self.init_curves["brine_pressure"] > self.init_curves["min_horizontal_stress"], "brine_pressure"] = np.nan
         self.init_curves.loc[self.init_curves["fluid_pressure"] < self.init_curves["brine_pressure"], "fluid_pressure"] = np.nan
 
+        self._cleanup_warnings()
+
+    def _cleanup_warnings(self):
+        cleaned_warnings = []
+        for warning in self.warnings:
+            if warning["z"] >= self.z_MSAD:
+                cleaned_warnings.append(warning)
+
+        self.warnings = cleaned_warnings
+
     def _integrate_brine_pressure_curve(self, reference_depth: float, reference_pressure: float) -> np.ndarray:
         return _integrate_pressure(
             init_curves=self.init_curves,

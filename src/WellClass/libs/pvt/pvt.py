@@ -370,7 +370,7 @@ def _integrate_pressure(
             z_log = init_curves.loc[supercritical_log.index[1], "depth"].astype(float)
             initial_phase = supercritical_log["phase"].values[0]
             final_phase = supercritical_log["phase"].values[1]
-            message = f"Message: Fluid changed phase from {initial_phase} to {final_phase} at {z_log} mTVDMSL (P = {p_log:.1f} bar)."
+            message = f"Message: Fluid changed phase from {initial_phase} to {final_phase} at {z_log:.2f} mTVDMSL (P = {p_log:.1f} bar)."
 
             warnings.append({"p": p_log, "T": T_log, "z": z_log, "message": message})
 
@@ -381,12 +381,7 @@ def _integrate_pressure(
             z_log = init_curves.loc[phase_log.index[0], "depth"].astype(float)
             phase = init_curves.loc[phase_log.index[0], "phase"]
             trigger = phase_log["phase_change_flag"].values[0]
-            message = f"""
-                        Warning: At depth {z_log} m, the phase change to {phase}. Pressures above this depth 
-                        cannot be accurately resolved by this method. For reliable pressure profiles above {z_log} m,
-                        use OLGA Dynamic Multiphase Flow Simulator (SLB).
-                      """
-
+            message = f"Warning: Phase change at {z_log:.2f} mTVDMSL ({phase}). Above this depth, use OLGA (SLB) for reliable pressure results."
 
             warnings.append({"p": p_log, "T": T_log, "z": z_log, "message": message})
 
