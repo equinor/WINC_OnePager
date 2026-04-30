@@ -215,11 +215,11 @@ def _flag_phase_changes(P: float, phase: str, p_dew: float, p_bubble: float, tol
     if phase == "gas" and not np.isnan(p_dew):
         diff_dew = p_dew - P
         if diff_dew <= tol:
-            return "approaching dew point"
+            return f"{phase} phase approaching liquid phase"
     if phase == "liquid" and not np.isnan(p_bubble):
         diff_bubble = P - p_bubble
         if diff_bubble <= tol:
-            return "approaching bubble point"
+            return f"{phase} phase approaching gas phase"
     return None
 
 
@@ -381,7 +381,7 @@ def _integrate_pressure(
             z_log = init_curves.loc[phase_log.index[0], "depth"].astype(float)
             phase = init_curves.loc[phase_log.index[0], "phase"]
             trigger = phase_log["phase_change_flag"].values[0]
-            message = f"Warning: {phase} {trigger} at {z_log:.2f} mTVDMSL. Above this depth, use OLGA (SLB) for reliable pressure results."
+            message = f"Warning: {trigger} at {z_log:.2f} mTVDMSL. Above this depth, use OLGA (SLB) for reliable pressure results."
 
             warnings.append({"p": p_log, "T": T_log, "z": z_log, "message": message})
 
