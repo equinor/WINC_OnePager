@@ -5,7 +5,7 @@ validate input drilling, casing, cement bond, and barriers
 import pandas as pd
 
 
-def valid_drilling(drilling_df: pd.DataFrame):
+def valid_drilling(drilling_df: pd.DataFrame) -> None:
     """
     Validate drilling input
     """
@@ -24,7 +24,7 @@ def valid_drilling(drilling_df: pd.DataFrame):
     assert (top[1:] == bot[:-1]).all()
 
 
-def valid_casings(casings_df: pd.DataFrame):
+def valid_casings(casings_df: pd.DataFrame) -> None:
     """
     Validate casings input
     """
@@ -44,7 +44,7 @@ def valid_casings(casings_df: pd.DataFrame):
     assert (casing_cols.dropna()["bottom_msl"].to_numpy() >= casing_cols.dropna()["boc_msl"].to_numpy()).all()
 
 
-def valid_barriers(barriers_df: pd.DataFrame):
+def valid_barriers(barriers_df: pd.DataFrame) -> None:
     """
     Validate barriers input
     """

@@ -36,7 +36,7 @@ def get_barrier_height_and_depth(barriers_mod: dict, barriers_names: dict, barri
     return barrier_props
 
 
-def get_barrier_radius(barriers_mod: dict, barriers_names: dict, barrier_name: str):
+def get_barrier_radius(barriers_mod: dict, barriers_names: dict, barrier_name: str) -> dict[str, float]:
     """Height-averaged radius if the barrier varies in diameter"""
     heights = []
     diams = []

@@ -9,10 +9,10 @@ from ..well_pressure import Pressure
 
 def plot_pt(
     my_pressure: Pressure,
-    fig: mpl.figure.Figure = None,
-    ax: plt.Axes = None,
-    file_only=False,
-    file_name="pt",
+    fig: mpl.figure.Figure | None = None,
+    ax: plt.Axes | None = None,
+    file_only: bool = False,
+    file_name: str = "pt",
     legend: bool = True,
     plot_selected_scenarios: list | None = None,
     plot_HSP: bool = False,
@@ -21,7 +21,7 @@ def plot_pt(
     plot_resrv: bool = False,  # Option to plot (p_resrv, z_resrv)
     plot_fluid_contact: bool = False,
     plot_delta_p: bool = False,
-):  # Option to plot (p_fluid_contact, z_fluid_contact
+) -> None:  # Option to plot (p_fluid_contact, z_fluid_contact
     """
 
     Pressure vs temperature

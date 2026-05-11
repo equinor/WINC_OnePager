@@ -36,7 +36,7 @@ class PressureScenario:
     cleanup_curves: bool = True
     warnings: list = None
 
-    def compute_pressure_profile(self):
+    def compute_pressure_profile(self) -> None:
         logger.debug("Computing pressure profile for scenario: %s", self.name)
 
         # Create default NaN arrays for fluid and brine pressure
@@ -69,7 +69,7 @@ class PressureScenario:
         if self.cleanup_curves:
             self._adjust_pressure_curves()
 
-    def _validate_parameters(self):
+    def _validate_parameters(self) -> None:
         """Validate required parameters for pressure computation."""
         if self.name is None:
             raise ValueError("The 'name' parameter is required.")
@@ -78,7 +78,7 @@ class PressureScenario:
         # if self.from_resrvr and self.z_fluid_contact and self.p_delta is None:
         #     self.p_delta = 0
 
-    def _compute_brine_pressure(self):
+    def _compute_brine_pressure(self) -> None:
         """Compute the brine pressure profile based on fluid pressure."""
         if np.isclose(self.p_delta, 0, atol=1e-2):
             # If delta_p is zero, use the hydrostatic pressure curve for the water pressure profile
@@ -108,7 +108,8 @@ class PressureScenario:
         """
         ip_params = zip(
             ["z_fluid_contact", "p_fluid_contact", "p_delta", "p_resrv", "z_resrv"],
-            np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float), strict=False,
+            np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float),
+            strict=False,
         )
 
         ip_params = pd.Series(dict(ip_params))
@@ -257,7 +258,7 @@ class PressureScenario:
         #         print(f'{key}: Input value {ip_param} overriden by {op_param}.')
         return fluid_pressure_profile
 
-    def _compute_MSAD(self, fluid_pressure_profile):
+    def _compute_MSAD(self, fluid_pressure_profile: np.ndarray) -> None:
         if "min_horizontal_stress" in self.init_curves.columns:
             depth = self.init_curves["depth"].to_numpy()
             shmin = self.init_curves["min_horizontal_stress"].to_numpy()
@@ -316,7 +317,7 @@ class PressureScenario:
 
         return fluid_pressure_curve
 
-    def _adjust_pressure_curves(self):
+    def _adjust_pressure_curves(self) -> None:
         """
         Adjust the fluid_pressure_curve and brine_pressure_curve to be valid within the given ranges.
         """
@@ -347,7 +348,7 @@ class PressureScenario:
 
         self._cleanup_warnings()
 
-    def _cleanup_warnings(self):
+    def _cleanup_warnings(self) -> None:
         cleaned_warnings = []
         for warning in self.warnings or []:
             if warning["z"] >= self.z_MSAD:
@@ -355,7 +356,7 @@ class PressureScenario:
 
         self.warnings = cleaned_warnings
 
-    def _integrate_brine_pressure_curve(self, reference_depth: float, reference_pressure: float) -> np.ndarray:
+    def _integrate_brine_pressure_curve(self, reference_depth: float, reference_pressure: float) -> tuple[np.ndarray, list[dict]]:
         return _integrate_pressure(
             init_curves=self.init_curves,
             reference_depth=reference_depth,

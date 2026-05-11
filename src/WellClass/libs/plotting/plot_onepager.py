@@ -43,7 +43,7 @@ def plot_onepager(
     pressure_fluid_contact: bool = False,
     pressure_fluid_pressure: bool = True,
     pressure_delta_p: bool = False,
-):
+) -> object:
     """
     Plot a one-pager of the well and pressure profile.
 

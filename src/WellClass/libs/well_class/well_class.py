@@ -72,12 +72,12 @@ class Well(WellRaw):
     barriers_mod: dict = None
     barriers_names: dict = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
 
         self._compute_well()
 
-    def _compute_well(self):
+    def _compute_well(self) -> None:
         """
         Compute extra well information
         """
@@ -115,5 +115,5 @@ class Well(WellRaw):
         return barrier_props
 
     @property
-    def to_json(self):
+    def to_json(self) -> str:
         return json.dumps(self.__dict__, indent=4)

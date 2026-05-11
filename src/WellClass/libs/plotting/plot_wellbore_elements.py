@@ -5,7 +5,7 @@ from matplotlib.patches import Rectangle
 from ..utils.fraction_float import float_to_fraction_inches
 
 
-def hole_plotter(axis: Axes, df: pd.DataFrame, hole_bool: bool, fill_bool: bool = True, z_order: int = 0):
+def hole_plotter(axis: Axes, df: pd.DataFrame, hole_bool: bool, fill_bool: bool = True, z_order: int = 0) -> None:
     """
     Draws all open hole elements. Applies for both drilling and borehole dataframes
     """
@@ -27,7 +27,7 @@ def casings_plotter(
     casings_bool: bool,
     c_shoe_bool: bool,
     c_weld_bool: bool,
-):
+) -> None:
     """
     Draws all components linked to the tubular assembly:
     - Casings
@@ -92,7 +92,7 @@ def casings_plotter(
             axis.annotate(shoe_label, xy=(x_txt_pos, ycoord), fontsize=txt_size, va="center", ha="right")
 
 
-def cement_bond_plotter(axis, df, cement_bond_bool):
+def cement_bond_plotter(axis: Axes, df: pd.DataFrame, cement_bond_bool: bool) -> None:
     if cement_bond_bool:
         for idx, row in df.iterrows():
             width = (row["od_m"] - row["id_m"]) / 2
@@ -105,7 +105,9 @@ def cement_bond_plotter(axis, df, cement_bond_bool):
             axis.add_patch(Rectangle(left_xy, width, height, facecolor="lightgray", zorder=5, hatch="///"))
 
 
-def cement_plug_plotter(axis, df_barriers, df_barriers_mod, plug_bool, annot_bool, txt_size):
+def cement_plug_plotter(
+    axis: Axes, df_barriers: pd.DataFrame, df_barriers_mod: pd.DataFrame, plug_bool: bool, annot_bool: bool, txt_size: int
+) -> None:
     """
     axis: Matplotlib object where items will be plotted
     df_barriers: Dataframe listing the barriers
@@ -127,7 +129,9 @@ def cement_plug_plotter(axis, df_barriers, df_barriers_mod, plug_bool, annot_boo
             axis.annotate(text=row["barrier_name"], xy=(0, ycoord), fontsize=txt_size, va="center", ha="center")
 
 
-def geology_plotter(axis, df_geol, w_header, geol_bool, annot_bool, width, x_txt_pos, txt_size):
+def geology_plotter(
+    axis: Axes, df_geol: pd.DataFrame, w_header: dict, geol_bool: bool, annot_bool: bool, width: float, x_txt_pos: float, txt_size: int
+) -> None:
     if geol_bool:
         axis.hlines(y=df_geol["top_msl"], xmin=-width, xmax=width, zorder=-4, lw=0.25, color="k")
         axis.axhspan(0, w_header["sf_depth_msl"], color="lightblue", alpha=0.5, zorder=-20)

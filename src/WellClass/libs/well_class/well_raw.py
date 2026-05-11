@@ -77,7 +77,7 @@ class WellRaw:
     co2_datum: float | int = None
     inventory: dict = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """
         Compute basic well information
         """
@@ -87,7 +87,7 @@ class WellRaw:
         self._process_barriers()
         self._process_geology()
 
-    def _check_inventory(self):
+    def _check_inventory(self) -> None:
         """
         Process to keep track of what has been declared as input.
         """
@@ -118,7 +118,7 @@ class WellRaw:
             logger.warning("No geology table declared.")
             self.inventory["geology"] = False
 
-    def _process_drilling(self):
+    def _process_drilling(self) -> None:
         if not self.inventory["drilling"]:
             """
             If no drilling table is declared, create a dummy well with info from the header
@@ -140,7 +140,7 @@ class WellRaw:
 
         self.drilling = drilling_df.to_dict()
 
-    def _process_casings(self):
+    def _process_casings(self) -> None:
         if not self.inventory["casings"]:
             """
             If no casings table is declared, create a dummy well with info from the header
@@ -175,7 +175,7 @@ class WellRaw:
 
         self.casings = casings_df.to_dict()
 
-    def _process_barriers(self):
+    def _process_barriers(self) -> None:
         if self.inventory["barriers"]:
             barriers_df = pd.DataFrame(self.barriers)
 
@@ -185,7 +185,7 @@ class WellRaw:
             # barriers_df.set_index('barrier_name', inplace=True)
             self.barriers = barriers_df.to_dict()
 
-    def _process_geology(self):
+    def _process_geology(self) -> None:
         if self.inventory["barriers"]:
             geology_df = pd.DataFrame(self.geology)
 
@@ -199,5 +199,5 @@ class WellRaw:
             self.geology = geology_df.to_dict()
 
     @property
-    def to_json(self):
+    def to_json(self) -> str:
         return json.dumps(self.__dict__, indent=4)

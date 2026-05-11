@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as plticker
 import pandas as pd
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 from ..well_class.well_class import Well
 from .plot_wellbore_elements import (
@@ -14,19 +16,19 @@ from .plot_wellbore_elements import (
 
 def plot_sketch(
     mywell: Well,
-    ax=None,
+    ax: Axes | None = None,
     *,
-    draw_drillings=True,
-    draw_casings=True,
-    draw_casing_shoes=True,
-    draw_open_hole=False,  # Note: default is False
-    draw_welded=True,
-    draw_cement_bond=True,
-    draw_barriers=True,
-    draw_geology=True,
-    draw_annotation=True,
-    save_file=None,
-):
+    draw_drillings: bool = True,
+    draw_casings: bool = True,
+    draw_casing_shoes: bool = True,
+    draw_open_hole: bool = False,  # Note: default is False
+    draw_welded: bool = True,
+    draw_cement_bond: bool = True,
+    draw_barriers: bool = True,
+    draw_geology: bool = True,
+    draw_annotation: bool = True,
+    save_file: str | None = None,
+) -> tuple[Figure, Axes] | Axes:
     """
 
     Plot well sketch

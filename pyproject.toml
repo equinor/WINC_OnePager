@@ -115,7 +115,6 @@ ignore = [
     "E501",   # Line length handled by formatter
     # --- Noisy rules ignored for now ---
     "ERA001",  # Commented-out code
-    "ANN",     # Missing type annotations (defer)
     "N803",    # Argument name should be lowercase (domain conventions like P, T, TVD)
     "N806",    # Variable in function should be lowercase (domain conventions)
     "N802",    # Function name should be lowercase
@@ -159,8 +158,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/*" = ["S101", "ANN201", "SLF001"]
+"**/tests/*" = ["S101", "ANN", "SLF001"]
 "__init__.py" = ["F401"]
+"experiments/**" = ["ANN"]
 
 [tool.ruff.lint.pylint]
 max-args = 10

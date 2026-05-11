@@ -43,7 +43,7 @@ class DrillingRawModel(BaseModel):
     diameter_in: float | int | str
 
     @field_validator("diameter_in")
-    def diameter_in_converter(cls, v):
+    def diameter_in_converter(cls, v: float | str) -> float:
         if isinstance(v, (float, int)):
             return v
         if isinstance(v, str):

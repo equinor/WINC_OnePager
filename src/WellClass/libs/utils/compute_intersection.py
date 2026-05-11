@@ -5,7 +5,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def compute_intersection(x: np.ndarray, y1: np.ndarray, y2: np.ndarray):
+def compute_intersection(x: np.ndarray, y1: np.ndarray, y2: np.ndarray) -> tuple[float, float]:
     x = np.asarray(x, dtype=float)
     y1 = np.asarray(y1, dtype=float)
     y2 = np.asarray(y2, dtype=float)

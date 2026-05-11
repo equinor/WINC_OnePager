@@ -3,11 +3,15 @@ from itertools import cycle
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 from ..well_pressure import Pressure
 
 
-def check_head_tail_of_array(arr_x, arr_y, head_x, tail_x, head_y, tail_y):
+def check_head_tail_of_array(
+    arr_x: np.ndarray, arr_y: np.ndarray, head_x: float, tail_x: float, head_y: float, tail_y: float
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Check if the head and tail of the array are equal to the given values.
     """
@@ -26,7 +30,7 @@ def plot_pressure(
     my_pressure: Pressure,
     geology_dict: dict | None = None,
     barriers: dict | None = None,
-    ax=None,
+    ax: Axes | None = None,
     plot_HSP: bool = False,
     plot_MSAD: bool = False,
     legend: bool = True,
@@ -35,7 +39,7 @@ def plot_pressure(
     plot_fluid_contact: bool = False,
     plot_fluid_pressure: bool = True,
     plot_delta_p: bool = False,
-):  # Option to plot (p_fluid_contact, z_fluid_contact)
+) -> tuple[Figure, Axes] | Axes:  # Option to plot (p_fluid_contact, z_fluid_contact)
     """
     Pressure vs depth
     Takes the Pressure class, geology and barriers tables

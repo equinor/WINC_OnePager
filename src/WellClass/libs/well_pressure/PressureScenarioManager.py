@@ -9,7 +9,7 @@ from .PressureScenario import PressureScenario
 class PressureScenarioManager:
     scenarios: dict[str, PressureScenario] = field(default_factory=dict)
 
-    def create_scenario(self, name: str, **kwargs) -> PressureScenario:
+    def create_scenario(self, name: str, **kwargs: object) -> PressureScenario:
         # Create a new PressureScenario instance with the given name and parameters
         if "init_curves" in kwargs:
             kwargs["init_curves"] = kwargs["init_curves"].copy(deep=True)
@@ -23,7 +23,7 @@ class PressureScenarioManager:
         self.scenarios[name] = scenario
         return scenario
 
-    def compute_all_scenarios(self):
+    def compute_all_scenarios(self) -> None:
         # Iterate over all scenarios and compute their pressure profiles
         for scenario in self.scenarios.values():
             scenario.compute_pressure_profile()
@@ -71,4 +71,3 @@ class PressureScenarioManager:
         scenario_profiles = pd.concat(scenario_data, axis=1)
         # Add common data to the MultiIndex DataFrame
         return pd.concat([common_data, scenario_profiles], axis=1)
-
