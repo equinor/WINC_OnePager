@@ -10,4 +10,3 @@ def get_barriers_names(barriers_mod: dict) -> dict:
     """
     names = barriers_mod["b_name"]
     return {key: [j for j, _ in list(value)] for key, value in groupby(names.items(), lambda x: x[1])}
-

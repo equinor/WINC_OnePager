@@ -24,7 +24,6 @@ def compute_barrier_leakage(barrier_perm: dict, pressure_scenarios: dict, pressu
     return _get_barrier_leakage(barrier_perm, barrier_p_rho, barrier_props)
 
 
-
 def _get_barrier_p_and_rho(pressure_scenarios: dict, pressure_CO2: dict, barrier_props: dict) -> pd.DataFrame:
     """
     Calculates pressure above and below the barrier

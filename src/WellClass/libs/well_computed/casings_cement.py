@@ -55,4 +55,3 @@ def trim_casings_cement(casings_df: pd.DataFrame) -> pd.DataFrame:
 
     # build dataframe
     return pd.DataFrame(data=casing_cement_list, columns=casing_columns)
-
