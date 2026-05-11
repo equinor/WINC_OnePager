@@ -1,12 +1,15 @@
-from dataclasses import dataclass, field
+import logging
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 from scipy import constants as const
 from scipy.interpolate import RectBivariateSpline
 
-from ..pvt.pvt import _integrate_pressure, get_rho_from_pvt_data
+from ..pvt.pvt import _integrate_pressure
 from ..utils.compute_intersection import compute_intersection
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -33,8 +36,8 @@ class PressureScenario:
     cleanup_curves: bool = True
     warnings: list = None
 
-    def compute_pressure_profile(self):
-        print(f"Computing pressure profile for scenario: {self.name}")
+    def compute_pressure_profile(self) -> None:
+        logger.debug("Computing pressure profile for scenario: %s", self.name)
 
         # Create default NaN arrays for fluid and brine pressure
         default_length = len(self.init_curves["depth"])
@@ -66,7 +69,7 @@ class PressureScenario:
         if self.cleanup_curves:
             self._adjust_pressure_curves()
 
-    def _validate_parameters(self):
+    def _validate_parameters(self) -> None:
         """Validate required parameters for pressure computation."""
         if self.name is None:
             raise ValueError("The 'name' parameter is required.")
@@ -75,7 +78,7 @@ class PressureScenario:
         # if self.from_resrvr and self.z_fluid_contact and self.p_delta is None:
         #     self.p_delta = 0
 
-    def _compute_brine_pressure(self):
+    def _compute_brine_pressure(self) -> None:
         """Compute the brine pressure profile based on fluid pressure."""
         if np.isclose(self.p_delta, 0, atol=1e-2):
             # If delta_p is zero, use the hydrostatic pressure curve for the water pressure profile
@@ -103,10 +106,10 @@ class PressureScenario:
         """
         Method to handle scenarios when the fluid pressure profile is computed from the reservoir.
         """
-
         ip_params = zip(
             ["z_fluid_contact", "p_fluid_contact", "p_delta", "p_resrv", "z_resrv"],
             np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float),
+            strict=False,
         )
 
         ip_params = pd.Series(dict(ip_params))
@@ -255,10 +258,10 @@ class PressureScenario:
         #         print(f'{key}: Input value {ip_param} overriden by {op_param}.')
         return fluid_pressure_profile
 
-    def _compute_MSAD(self, fluid_pressure_profile):
+    def _compute_MSAD(self, fluid_pressure_profile: np.ndarray) -> None:
         if "min_horizontal_stress" in self.init_curves.columns:
-            depth = self.init_curves["depth"].values
-            shmin = self.init_curves["min_horizontal_stress"].values
+            depth = self.init_curves["depth"].to_numpy()
+            shmin = self.init_curves["min_horizontal_stress"].to_numpy()
 
             self.z_MSAD, self.p_MSAD = compute_intersection(depth, fluid_pressure_profile, shmin)
 
@@ -314,11 +317,10 @@ class PressureScenario:
 
         return fluid_pressure_curve
 
-    def _adjust_pressure_curves(self):
+    def _adjust_pressure_curves(self) -> None:
         """
         Adjust the fluid_pressure_curve and brine_pressure_curve to be valid within the given ranges.
         """
-
         for z_val in set([self.z_MSAD, self.z_fluid_contact, self.z_resrv]):
             # Check if the z_val is close to any depth in the init_curves
             eval_array = ~np.isclose(self.init_curves["depth"], z_val, atol=0.001, rtol=0)
@@ -346,15 +348,15 @@ class PressureScenario:
 
         self._cleanup_warnings()
 
-    def _cleanup_warnings(self):
+    def _cleanup_warnings(self) -> None:
         cleaned_warnings = []
-        for warning in self.warnings:
+        for warning in self.warnings or []:
             if warning["z"] >= self.z_MSAD:
                 cleaned_warnings.append(warning)
 
         self.warnings = cleaned_warnings
 
-    def _integrate_brine_pressure_curve(self, reference_depth: float, reference_pressure: float) -> np.ndarray:
+    def _integrate_brine_pressure_curve(self, reference_depth: float, reference_pressure: float) -> tuple[np.ndarray, list[dict]]:
         return _integrate_pressure(
             init_curves=self.init_curves,
             reference_depth=reference_depth,
@@ -364,8 +366,9 @@ class PressureScenario:
             interpolator=self.brine_interpolator,
         )
 
-    def _compute_fluid_pressure_curve(self, reference_depth: float, reference_pressure: float, fluid_key: str = None) -> np.ndarray:
-        """Computes the fluid pressure curve based on a reference depth and pressure.
+    def _compute_fluid_pressure_curve(self, reference_depth: float, reference_pressure: float, fluid_key: str | None = None) -> np.ndarray:
+        """
+        Computes the fluid pressure curve based on a reference depth and pressure.
 
         This method can be used to compute the pressure curve for the specified fluid type
         or for brine if 'brine' is passed as the fluid_key.
@@ -378,8 +381,9 @@ class PressureScenario:
 
         Returns:
             np.ndarray: The computed fluid pressure curve.
+
         """
-        depth_array = self.init_curves["depth"].values
+        depth_array = self.init_curves["depth"].to_numpy()
 
         if self.specific_gravity is not None:
             # Convert specific gravity to density (assuming specific gravity is relative to water at 4°C, 1000 kg/m³)

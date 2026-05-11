@@ -6,7 +6,7 @@ from .plot_pressure import plot_pressure
 from .plot_sketch import plot_sketch
 
 
-def plot_sketch_pressure(my_well: Well, my_pressure: Pressure, *, save_file=None):
+def plot_sketch_pressure(my_well: Well, my_pressure: Pressure, *, save_file: str | None = None) -> None:
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 8))
 
     plot_sketch(my_well, ax=ax1)

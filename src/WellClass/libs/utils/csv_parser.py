@@ -1,13 +1,14 @@
 import io
 import re
+from pathlib import Path
 
 import pandas as pd
 
 from .fraction_float import fraction_float
 
 
-def csv_parser(csv_file):
-    with open(csv_file, encoding="utf-8-sig") as f:
+def csv_parser(csv_file: str | Path) -> dict:
+    with Path(csv_file).open(encoding="utf-8-sig") as f:
         lines = f.read()
     lines = re.sub(r"\,+\n", "\n", lines)
 
@@ -24,14 +25,10 @@ def csv_parser(csv_file):
                 for attribute, value in table.items():
                     try:
                         table[attribute] = float(value)
-                    except Exception:
+                    except (ValueError, TypeError):
                         table[attribute] = value
 
-            elif table_title.lower() == "reservoir_pressure":
-                table = pd.read_csv(io.StringIO(table_str), index_col=False).squeeze()
-                # print(table)
-
-            elif table_title.lower() == "barrier_permability":
+            elif table_title.lower() == "reservoir_pressure" or table_title.lower() == "barrier_permability":
                 table = pd.read_csv(io.StringIO(table_str), index_col=False).squeeze()
 
             elif table_title.lower() in ["main_barrier", "co2_datum"]:
@@ -45,7 +42,7 @@ def csv_parser(csv_file):
             try:
                 well[table_title] = table.to_dict()
                 # well[table_title] = table
-            except Exception:
+            except (ValueError, AttributeError):
                 well[table_title] = table
 
     return well

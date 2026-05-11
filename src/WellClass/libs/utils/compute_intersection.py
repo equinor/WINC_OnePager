@@ -1,7 +1,11 @@
+import logging
+
 import numpy as np
 
-def compute_intersection(x: np.ndarray, y1:np.ndarray, y2: np.ndarray):
-    
+logger = logging.getLogger(__name__)
+
+
+def compute_intersection(x: np.ndarray, y1: np.ndarray, y2: np.ndarray) -> tuple[float, float]:
     x = np.asarray(x, dtype=float)
     y1 = np.asarray(y1, dtype=float)
     y2 = np.asarray(y2, dtype=float)
@@ -10,11 +14,9 @@ def compute_intersection(x: np.ndarray, y1:np.ndarray, y2: np.ndarray):
     m = np.isfinite(x) & np.isfinite(y1) & np.isfinite(y2)
     x, y1, y2 = x[m], y1[m], y2[m]
 
-
     # Ensure x is sorted (required for interpolation to make sense)
     s = np.argsort(x)
     x, y1, y2 = x[s], y1[s], y2[s]
-
 
     # Difference between curves
     d = y1 - y2
@@ -23,11 +25,11 @@ def compute_intersection(x: np.ndarray, y1:np.ndarray, y2: np.ndarray):
     idx = np.where(np.diff(np.sign(d)))[0]
 
     # Linear interpolation for more accurate intersection points
-    xi = x[idx] - d[idx] * (x[idx+1] - x[idx]) / (d[idx+1] - d[idx])
-    yi = y1[idx] - d[idx] * (y1[idx+1] - y1[idx]) / (d[idx+1] - d[idx])
+    xi = x[idx] - d[idx] * (x[idx + 1] - x[idx]) / (d[idx + 1] - d[idx])
+    yi = y1[idx] - d[idx] * (y1[idx + 1] - y1[idx]) / (d[idx + 1] - d[idx])
 
     if xi.shape[0] == 0:
-        print('Lines do not intersect')
+        logger.warning("Lines do not intersect")
         intersect_x = np.nan
         intersect_y = np.nan
 
@@ -38,6 +40,5 @@ def compute_intersection(x: np.ndarray, y1:np.ndarray, y2: np.ndarray):
     else:
         intersect_x = xi[0]
         intersect_y = yi[0]
-    
-    
+
     return intersect_x, intersect_y
