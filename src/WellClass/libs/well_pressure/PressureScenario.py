@@ -349,7 +349,7 @@ class PressureScenario:
 
     def _cleanup_warnings(self):
         cleaned_warnings = []
-        for warning in self.warnings:
+        for warning in self.warnings or []:
             if warning["z"] >= self.z_MSAD:
                 cleaned_warnings.append(warning)
 
