@@ -27,11 +27,7 @@ def csv_parser(csv_file):
                     except Exception:
                         table[attribute] = value
 
-            elif table_title.lower() == "reservoir_pressure":
-                table = pd.read_csv(io.StringIO(table_str), index_col=False).squeeze()
-                # print(table)
-
-            elif table_title.lower() == "barrier_permability":
+            elif table_title.lower() == "reservoir_pressure" or table_title.lower() == "barrier_permability":
                 table = pd.read_csv(io.StringIO(table_str), index_col=False).squeeze()
 
             elif table_title.lower() in ["main_barrier", "co2_datum"]:

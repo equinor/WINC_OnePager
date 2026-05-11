@@ -1,6 +1,6 @@
 import json
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -19,13 +19,13 @@ def file_exists(files_path: list):
             raise FileNotFoundError(f"Required PVT file not found: {file}")
 
 
-def get_mixture_info(pvt_path: Union[str, Path]):
-    with open(f"{pvt_path}/metadata.json", "r") as file:
+def get_mixture_info(pvt_path: str | Path):
+    with open(f"{pvt_path}/metadata.json") as file:
         mixture_info = json.load(file)
     return mixture_info
 
 
-def load_envelopes(pvt_path: Union[str, Path]):
+def load_envelopes(pvt_path: str | Path):
     bubble_point = np.loadtxt(pvt_path / "bubble_point.csv", delimiter=",", skiprows=1)
     dew_point = np.loadtxt(pvt_path / "dew_point.csv", delimiter=",", skiprows=1)
 
@@ -66,7 +66,6 @@ def corr_rhobrine_LaliberteCopper(salinity: float, temperature: np.ndarray, pres
     1141-1151. https://doi.org/10.1021/je0498659
     https://www.calsep.com/13-density-of-brine/
     """
-
     ## Laliberté and Cooper model for NaCl solutions
     # Laliberté and Cooper model: constants for NaCl
     c0 = -0.00433
@@ -87,7 +86,7 @@ def corr_rhobrine_LaliberteCopper(salinity: float, temperature: np.ndarray, pres
     return rho_brine
 
 
-def load_pvt_data(pvt_root_path: Union[str, Path], fluid_type: str = None, load_fluid: bool = True) -> Dict[str, Dict[str, np.ndarray]]:
+def load_pvt_data(pvt_root_path: str | Path, fluid_type: str = None, load_fluid: bool = True) -> dict[str, dict[str, np.ndarray]]:
     # Convert to Path object if not already
     pvt_root_path = Path(pvt_root_path)
 
@@ -174,7 +173,7 @@ def _check_phase(P: float, T: float, T_crit: float, bubble_interp: Callable, dew
     Return one of: "supercritical", "liquid", "gas", "two-phase", "unknown".
     Safely handles missing interpolators or NaN envelope values.
     """
-    if (T_crit is not None) and (T >= T_crit):
+    if (T_crit is not None) and (T_crit <= T):
         return "supercritical"
 
     # Evaluate envelopes
@@ -198,9 +197,9 @@ def _check_phase(P: float, T: float, T_crit: float, bubble_interp: Callable, dew
         return "unknown"
 
     # Check liquid/gas/two-phase (prefer bubble/dew where available)
-    if not np.isnan(p_bubble) and P > p_bubble:
+    if not np.isnan(p_bubble) and p_bubble < P:
         return "liquid"
-    if not np.isnan(p_dew) and P < p_dew:
+    if not np.isnan(p_dew) and p_dew > P:
         return "gas"
     return "two-phase"
 
@@ -210,7 +209,6 @@ def _flag_phase_changes(P: float, phase: str, p_dew: float, p_bubble: float, tol
     Return a flag string when approaching envelope within tol (bar),
     or None otherwise.
     """
-
     # Ensure p_dew / p_bubble may be NaN
     if phase == "gas" and not np.isnan(p_dew):
         diff_dew = p_dew - P
@@ -262,7 +260,7 @@ def _eval_envelopes_for_temps(temps: np.ndarray, dew_interp: Callable, bub_inter
 
 
 # Define _Pdz_odesys outside with necessary arguments
-def _Pdz_odesys(z, y, depth_array: np.ndarray, temperature_array: np.ndarray, rho_interpolator: RectBivariateSpline, fluid_key: str) -> Tuple[float]:
+def _Pdz_odesys(z, y, depth_array: np.ndarray, temperature_array: np.ndarray, rho_interpolator: RectBivariateSpline, fluid_key: str) -> tuple[float]:
     P = float(y[0])
     T = float(np.interp(z, depth_array, temperature_array))
     rho = get_rho_from_pvt_data(P, T, rho_interpolator)
@@ -289,7 +287,6 @@ def _integrate_pressure(
     init_curves = init_curves.copy()
 
     warnings = []
-    warning_item = {"p": np.nan, "T": np.nan, "z": np.nan, "message": ""}
 
     depth_array = init_curves["depth"].values
 
@@ -379,7 +376,6 @@ def _integrate_pressure(
             p_log = init_curves.loc[phase_log.index[0], colname_p].astype(float)
             T_log = init_curves.loc[phase_log.index[0], "temperature"].astype(float)
             z_log = init_curves.loc[phase_log.index[0], "depth"].astype(float)
-            phase = init_curves.loc[phase_log.index[0], "phase"]
             trigger = phase_log["phase_change_flag"].values[0]
             message = f"Warning: {trigger} at {z_log:.2f} mTVDMSL. Above this depth, use OLGA (SLB) for reliable pressure results."
 
@@ -399,7 +395,7 @@ def _integrate_pressure(
     return pressures, warnings
 
 
-def build_ivp_data(interval_start: float, interval_end: float, initial_state: float, init_curves: pd.DataFrame, pvt_data: dict) -> Dict:
+def build_ivp_data(interval_start: float, interval_end: float, initial_state: float, init_curves: pd.DataFrame, pvt_data: dict) -> dict:
     """
     Builds a dictionary containing all the necessary values to solve the IVP
 
@@ -428,6 +424,7 @@ def build_ivp_data(interval_start: float, interval_end: float, initial_state: fl
          1. The function to solve the IVP
          2. Default parameters of the 'solve_ivp' method (e.g.: method, dense_output)
          3. Arguments that have no need to be calculated or extracted from the input data frame
+
     """
     depth = init_curves["depth"].to_numpy()
     temperature = init_curves["temperature"].to_numpy()

@@ -1,12 +1,15 @@
-from dataclasses import dataclass, field
+import logging
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 from scipy import constants as const
 from scipy.interpolate import RectBivariateSpline
 
-from ..pvt.pvt import _integrate_pressure, get_rho_from_pvt_data
+from ..pvt.pvt import _integrate_pressure
 from ..utils.compute_intersection import compute_intersection
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -34,7 +37,7 @@ class PressureScenario:
     warnings: list = None
 
     def compute_pressure_profile(self):
-        print(f"Computing pressure profile for scenario: {self.name}")
+        logger.debug("Computing pressure profile for scenario: %s", self.name)
 
         # Create default NaN arrays for fluid and brine pressure
         default_length = len(self.init_curves["depth"])
@@ -103,7 +106,6 @@ class PressureScenario:
         """
         Method to handle scenarios when the fluid pressure profile is computed from the reservoir.
         """
-
         ip_params = zip(
             ["z_fluid_contact", "p_fluid_contact", "p_delta", "p_resrv", "z_resrv"],
             np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float),
@@ -318,7 +320,6 @@ class PressureScenario:
         """
         Adjust the fluid_pressure_curve and brine_pressure_curve to be valid within the given ranges.
         """
-
         for z_val in set([self.z_MSAD, self.z_fluid_contact, self.z_resrv]):
             # Check if the z_val is close to any depth in the init_curves
             eval_array = ~np.isclose(self.init_curves["depth"], z_val, atol=0.001, rtol=0)
@@ -365,7 +366,8 @@ class PressureScenario:
         )
 
     def _compute_fluid_pressure_curve(self, reference_depth: float, reference_pressure: float, fluid_key: str = None) -> np.ndarray:
-        """Computes the fluid pressure curve based on a reference depth and pressure.
+        """
+        Computes the fluid pressure curve based on a reference depth and pressure.
 
         This method can be used to compute the pressure curve for the specified fluid type
         or for brine if 'brine' is passed as the fluid_key.
@@ -378,6 +380,7 @@ class PressureScenario:
 
         Returns:
             np.ndarray: The computed fluid pressure curve.
+
         """
         depth_array = self.init_curves["depth"].values
 

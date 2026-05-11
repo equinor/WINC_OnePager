@@ -61,6 +61,125 @@ include = [
 [tool.hatch.build.targets.wheel.sources]
 "src/WellClass" = "WellClass"
 
+[tool.pytest.ini_options]
+addopts = ["--color=yes", "-vv"]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 150
+exclude = [
+    "build",
+    "dist",
+    "site",
+    "venv_screen",
+    "originals",
+    "test_data",
+    "**/*.ipynb",
+    "GaP_HIRES.py",
+    "GaP_HIRES_15112022.py",
+]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "W191",   # Conflicts with ruff formatter
+    "E111",   # Conflicts with ruff formatter
+    "E114",   # Conflicts with ruff formatter
+    "E117",   # Conflicts with ruff formatter
+    "D206",   # Conflicts with ruff formatter
+    "D300",   # Conflicts with ruff formatter
+    "Q000",   # Conflicts with ruff formatter
+    "Q001",   # Conflicts with ruff formatter
+    "Q002",   # Conflicts with ruff formatter
+    "Q003",   # Conflicts with ruff formatter
+    "COM812", # Conflicts with ruff formatter
+    "COM819", # Conflicts with ruff formatter
+    "FIX",    # flake8-fixme
+    "FBT",    # flake8-boolean-trap
+    "TD",     # flake8-todos
+    "TRY003", # Messages inside exception class initialization
+    "TRY300", # No need to enforce try-except-else
+    "EM",     # flake8-errmsg
+    "D100",   # No need to enforce docstring in public module
+    "D101",   # No need to enforce docstring in public class
+    "D102",   # No need to enforce docstring in public method
+    "D103",   # No need to enforce docstring in public function
+    "D104",   # No need to enforce docstring in public package
+    "D107",   # No need to enforce docstrings in __init__
+    "D203",   # Incompatible with D211
+    "D212",   # Incompatible with D213
+    "G003",   # Logging should be able to use string concatenation
+    "G004",   # Allow f-strings in logging
+    "E501",   # Line length handled by formatter
+    # --- Noisy rules ignored for now ---
+    "ERA001",  # Commented-out code
+    "ANN",     # Missing type annotations (defer)
+    "N803",    # Argument name should be lowercase (domain conventions like P, T, TVD)
+    "N806",    # Variable in function should be lowercase (domain conventions)
+    "N802",    # Function name should be lowercase
+    "N815",    # Mixed-case variable in class scope
+    "D105",    # Missing docstring in magic method
+    "D200",    # Docstring should fit on one line
+    "D205",    # 1 blank line required between summary and description
+    "D400",    # Docstring first line should end with period
+    "D401",    # Docstring imperative mood
+    "D404",    # Docstring first word
+    "D415",    # Docstring first line should end with punctuation
+    "D417",    # Missing argument description in docstring
+    "TID252",  # Relative imports from parent modules
+    "PD011",   # Use .to_numpy() instead of .values
+    "RET504",  # Unnecessary assignment before return
+    "BLE001",  # Blind exception catching
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments (handled by pylint.max-args)
+    "PLR0915", # Too many statements
+    "PLR2004", # Magic value in comparison
+    "C901",    # Too complex
+    "INP001",  # Implicit namespace package
+    "RUF013",  # Implicit Optional
+    "N999",    # Invalid module name
+    "SIM108",  # Use ternary operator (readability preference)
+    "ARG001",  # Unused function argument
+    "ARG002",  # Unused method argument
+    "PTH103",  # Use pathlib (os.makedirs)
+    "PTH110",  # Use pathlib (os.path.exists)
+    "PTH118",  # Use pathlib (os.path.join)
+    "PTH123",  # Use pathlib (open)
+    "B905",    # zip() without strict=
+    "PLW2901", # Overwritten loop variable
+    "PD002",   # Use of .values on DataFrame
+    "S301",    # pickle usage
+    "S307",    # eval() usage (review separately)
+    "B028",    # No stacklevel in warnings.warn
+    "PERF102", # Incorrect key check on dict
+    "PERF401", # Use list comprehension
+    "C405",    # Unnecessary literal set
+    "C408",    # Unnecessary dict call
+    "PLW0133", # Unnecessary return value
+    "ISC002",  # Implicit string concat
+    "SIM102",  # Collapsible if
+    "N805",    # First argument should be self
+    "PT018",   # Composite assertion
+    "B007",    # Unused loop variable
+    "RUF059",  # Unused unpacked variable
+    "S101",    # Use of assert (used for validation)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["S101", "ANN201", "SLF001"]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.pylint]
+max-args = 10
+
+[tool.ruff.lint.flake8-implicit-str-concat]
+allow-multiline = false
+
+[tool.ruff.format]
+docstring-code-format = true
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
