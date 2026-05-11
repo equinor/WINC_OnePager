@@ -103,10 +103,9 @@ def initialize_well(
     # At this point, regardless of the input method, we should have all required dictionaries or None
 
     # Build Well Class
-    mywell = Well(
+    return Well(
         header=header, drilling=drilling, casings=casings, barriers=barriers, barrier_perm=barrier_perm, geology=geology, co2_datum=co2_datum
     )
 
     # If you had a separate class that needed the reservoir_P, main_barrier, etc., you would Initialize it here
 
-    return mywell

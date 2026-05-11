@@ -129,7 +129,6 @@ ignore = [
     "D415",    # Docstring first line should end with punctuation
     "D417",    # Missing argument description in docstring
     "TID252",  # Relative imports from parent modules
-    "RET504",  # Unnecessary assignment before return
     "PLR0912", # Too many branches
     "PLR0913", # Too many arguments (handled by pylint.max-args)
     "PLR0915", # Too many statements
@@ -140,11 +139,6 @@ ignore = [
     "SIM108",  # Use ternary operator (readability preference)
     "ARG001",  # Unused function argument
     "ARG002",  # Unused method argument
-    "PTH103",  # Use pathlib (os.makedirs)
-    "PTH110",  # Use pathlib (os.path.exists)
-    "PTH118",  # Use pathlib (os.path.join)
-    "PTH123",  # Use pathlib (open)
-    "B905",    # zip() without strict=
     "PLW2901", # Overwritten loop variable
     "PD002",   # Use of .values on DataFrame
     "S301",    # pickle usage

@@ -174,7 +174,7 @@ def plot_pressure(
     if legend:
         ax.legend()
         handles, labels = ax.get_legend_handles_labels()
-        lgd = dict(zip(labels, handles))
+        lgd = dict(zip(labels, handles, strict=False))
         ax.legend(lgd.values(), lgd.keys())
 
     ax.set_xlim(xmin, xmax)

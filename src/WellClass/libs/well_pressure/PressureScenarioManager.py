@@ -51,8 +51,7 @@ class PressureScenarioManager:
             scenarios_data.append(scenario_data)
 
         # Convert the list of dictionaries into a DataFrame
-        scenarios_df = pd.DataFrame(scenarios_data)
-        return scenarios_df
+        return pd.DataFrame(scenarios_data)
 
     def collate_scenario_profiles(self, common_data: pd.DataFrame) -> pd.DataFrame:
         scenario_data = []
@@ -71,6 +70,5 @@ class PressureScenarioManager:
         # Concatenate all scenario DataFrames along the column axis with MultiIndex columns
         scenario_profiles = pd.concat(scenario_data, axis=1)
         # Add common data to the MultiIndex DataFrame
-        scenario_profiles = pd.concat([common_data, scenario_profiles], axis=1)
+        return pd.concat([common_data, scenario_profiles], axis=1)
 
-        return scenario_profiles

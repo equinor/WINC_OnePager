@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import yaml
 
 from ..models import WellModel
@@ -14,13 +16,11 @@ def yaml_parser(yaml_file: str) -> WellModel:
 
     """
     # load configuration file
-    with open(yaml_file, encoding="utf-8") as f:
+    with Path(yaml_file).open(encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     # yaml_config = yaml.dump(config, sort_keys=False)
     # print(yaml_config)
 
     # dict => pydantic model
-    well = WellModel(**config)
-
-    return well
+    return WellModel(**config)

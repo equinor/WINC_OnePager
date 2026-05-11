@@ -21,9 +21,8 @@ def compute_barrier_leakage(barrier_perm: dict, pressure_scenarios: dict, pressu
     barrier_p_rho = _get_barrier_p_and_rho(pressure_scenarios, pressure_CO2, barrier_props)
 
     # Estimate CO2 leakage in [tons/day] after a trancient period
-    barrier_leakage = _get_barrier_leakage(barrier_perm, barrier_p_rho, barrier_props)
+    return _get_barrier_leakage(barrier_perm, barrier_p_rho, barrier_props)
 
-    return barrier_leakage
 
 
 def _get_barrier_p_and_rho(pressure_scenarios: dict, pressure_CO2: dict, barrier_props: dict) -> pd.DataFrame:

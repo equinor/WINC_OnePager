@@ -9,6 +9,5 @@ def get_barriers_names(barriers_mod: dict) -> dict:
     New format         barr1: [barr1_0, barr1_1], barr2: [barr2_0]
     """
     names = barriers_mod["b_name"]
-    bnames = {key: [j for j, _ in list(value)] for key, value in groupby(names.items(), lambda x: x[1])}
+    return {key: [j for j, _ in list(value)] for key, value in groupby(names.items(), lambda x: x[1])}
 
-    return bnames

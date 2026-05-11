@@ -48,7 +48,7 @@ def get_barrier_radius(barriers_mod: dict, barriers_names: dict, barrier_name: s
 
     # Do the avaraging
     avg_diam = 0
-    for diam, height in zip(diams, heights):
+    for diam, height in zip(diams, heights, strict=False):
         avg_diam += diam * height
     avg_diam /= sum(heights)
 

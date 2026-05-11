@@ -96,7 +96,7 @@ class Pressure:
         return pvt_data
 
     def _setup_init_curves(self, depth_array) -> pd.DataFrame:
-        init_curves = pd.DataFrame(
+        return pd.DataFrame(
             {
                 "depth": depth_array,
                 "temperature": [np.nan] * len(depth_array),
@@ -104,7 +104,6 @@ class Pressure:
                 "min_horizontal_stress": [np.nan] * len(depth_array),
             }
         )
-        return init_curves
 
     def _compute_init_curves(self) -> pd.DataFrame:
         """
@@ -158,15 +157,13 @@ class Pressure:
 
         bottom_depth = int(td_msl) + 300
 
-        z_vec = np.linspace(top_depth, bottom_depth, int(bottom_depth - top_depth) + 1)
+        return np.linspace(top_depth, bottom_depth, int(bottom_depth - top_depth) + 1)
 
-        return z_vec
 
     def _calculate_temperature_curve(self, depth_curve: np.ndarray) -> np.ndarray:
         # Calculate depth sample points based on well depth and seabed depth
-        temperature_curve = self.sf_temp + np.maximum(0, (self.geo_tgrad * (depth_curve - self.sf_depth_msl)) / 1e3)
+        return self.sf_temp + np.maximum(0, (self.geo_tgrad * (depth_curve - self.sf_depth_msl)) / 1e3)
 
-        return temperature_curve
 
     def _calculate_hydrostatic_pressure(
         self,

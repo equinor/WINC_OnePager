@@ -41,7 +41,7 @@ def well_class_fixture():
         well_csv = csv_parser(well_name)
 
     # instantiate class
-    my_well = Well(
+    return Well(
         header=well_csv["well_header"],
         drilling=well_csv["drilling"],
         casings=well_csv["casing_cement"],
@@ -50,8 +50,6 @@ def well_class_fixture():
         barrier_perm=well_csv["barrier_permeability"],
         co2_datum=well_csv["co2_datum"],
     )
-
-    return my_well
 
 
 @pytest.fixture(scope="session")
@@ -79,13 +77,11 @@ def well_class_dict_fixture():
     well_name_pkl = well_name_tuple[0] + "_well_pytest.pkl"
 
     # load .pkl file
-    with open(well_name_pkl, "rb") as f:
+    with pathlib.Path(well_name_pkl).open("rb") as f:
         my_well = f.read()
 
     # convert it to dictionary
-    my_well_dict = pickle.loads(my_well)
-
-    return my_well_dict
+    return pickle.loads(my_well)
 
 
 @pytest.fixture

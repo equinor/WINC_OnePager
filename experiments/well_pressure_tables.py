@@ -64,7 +64,6 @@ $ python -m experiments.well_pressure_tables --config-file ./test_data/examples/
 
 import argparse
 import json
-import os
 from argparse import Namespace
 from importlib.resources import files
 from pathlib import Path
@@ -139,10 +138,9 @@ def main(args: Namespace):
 
     # well sketch
     if args.out_name:
-        if not os.path.exists(args.out_path):
-            os.makedirs(args.out_path, exist_ok=True)
+        Path(args.out_path).mkdir(parents=True, exist_ok=True)
         # output file
-        _output = os.path.join(args.out_path, args.out_name)
+        _output = Path(args.out_path) / args.out_name
 
     # Plot sketch, pressures
     # plot_sketch_pressure(my_well, my_pressure, save_file=output)
@@ -151,7 +149,7 @@ def main(args: Namespace):
     # Export tables to json files
     my_pressure.pressure_CO2.to_json("pressure_co2.json", orient="records")
 
-    with open("pressure_scenarios.json", "w") as f:
+    with Path("pressure_scenarios.json").open("w") as f:
         # Use json.dump() to write dictionary to a file
         json.dump(my_pressure.pressure_scenarios, f)
 

@@ -255,7 +255,7 @@ def plot_pt(
     # Optimize legend
     if legend:
         handles, labels = ax.get_legend_handles_labels()
-        unique_labels = dict(zip(labels, handles))
+        unique_labels = dict(zip(labels, handles, strict=False))
         ax.legend(unique_labels.values(), unique_labels.keys(), loc="upper left", bbox_to_anchor=(1.3, 1), fontsize="small")
 
     # Adjust plot layout to fit colorbar and make room for the legend

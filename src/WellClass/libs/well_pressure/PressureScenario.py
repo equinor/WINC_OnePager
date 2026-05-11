@@ -108,7 +108,7 @@ class PressureScenario:
         """
         ip_params = zip(
             ["z_fluid_contact", "p_fluid_contact", "p_delta", "p_resrv", "z_resrv"],
-            np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float),
+            np.array([self.z_fluid_contact, self.p_fluid_contact, self.p_delta, self.p_resrv, self.z_resrv], dtype=float), strict=False,
         )
 
         ip_params = pd.Series(dict(ip_params))

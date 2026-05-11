@@ -54,6 +54,5 @@ def trim_casings_cement(casings_df: pd.DataFrame) -> pd.DataFrame:
         top_msl_saved = bot_msl
 
     # build dataframe
-    casing_cement_df = pd.DataFrame(data=casing_cement_list, columns=casing_columns)
+    return pd.DataFrame(data=casing_cement_list, columns=casing_columns)
 
-    return casing_cement_df

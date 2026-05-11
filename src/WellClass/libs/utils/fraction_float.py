@@ -23,7 +23,5 @@ def float_to_fraction_inches(d_in: float) -> str:
     if remainder > 0:
         fraction = remainder.as_integer_ratio()  # 0.25 -> 1/4 ->  (1, 4)
         fraction_str = f"{fraction[0]}/{fraction[1]}"  # "1/4"
-        d_fmt = f'{int_d} {fraction_str}"'  # "12 1/4"
-        return d_fmt
-    d_fmt = f'{int_d}"'  # "12"
-    return d_fmt
+        return f'{int_d} {fraction_str}"'  # "12 1/4"
+    return f'{int_d}"'  # "12"

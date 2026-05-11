@@ -17,7 +17,6 @@ $ python -m experiments.well_sketch --config-file ./test_data/examples/wildcat/w
 
 import argparse
 import json
-import os
 import pathlib
 from argparse import Namespace
 
@@ -72,10 +71,9 @@ def main(args: Namespace):
     # well sketch
     output = None
     if args.out_name:
-        if not os.path.exists(args.out_path):
-            os.makedirs(args.out_path, exist_ok=True)
+        pathlib.Path(args.out_path).mkdir(parents=True, exist_ok=True)
         # output file
-        output = os.path.join(args.out_path, args.out_name)
+        output = pathlib.Path(args.out_path) / args.out_name
 
     # plot it
     plot_sketch(my_well, save_file=output)

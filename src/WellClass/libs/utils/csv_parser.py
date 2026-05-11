@@ -1,5 +1,6 @@
 import io
 import re
+from pathlib import Path
 
 import pandas as pd
 
@@ -7,7 +8,7 @@ from .fraction_float import fraction_float
 
 
 def csv_parser(csv_file):
-    with open(csv_file, encoding="utf-8-sig") as f:
+    with Path(csv_file).open(encoding="utf-8-sig") as f:
         lines = f.read()
     lines = re.sub(r"\,+\n", "\n", lines)
 

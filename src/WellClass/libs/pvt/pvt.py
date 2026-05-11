@@ -20,9 +20,8 @@ def file_exists(files_path: list):
 
 
 def get_mixture_info(pvt_path: str | Path):
-    with open(f"{pvt_path}/metadata.json") as file:
-        mixture_info = json.load(file)
-    return mixture_info
+    with Path(pvt_path, "metadata.json").open() as file:
+        return json.load(file)
 
 
 def load_envelopes(pvt_path: str | Path):
@@ -48,9 +47,7 @@ def set_envelope_interpolator(envelope_data: np.ndarray) -> Callable:
     T_envelope = T_envelope[sorted_indices]
     p_envelope = p_envelope[sorted_indices]
 
-    envelope_interpolator = Akima1DInterpolator(T_envelope, p_envelope, method="makima", extrapolate=False)
-
-    return envelope_interpolator
+    return Akima1DInterpolator(T_envelope, p_envelope, method="makima", extrapolate=False)
 
 
 def corr_rhobrine_LaliberteCopper(salinity: float, temperature: np.ndarray, pressure: np.ndarray, rho_h2o: np.ndarray) -> np.ndarray:
@@ -81,9 +78,7 @@ def corr_rhobrine_LaliberteCopper(salinity: float, temperature: np.ndarray, pres
     rho_app = (c0 * w + c1) * np.exp(0.000001 * (temperature + c4) ** 2) / (w + c2 + c3 * temperature)
 
     # Laliberté and Cooper model: Brine density
-    rho_brine = 1 / (((1 - w) / rho_h2o) + (w / rho_app))
-
-    return rho_brine
+    return 1 / (((1 - w) / rho_h2o) + (w / rho_app))
 
 
 def load_pvt_data(pvt_root_path: str | Path, fluid_type: str | None = None, load_fluid: bool = True) -> dict[str, dict[str, np.ndarray]]:
@@ -439,7 +434,7 @@ def build_ivp_data(interval_start: float, interval_end: float, initial_state: fl
     index = query.index.to_numpy()
     t_eval = query["depth"].to_numpy()
 
-    ivp_data = {
+    return {
         "interval_start": interval_start,
         "interval_end": interval_end,
         "initial_state": initial_state,
@@ -449,11 +444,9 @@ def build_ivp_data(interval_start: float, interval_end: float, initial_state: fl
         "temperature_array": temperature,
     }
 
-    return ivp_data
-
 
 def solve_ivp_with_data(ivp_data: dict, interpolator: RectBivariateSpline, fluid_key: str):
-    ivp_solution = solve_ivp(
+    return solve_ivp(
         fun=_Pdz_odesys,
         t_span=[ivp_data["interval_start"], ivp_data["interval_end"]],
         y0=[ivp_data["initial_state"]],
@@ -462,10 +455,8 @@ def solve_ivp_with_data(ivp_data: dict, interpolator: RectBivariateSpline, fluid
         args=(ivp_data["depth_array"], ivp_data["temperature_array"], interpolator, fluid_key),
         method="Radau",
     )
-    return ivp_solution
 
 
 def get_rho_from_pvt_data(pressure: float, temperature: float, rho_interpolator: RectBivariateSpline) -> float:
     # Interpolate the density at the given pressure and temperature
-    rho = rho_interpolator(pressure, temperature)[0, 0]
-    return rho
+    return rho_interpolator(pressure, temperature)[0, 0]
