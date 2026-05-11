@@ -259,8 +259,8 @@ class PressureScenario:
 
     def _compute_MSAD(self, fluid_pressure_profile):
         if "min_horizontal_stress" in self.init_curves.columns:
-            depth = self.init_curves["depth"].values
-            shmin = self.init_curves["min_horizontal_stress"].values
+            depth = self.init_curves["depth"].to_numpy()
+            shmin = self.init_curves["min_horizontal_stress"].to_numpy()
 
             self.z_MSAD, self.p_MSAD = compute_intersection(depth, fluid_pressure_profile, shmin)
 
@@ -365,7 +365,7 @@ class PressureScenario:
             interpolator=self.brine_interpolator,
         )
 
-    def _compute_fluid_pressure_curve(self, reference_depth: float, reference_pressure: float, fluid_key: str = None) -> np.ndarray:
+    def _compute_fluid_pressure_curve(self, reference_depth: float, reference_pressure: float, fluid_key: str | None = None) -> np.ndarray:
         """
         Computes the fluid pressure curve based on a reference depth and pressure.
 
@@ -382,7 +382,7 @@ class PressureScenario:
             np.ndarray: The computed fluid pressure curve.
 
         """
-        depth_array = self.init_curves["depth"].values
+        depth_array = self.init_curves["depth"].to_numpy()
 
         if self.specific_gravity is not None:
             # Convert specific gravity to density (assuming specific gravity is relative to water at 4°C, 1000 kg/m³)

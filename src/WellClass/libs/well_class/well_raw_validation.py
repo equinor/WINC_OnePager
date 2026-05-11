@@ -13,7 +13,7 @@ def valid_drilling(drilling_df: pd.DataFrame):
     assert drilling_df["diameter_m"].is_monotonic_decreasing, "drilling needs to be sorted"
 
     # extract data
-    top_bot = drilling_df.loc[:, ["top_msl", "bottom_msl"]].values
+    top_bot = drilling_df.loc[:, ["top_msl", "bottom_msl"]].to_numpy()
     top = top_bot[:, 0]
     bot = top_bot[:, 1]
 
@@ -36,12 +36,12 @@ def valid_casings(casings_df: pd.DataFrame):
     casing_cols = casings_df.loc[:, columns]
 
     # ensure the depth order is correct
-    assert (casing_cols["top_msl"].values < casing_cols["bottom_msl"].values).all()  # casing intervals
-    assert (casing_cols.dropna()["toc_msl"].values < casing_cols.dropna()["boc_msl"].values).all()  # cement bond intervals
+    assert (casing_cols["top_msl"].to_numpy() < casing_cols["bottom_msl"].to_numpy()).all()  # casing intervals
+    assert (casing_cols.dropna()["toc_msl"].to_numpy() < casing_cols.dropna()["boc_msl"].to_numpy()).all()  # cement bond intervals
 
     # in intervals with cement bond, ensure the cement bond is within its corresponding casing
-    assert (casing_cols.dropna()["top_msl"].values <= casing_cols.dropna()["toc_msl"].values).all()
-    assert (casing_cols.dropna()["bottom_msl"].values >= casing_cols.dropna()["boc_msl"].values).all()
+    assert (casing_cols.dropna()["top_msl"].to_numpy() <= casing_cols.dropna()["toc_msl"].to_numpy()).all()
+    assert (casing_cols.dropna()["bottom_msl"].to_numpy() >= casing_cols.dropna()["boc_msl"].to_numpy()).all()
 
 
 def valid_barriers(barriers_df: pd.DataFrame):

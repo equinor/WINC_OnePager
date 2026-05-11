@@ -86,7 +86,7 @@ def corr_rhobrine_LaliberteCopper(salinity: float, temperature: np.ndarray, pres
     return rho_brine
 
 
-def load_pvt_data(pvt_root_path: str | Path, fluid_type: str = None, load_fluid: bool = True) -> dict[str, dict[str, np.ndarray]]:
+def load_pvt_data(pvt_root_path: str | Path, fluid_type: str | None = None, load_fluid: bool = True) -> dict[str, dict[str, np.ndarray]]:
     # Convert to Path object if not already
     pvt_root_path = Path(pvt_root_path)
 
@@ -183,13 +183,13 @@ def _check_phase(P: float, T: float, T_crit: float, bubble_interp: Callable, dew
     if bubble_interp is not None:
         try:
             p_bubble = float(bubble_interp(T))
-        except Exception:
+        except (ValueError, TypeError):
             p_bubble = np.nan
 
     if dew_interp is not None:
         try:
             p_dew = float(dew_interp(T))
-        except Exception:
+        except (ValueError, TypeError):
             p_dew = np.nan
 
     # If both envelopes invalid, return "unknown"
@@ -221,7 +221,7 @@ def _flag_phase_changes(P: float, phase: str, p_dew: float, p_bubble: float, tol
     return None
 
 
-def _eval_envelopes_for_temps(temps: np.ndarray, dew_interp: Callable, bub_interp: Callable, T_crit: float = None):
+def _eval_envelopes_for_temps(temps: np.ndarray, dew_interp: Callable, bub_interp: Callable, T_crit: float | None = None):
     """
     Returns (p_dew_vals, p_bub_vals) arrays aligned with temps.
     If an interpolator is None or fails or returns NaN, corresponding entries are NaN.
@@ -234,7 +234,7 @@ def _eval_envelopes_for_temps(temps: np.ndarray, dew_interp: Callable, bub_inter
             # ensure shape matches temps
             if p_dew_vals.shape != temps.shape:
                 p_dew_vals = np.broadcast_to(p_dew_vals, temps.shape).copy()
-        except Exception:
+        except (ValueError, TypeError):
             p_dew_vals = np.full(temps.shape, np.nan, dtype=float)
     else:
         p_dew_vals = np.full(temps.shape, np.nan, dtype=float)
@@ -245,7 +245,7 @@ def _eval_envelopes_for_temps(temps: np.ndarray, dew_interp: Callable, bub_inter
             p_bub_vals = np.asarray(bub_interp(temps), dtype=float)
             if p_bub_vals.shape != temps.shape:
                 p_bub_vals = np.broadcast_to(p_bub_vals, temps.shape).copy()
-        except Exception:
+        except (ValueError, TypeError):
             p_bub_vals = np.full(temps.shape, np.nan, dtype=float)
     else:
         p_bub_vals = np.full(temps.shape, np.nan, dtype=float)
@@ -275,8 +275,8 @@ def _integrate_pressure(
     pvt_data: dict,
     fluid_key: str,
     interpolator: RectBivariateSpline,
-    top_limit: float = None,
-    bottom_limit: float = None,
+    top_limit: float | None = None,
+    bottom_limit: float | None = None,
 ) -> np.ndarray:
     """
     Simple integration to find pressure
@@ -288,7 +288,7 @@ def _integrate_pressure(
 
     warnings = []
 
-    depth_array = init_curves["depth"].values
+    depth_array = init_curves["depth"].to_numpy()
 
     # metadata and envelopes
     T_crit = pvt_data[fluid_key]["metadata"].get("T_crit", None)
@@ -296,7 +296,7 @@ def _integrate_pressure(
     dew_point_interpolator = pvt_data[fluid_key].get("dew_point", None)
 
     # evaluate envelopes into DataFrame columns safely
-    temps = init_curves["temperature"].values
+    temps = init_curves["temperature"].to_numpy()
     p_dew_vals, p_bub_vals = _eval_envelopes_for_temps(temps, dew_point_interpolator, bubble_point_interpolator, T_crit)
     init_curves["dew_point"] = p_dew_vals
     init_curves["bubble_point"] = p_bub_vals
@@ -365,8 +365,8 @@ def _integrate_pressure(
             p_log = init_curves.loc[supercritical_log.index[1], colname_p].astype(float)
             T_log = init_curves.loc[supercritical_log.index[1], "temperature"].astype(float)
             z_log = init_curves.loc[supercritical_log.index[1], "depth"].astype(float)
-            initial_phase = supercritical_log["phase"].values[0]
-            final_phase = supercritical_log["phase"].values[1]
+            initial_phase = supercritical_log["phase"].to_numpy()[0]
+            final_phase = supercritical_log["phase"].to_numpy()[1]
             message = f"Message: Fluid changed phase from {initial_phase} to {final_phase} at {z_log:.2f} mTVDMSL (P = {p_log:.1f} bar)."
 
             warnings.append({"p": p_log, "T": T_log, "z": z_log, "message": message})
@@ -376,7 +376,7 @@ def _integrate_pressure(
             p_log = init_curves.loc[phase_log.index[0], colname_p].astype(float)
             T_log = init_curves.loc[phase_log.index[0], "temperature"].astype(float)
             z_log = init_curves.loc[phase_log.index[0], "depth"].astype(float)
-            trigger = phase_log["phase_change_flag"].values[0]
+            trigger = phase_log["phase_change_flag"].to_numpy()[0]
             message = f"Warning: {trigger} at {z_log:.2f} mTVDMSL. Above this depth, use OLGA (SLB) for reliable pressure results."
 
             warnings.append({"p": p_log, "T": T_log, "z": z_log, "message": message})
@@ -387,7 +387,7 @@ def _integrate_pressure(
         ivp_solution = solve_ivp_with_data(ivp_data, interpolator, fluid_key)
         init_curves.loc[ivp_data["index"], colname_p] = ivp_solution.y[0]
 
-    if reference_depth in init_curves["depth"].values:
+    if reference_depth in init_curves["depth"].to_numpy():
         init_curves.loc[init_curves["depth"] == reference_depth, colname_p] = reference_pressure
 
     pressures = init_curves[colname_p].to_numpy(dtype=float)

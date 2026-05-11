@@ -19,7 +19,7 @@ def plot_onepager(
     include_sketch: bool = True,
     include_pressure: bool = True,
     savefig: bool = False,
-    filename: str = None,
+    filename: str | None = None,
     width: float = 10,
     height: float = 8,
     # sketch arguments
@@ -38,7 +38,7 @@ def plot_onepager(
     pressure_HSP: bool = False,
     pressure_MSAD: bool = True,
     pressure_legend: bool = True,
-    pressure_selected_scenarios: list = None,
+    pressure_selected_scenarios: list | None = None,
     pressure_resrv: bool = False,
     pressure_fluid_contact: bool = False,
     pressure_fluid_pressure: bool = True,

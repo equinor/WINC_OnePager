@@ -367,8 +367,8 @@ class Pressure:
             )
 
             # Retrieve common init curves
-            depth = self.init_curves["depth"].values
-            temperature = self.init_curves["temperature"].values
+            depth = self.init_curves["depth"].to_numpy()
+            temperature = self.init_curves["temperature"].to_numpy()
 
             # barrier geometries
             barrier_props = well.compute_barrier_props(barrier_name)
@@ -395,7 +395,7 @@ class Pressure:
                 # Check if the barrier has permeabilities
                 try:
                     perms = barrier_perm["kv"].values()
-                except Exception:
+                except AttributeError:
                     perms = barrier_perm["kv"]
 
                 # Compute leakage rates for different permeabilities and store in df

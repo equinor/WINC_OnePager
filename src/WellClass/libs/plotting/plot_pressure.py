@@ -24,13 +24,13 @@ def check_head_tail_of_array(arr_x, arr_y, head_x, tail_x, head_y, tail_y):
 
 def plot_pressure(
     my_pressure: Pressure,
-    geology_dict: dict = None,
-    barriers: dict = None,
+    geology_dict: dict | None = None,
+    barriers: dict | None = None,
     ax=None,
     plot_HSP: bool = False,
     plot_MSAD: bool = False,
     legend: bool = True,
-    plot_selected_scenarios: list = None,
+    plot_selected_scenarios: list | None = None,
     plot_resrv: bool = False,  # Option to plot (p_resrv, z_resrv)
     plot_fluid_contact: bool = False,
     plot_fluid_pressure: bool = True,
@@ -130,8 +130,8 @@ def plot_pressure(
                 else:
                     fluid_pressure = sc_curves.query("depth<=@sc_z_fluid_contact")
 
-                fluid_pressure_x = fluid_pressure["fluid_pressure"].values
-                fluid_pressure_y = fluid_pressure["depth"].values
+                fluid_pressure_x = fluid_pressure["fluid_pressure"].to_numpy()
+                fluid_pressure_y = fluid_pressure["depth"].to_numpy()
 
                 # Check if the head and tail of the array are equal to the given values
                 # fluid_pressure_x, fluid_pressure_y = check_head_tail_of_array(fluid_pressure_x, fluid_pressure_y,

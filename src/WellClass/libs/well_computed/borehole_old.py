@@ -19,7 +19,7 @@ def compute_borehole(casings: dict, drilling: dict) -> dict:
     drilling_df = pd.DataFrame(drilling)
 
     well_concat = pd.concat([casings_df, drilling_df])
-    top_z = well_concat["top_msl"].drop_duplicates().dropna().values
+    top_z = well_concat["top_msl"].drop_duplicates().dropna().to_numpy()
     top_z.sort()
 
     diam = 1 + well_concat["diameter_m"].max()
@@ -29,7 +29,7 @@ def compute_borehole(casings: dict, drilling: dict) -> dict:
         z_query = well_concat.query("top_msl == @z_value")
         min_q = z_query.query("diameter_m == diameter_m.min()")
         if min_q.iloc[0]["diameter_m"] < diam:
-            borehole.append(min_q.iloc[0][["top_msl", "bottom_msl", "diameter_m"]].values.tolist())
+            borehole.append(min_q.iloc[0][["top_msl", "bottom_msl", "diameter_m"]].to_numpy().tolist())
             diam = min_q.iloc[0]["diameter_m"]
 
     borehole = np.array(borehole)

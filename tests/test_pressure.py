@@ -66,20 +66,20 @@ class TestPressureInit:
         # Below seafloor, temperature should increase
         below_sf = curves[curves["depth"] > pressure_instance.sf_depth_msl]
         if len(below_sf) > 1:
-            temps = below_sf["temperature"].values
+            temps = below_sf["temperature"].to_numpy()
             assert temps[-1] > temps[0]
 
     def test_hydrostatic_pressure_increases_with_depth(self, pressure_instance):
         curves = pressure_instance.init_curves
         below_zero = curves[curves["depth"] > 0]
-        pressures = below_zero["hydrostatic_pressure"].values
+        pressures = below_zero["hydrostatic_pressure"].to_numpy()
         assert pressures[-1] > pressures[0]
 
     def test_shmin_increases_with_depth(self, pressure_instance):
         curves = pressure_instance.init_curves
         below_sf = curves[curves["depth"] > pressure_instance.sf_depth_msl]
         if len(below_sf) > 1:
-            shmin = below_sf["min_horizontal_stress"].values
+            shmin = below_sf["min_horizontal_stress"].to_numpy()
             assert shmin[-1] > shmin[0]
 
     def test_scenario_manager_created(self, pressure_instance):

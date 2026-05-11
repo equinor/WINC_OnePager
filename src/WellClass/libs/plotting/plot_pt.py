@@ -14,7 +14,7 @@ def plot_pt(
     file_only=False,
     file_name="pt",
     legend: bool = True,
-    plot_selected_scenarios: list = None,
+    plot_selected_scenarios: list | None = None,
     plot_HSP: bool = False,
     plot_Shmin: bool = False,
     plot_MSAD: bool = False,

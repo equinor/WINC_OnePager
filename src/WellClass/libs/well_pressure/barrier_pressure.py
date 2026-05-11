@@ -76,7 +76,7 @@ def _get_barrier_leakage(barrier_perm: dict, barrier_p_rho: pd.DataFrame, barrie
     # Get the permeabilty values to use
     try:
         perms = barrier_perm["kv"].values()
-    except Exception:
+    except AttributeError:
         perms = barrier_perm["kv"]
 
     # Get the pressure cases to use (RP1, RP2 etc)
