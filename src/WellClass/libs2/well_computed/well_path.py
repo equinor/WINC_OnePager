@@ -4,7 +4,7 @@ import numpy as np
 import scipy.interpolate as interp
 import wellpathpy as wp
 
-from src.WellClass.libs.models.well_model_utils import WellSurveyModel
+from src.WellClass.libs2.models.well_models_utils import WellSurveyModel
 
 
 def build_wellpath_object(survey: WellSurveyModel, total_depth: float, survey_bool: bool) -> wp.position_log:

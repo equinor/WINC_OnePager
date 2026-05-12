@@ -64,12 +64,12 @@ class HoleCasingModelRaw(BaseModel):
     shoe: bool | None = False
 
     @field_validator("diameter_in")
-    def diameter_in_converter(cls, v: float | str) -> float:
-        if isinstance(v, float):
-            return v
+    def diameter_in_converter(cls, v: float | int | str) -> float:
+        if isinstance(v, (int, float)):
+            return float(v)
         if isinstance(v, str):
             return fraction_float(v)
-        raise ValueError("diameter_in must be a float or string")
+        raise ValueError("diameter_in must be a float, int, or string")
 
 
 class HoleCasingModel(HoleCasingModelRaw):

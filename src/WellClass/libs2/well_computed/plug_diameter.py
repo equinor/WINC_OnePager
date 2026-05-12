@@ -1,7 +1,7 @@
 import typing
 
 
-def compute_plugs_diameter(plugs: list[dict[str, typing.Any]], borehole: list[dict[str, typing.Any]]) -> list[dict[str, typing.Any]]:
+def compute_plug_diameter(plugs: list[dict[str, typing.Any]], borehole: list[dict[str, typing.Any]]) -> list[dict[str, typing.Any]]:
     plugs_processed = []
 
     for plug in plugs:

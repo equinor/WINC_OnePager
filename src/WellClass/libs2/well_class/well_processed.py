@@ -7,7 +7,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from scipy import constants as const
 
-from src.WellClass.libs.plotting.plot_sketch import plot_sketch
+from src.WellClass.libs2.plotting.plot_sketch import plot_sketch
 from src.WellClass.libs2.well_class import Well
 from src.WellClass.libs2.well_class.well_validation import (
     split_hole_casings,

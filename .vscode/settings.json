@@ -1,11 +1,18 @@
 {
     "cSpell.words": [
+        "annot",
         "Equinor",
+        "facecolor",
         "interp",
+        "lightgray",
         "msad",
+        "mywell",
+        "plticker",
+        "STEELCOLOR",
         "tvdmsl",
         "wellbore",
         "wellpath",
-        "wellpathpy"
+        "wellpathpy",
+        "zorder"
     ]
 }
