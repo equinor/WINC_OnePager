@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy import constants as const
@@ -6,16 +9,22 @@ from scipy.interpolate import interp1d
 
 from .pressure_utils import shmin_data_interpolator
 
+if TYPE_CHECKING:
+    from .fluid_pressure import FluidPressure
+
 
 @dataclass
 class PressureTable:
     name: str
-    depth: np.ndarray  # depth array (m)
+    top_depth: float
+    bottom_depth: float
 
     # Input parameters
     ground_elevation: float  # ground elevation (m)
     ground_temperature: float  # ground temperature (°C)
     geothermal_gradient: float  # geothermal gradient (°C/km)
+
+    step: float = 1.0  # step size for depth array (m)
     rho_brine: float = 1030  # brine density (kg/m³)
 
     # Minimum horizontal stress parameters
@@ -23,30 +32,21 @@ class PressureTable:
     shmin_data: list[list[float]] = field(default=None)  # depth values for shmin data
 
     # Computed arrays
+    depth: np.ndarray = field(init=False)  # depth array (m)
     temperature: np.ndarray = field(init=False)  # temperature array (°C)
-    hydrostatic_pressure: np.ndarray = field(init=False)  # hydrostatic pressure (MPa or bar)
-    min_horizontal_stress: np.ndarray = field(init=False)  # minimum horizontal stress (MPa or bar)
-    # fluid_pressure: np.ndarray  # fluid pressure (MPa or bar)
-    # brine_pressure: np.ndarray  # brine pressure (MPa or bar)
-    # min_horizontal_stress: np.ndarray  # minimum horizontal stress (MPa or bar)
+    hydrostatic_pressure: np.ndarray = field(init=False)  # hydrostatic pressure (bar)
+    min_horizontal_stress: np.ndarray = field(init=False)  # minimum horizontal stress (bar)
+
+    # Collection of fluid pressure scenarios
+    scenarios: list[FluidPressure] = field(init=False, default_factory=list)
 
     def __post_init__(self) -> None:
-        # Compute temperature array based on depth and geothermal gradient
+        # Generate depth array
+        self.depth = np.linspace(self.top_depth, self.bottom_depth, int((self.bottom_depth - self.top_depth) / self.step) + 1)
+
         self.temperature = self.compute_temperature()
         self.hydrostatic_pressure = self.compute_hydrostatic_pressure()
         self.min_horizontal_stress = self.compute_shmin()
-
-    #     lengths = {
-    #         'depth': len(self.depth),
-    #         'temperature': len(self.temperature),
-    #         'hydrostatic_pressure': len(self.hydrostatic_pressure),
-    #         'fluid_pressure': len(self.fluid_pressure),
-    #         'brine_pressure': len(self.brine_pressure),
-    #         'min_horizontal_stress': len(self.min_horizontal_stress),
-    #     }
-    #     unique_lengths = set(lengths.values())
-    #     if len(unique_lengths) != 1:
-    #         raise ValueError(f"All arrays must have the same length, but got lengths: {lengths}")
 
     def compute_temperature(self) -> np.ndarray:
         """Compute temperature at a given depth using the geothermal gradient."""
@@ -62,11 +62,9 @@ class PressureTable:
 
     def compute_shmin(self) -> np.ndarray:
         """Compute minimum horizontal stress at a given depth."""
-        # Placeholder: linear increase with depth, can be replaced with a more complex model
-
         ground_pressure = np.interp(self.ground_elevation, self.depth, self.hydrostatic_pressure)
 
-        if self.shmin_data:
+        if self.shmin_data is not None:
             return shmin_data_interpolator(
                 shmin_data=self.shmin_data,
                 depth_array=self.depth,
@@ -74,6 +72,11 @@ class PressureTable:
                 ground_pressure_bar=ground_pressure,
                 surface_pressure_bar=const.atm / 1e5,
             )
+
+        if self.shmin_gradient is not None:
+            shmin = ground_pressure + self.shmin_gradient * (self.depth - self.ground_elevation)
+            shmin[self.depth < self.ground_elevation] = self.hydrostatic_pressure[self.depth < self.ground_elevation]
+            return shmin
 
         raise ValueError("Either shmin_gradient or shmin_data must be provided.")
 
@@ -87,7 +90,13 @@ class PressureTable:
         return {
             "temperature": interp(self.temperature),
             "hydrostatic_pressure": interp(self.hydrostatic_pressure),
-            # "fluid_pressure": interp(self.fluid_pressure),
-            # "brine_pressure": interp(self.brine_pressure),
             "min_horizontal_stress": interp(self.min_horizontal_stress),
         }
+
+    def add_scenario(self, **kwargs: float | str | None) -> FluidPressure:
+        """Create a FluidPressure scenario, register it, and return it."""
+        from .fluid_pressure import FluidPressure  # noqa: PLC0415
+
+        scenario = FluidPressure(table=self, **kwargs)
+        self.scenarios.append(scenario)
+        return scenario
