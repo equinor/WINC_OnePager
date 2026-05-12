@@ -199,7 +199,7 @@ def plot_sketch(
     TXT_FS_LEFT = 7
     TXT_FS_RIGHT = 6
     STEELCOLOR = "#702F00"
-    # base_deepest_rsrv = stratigraphy_data[stratigraphy_data.reservoir_flag]["base_msl"].max()
+    # base_deepest_resrv = stratigraphy_data[stratigraphy_data.reservoir_flag]["base_msl"].max()
     ymax = max([item["tvd_msl_bottom"] for item in stratigraphy_data])
 
     # Draw drilling (Bit size)
